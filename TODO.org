@@ -186,6 +186,12 @@
 
   - [ ] run and fix memleaks for all cmds
 
+* TODO client, Python
+
+  - [X] basic client loading data from a file or stdin
+
+  - [ ] client should undestand commands and command return values
+
 * TODO backend DSs
 
   - [ ] a more generic int hash instead of str by default and use that to fix the reverse mapping
@@ -204,7 +210,6 @@
 * TODO input fuzzy tests? test random broken input?
 * TODO ubsan, asan
 * TODO client, C
-* TODO client, Python
 * TODO client, (Node) JS
 
 * TODO mmaped DS
