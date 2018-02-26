@@ -1,0 +1,38 @@
+# Prerequisites
+*.d
+
+# Object files
+*.o
+
+# Linker output
+*.ilk
+*.map
+*.exp
+
+# Libraries
+*.lib
+*.a
+*.la
+*.lo
+
+# Shared objects
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.out
+*.i*86
+*.x86_64
+
+# Tags
+GPATH
+GRTAGS
+GTAGS
+
+# Binaries
+cubedb-test
+cube-test
+slist-test
+htable-test
+cubedb

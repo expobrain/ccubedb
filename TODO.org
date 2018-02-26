@@ -1,0 +1,219 @@
+* DONE cubedb - filtering data in partitions
+
+  - [X] rename partition_row_t to become an external struct (insertion_row_t?)
+
+  - [X] filtered counting
+
+  - [X] tests
+
+  - [X] destroys should also free things
+
+* DONE cubedb - mappings everywhere
+
+  - [X] simple mapping ds to use for oh so many mappings I have, to be replaced
+
+    The djb2 algorithm (k=33) was first reported by dan bernstein many years ago in comp.lang.c. another
+    version of this algorithm (now favored by bernstein) uses xor: hash(i) = hash(i - 1) * 33 ^ str[i];
+    the magic of number 33 (why it works better than many other constants, prime or not) has never been
+    adequately explained.
+
+  #+BEGIN_SRC c
+  unsigned long
+  hash(unsigned char *str)
+  {
+  unsigned long hash = 5381;
+        int c;
+
+        while (c = *str++)
+            hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+
+        return hash;
+    }
+  #+END_SRC
+
+  - [X] size limit and resizing of the htable
+
+  - [X] introduce the mappings
+
+  - [X] defer
+
+* DONE basic TCP server
+
+  - [X] plan and find examples
+
+    http://beej.us/guide/bgnet/html/multi/index.html
+
+    https://eax.me/libevent/
+
+    https://eax.me/tcp-server/
+
+    https://eax.me/network-application-mistakes/
+
+  - [X] basic server
+
+  - [X] QUIT: disconnect
+
+  - [X] go through the BG's guide with the source code to understand things in the code
+
+  - [X] cmd parsing framework
+
+  - [X] CUBES: dump stupid info on cubes by default
+
+  - [X] CUBE: a certain cube info (partition list)
+
+  - [X] INSERT: insert something into a cube
+
+  - [X] COUNT: count all within a cube
+
+  - [X] COUNTF: count all within a cube with a filter
+
+  - [X] HELP: dump cmd info (this should be defined along with the cmd)
+
+  - [X] PCOUNT per-partition counting
+
+  - [X] PCOUNTF - per-partition counting, filtered
+
+  - [X] DELCUBE cube
+
+* DONE server configuration through args
+
+  - [X] simplistic parse process args (port?)
+
+  - [X] encapsulate configuration somehow
+
+* DONE logging
+
+  - [X] it sould be possible to configure log paths
+
+  - [X] log levels, etc
+
+  - [X] inject
+
+* DONE urgent fixes
+
+  - [X] deleting from the hash table should also reinsert all the following record, up to the next
+    NULL
+
+  - [X] better malloc (check the libfirm macros or redis allocation for that) macro that handles
+    failed allocations. also need to decide what to do on oom errors in general
+
+  - [X] handle sendall failures (should probably just do REPLY_ERR)
+
+  - [X] when inserting data specifying same keys twice should *not be* possible
+
+  - [X] when filtering data specifying same keys twice should *be* possible
+
+* DONE basic async server
+* DONE external tests
+
+  something like a Python-based test client that would run a bunch of commands on a running server
+
+  - [X] base class for a test that runs the subprocess
+
+  - [X] a simple example test
+
+  - [X] test framework
+
+  - [X] cmd_insert
+
+  - [X] cmd_cube
+
+  - [X] cmd_count
+
+  - [X] cmd_countf
+
+  - [X] cmd_pcount
+
+  - [X] cmd_pcountf
+
+  - [X] cmd_help
+
+* DONE the framework
+
+  - [X] extract network stuff into a separate file to avoid server.c cluttering
+
+  - [X] headers in the makefile
+
+  - [X] lower the default log level when running tests in server_test.py. There should be a flag for
+    that
+
+  - [X] DELCUBEP cube partition
+
+  - [X] DELCUBEPFT cube from to
+
+  - [X] cmd flags (for cmd with a varying arg num )
+
+  - [X] unify COUNT/COUNTF
+
+  - [X] unify PCOUNT/PCOUNTF
+
+  - [X] unify DELCUBEP/DELCUBEPFT
+
+* DONE when and how filter values should be ORed/ANDed?
+
+  - [X] introduce tests that should fail
+
+  - [X] filter values should be ORed for the same column ANDed for different values
+
+* DONE grouped results
+
+  - [X] result grouping in partition.c
+
+  - [X] pcount_from_to_grouped
+
+  - [X] count_from_to_grouped
+
+  - [X] pcount interface
+
+  - [X] a special value for skipping args ("null?")
+
+  - [X] count interface
+
+  - [X] helper functions for send the data to the client
+
+* DONE argument validation
+
+  - [X] partitions names and cube names should be just graphical symbols
+* TODO valgrind
+
+  - [X] fix basic DS memleaks
+
+  - [ ] introduce a set of tests data
+
+  - [ ] a stupid python client loading the data
+
+  - [ ] data sets should touch all commands
+
+  - [ ] run and fix memleaks for all cmds
+
+* TODO backend DSs
+
+  - [ ] a more generic int hash instead of str by default and use that to fix the reverse mapping
+    problem in partition.c:get_column_value_id_value
+
+  - [ ] inserting should not go over everything, a proper position map should do
+
+    currently it's just a list of rows, which is, ehm, wrong
+
+  - [ ] a list of partitions should be sorted, or, even better, should be a autosorted DS
+
+  - [ ] a list of clients should be a mapping
+
+  - [ ] hash table, overwrite an existing value
+
+* TODO input fuzzy tests? test random broken input?
+* TODO ubsan, asan
+* TODO client, C
+* TODO client, Python
+* TODO client, (Node) JS
+
+* TODO mmaped DS
+
+  using mmaped DS as a backend would greatly simplify data flushing
+
+  do we want to do this optionally?
+* TODO dumping or syncing
+* TODO advanced async server
+
+  a framework for those things, with proper extension points
+* TODO recursive grouping
