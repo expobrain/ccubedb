@@ -250,9 +250,11 @@ static char *test_pcount_from_to_single_row()
     cube_t *cube = cube_create();
     defer { cube_destroy(cube); }
 
-    insert_row_t *row = insert_row_create("part1001", 3);
-    cube_insert_row(cube, row);
-    defer { insert_row_destroy(row); }
+    {
+        insert_row_t *row = insert_row_create("part1001", 3);
+        cube_insert_row(cube, row);
+        defer { insert_row_destroy(row); }
+    }
 
     htable_t *partition_to_count = cube_pcount_from_to(cube,"part1001","part1002", NULL, NULL);
     defer {
@@ -275,13 +277,17 @@ static char *test_pcount_from_to_multiple_rows()
     cube_t *cube = cube_create();
     defer { cube_destroy(cube); }
 
-    insert_row_t *row1 = insert_row_create("part1001", 3);
-    cube_insert_row(cube, row1);
-    defer { insert_row_destroy(row1); }
+    {
+        insert_row_t *row1 = insert_row_create("part1001", 3);
+        cube_insert_row(cube, row1);
+        defer { insert_row_destroy(row1); }
+    }
 
-    insert_row_t *row2 = insert_row_create("part1002", 2);
-    cube_insert_row(cube, row2);
-    defer { insert_row_destroy(row2); }
+    {
+        insert_row_t *row2 = insert_row_create("part1002", 2);
+        cube_insert_row(cube, row2);
+        defer { insert_row_destroy(row2); }
+    }
 
     htable_t *partition_to_count = cube_pcount_from_to(cube,"part1001","part1002", NULL, NULL);
     defer {
@@ -292,13 +298,17 @@ static char *test_pcount_from_to_multiple_rows()
     }
     mu_assert("Wrong partition num", 2 == htable_size(partition_to_count));
 
-    counter_t *count = htable_get(partition_to_count, "part1001");
-    mu_assert("Partition not found", NULL != count);
-    mu_assert("Wrong partition count", 3 == *count);
+    {
+        counter_t *count = htable_get(partition_to_count, "part1001");
+        mu_assert("Partition not found", NULL != count);
+        mu_assert("Wrong partition count", 3 == *count);
+    }
 
-    count = htable_get(partition_to_count, "part1002");
-    mu_assert("Partition not found", NULL != count);
-    mu_assert("Wrong partition count", 2 == *count);
+    {
+        counter_t *count = htable_get(partition_to_count, "part1002");
+        mu_assert("Partition not found", NULL != count);
+        mu_assert("Wrong partition count", 2 == *count);
+    }
 
     return 0;
 }
@@ -308,46 +318,52 @@ static char *test_pcount_from_to_filter_single_row()
     cube_t *cube = cube_create();
     defer { cube_destroy(cube); }
 
-    insert_row_t *irow = insert_row_create("part1001", 3);
-    insert_row_add_column_value(irow, "column", "test value") ;
-    defer { insert_row_destroy(irow); }
-    cube_insert_row(cube, irow);
-
-    filter_t *correct_frow = filter_create();
-    filter_add_column_value(correct_frow, "column", "test value");
-    defer { filter_destroy(correct_frow); }
-
-    htable_t *correct_partition_to_count = cube_pcount_from_to(cube,"part1001","part1002", correct_frow, NULL);
-    defer {
-        htable_for_each(item, correct_partition_to_count) {
-            counter_t *pcount = htable_value(item);
-            free(pcount);
-        }
-        htable_destroy(correct_partition_to_count);
+    {
+        insert_row_t *irow = insert_row_create("part1001", 3);
+        insert_row_add_column_value(irow, "column", "test value") ;
+        defer { insert_row_destroy(irow); }
+        cube_insert_row(cube, irow);
     }
-    mu_assert("Wrong partition num", 1 == htable_size(correct_partition_to_count));
 
-    counter_t *count = htable_get(correct_partition_to_count, "part1001");
-    mu_assert("Partition not found", NULL != count);
-    mu_assert("Wrong partition count", 3 == *count);
+    {
+        filter_t *correct_frow = filter_create();
+        filter_add_column_value(correct_frow, "column", "test value");
+        defer { filter_destroy(correct_frow); }
 
-    filter_t *wrong_value_frow = filter_create();
-    filter_add_column_value(wrong_value_frow, "column", "wrong value");
-    defer { filter_destroy(wrong_value_frow); }
-
-    htable_t *wrong_partition_to_count = cube_pcount_from_to(cube,"part1001","part1002", wrong_value_frow, NULL);
-    defer {
-        htable_for_each(item, wrong_partition_to_count) {
-            counter_t *pcount = htable_value(item);
-            free(pcount);
+        htable_t *correct_partition_to_count = cube_pcount_from_to(cube,"part1001","part1002", correct_frow, NULL);
+        defer {
+            htable_for_each(item, correct_partition_to_count) {
+                counter_t *pcount = htable_value(item);
+                free(pcount);
+            }
+            htable_destroy(correct_partition_to_count);
         }
-        htable_destroy(wrong_partition_to_count);
-    }
-    mu_assert("Wrong partition num", 1 == htable_size(wrong_partition_to_count));
+        mu_assert("Wrong partition num", 1 == htable_size(correct_partition_to_count));
 
-    count = htable_get(wrong_partition_to_count, "part1001");
-    mu_assert("Partition not found", NULL != count);
-    mu_assert("Wrong partition count", 0 == *count);
+        counter_t *count = htable_get(correct_partition_to_count, "part1001");
+        mu_assert("Partition not found", NULL != count);
+        mu_assert("Wrong partition count", 3 == *count);
+    }
+
+    {
+        filter_t *wrong_value_frow = filter_create();
+        filter_add_column_value(wrong_value_frow, "column", "wrong value");
+        defer { filter_destroy(wrong_value_frow); }
+
+        htable_t *wrong_partition_to_count = cube_pcount_from_to(cube,"part1001","part1002", wrong_value_frow, NULL);
+        defer {
+            htable_for_each(item, wrong_partition_to_count) {
+                counter_t *pcount = htable_value(item);
+                free(pcount);
+            }
+            htable_destroy(wrong_partition_to_count);
+        }
+        mu_assert("Wrong partition num", 1 == htable_size(wrong_partition_to_count));
+
+        counter_t *count = htable_get(wrong_partition_to_count, "part1001");
+        mu_assert("Partition found", NULL != count);
+        mu_assert("Wrong partition count", 0 == *count);
+    }
 
     return 0;
 }
@@ -401,23 +417,32 @@ static char *test_pcount_from_to_filter_grouped()
     cube_t *cube = cube_create();
     defer { cube_destroy(cube); }
 
-    insert_row_t *irow1 = insert_row_create("part1001", 3);
-    insert_row_add_column_value(irow1, "column", "test value") ;
-    defer { insert_row_destroy(irow1); }
+    {
+        insert_row_t *irow1 = insert_row_create("part1001", 3);
+        insert_row_add_column_value(irow1, "column", "test value") ;
+        defer { insert_row_destroy(irow1); }
 
-    insert_row_t *irow2 = insert_row_create("part1001", 2);
-    insert_row_add_column_value(irow2, "column", "test value2") ;
-    defer { insert_row_destroy(irow2); }
+        insert_row_t *irow2 = insert_row_create("part1001", 2);
+        insert_row_add_column_value(irow2, "column", "test value2") ;
+        defer { insert_row_destroy(irow2); }
 
-    insert_row_t *irow3 = insert_row_create("part1001", 1);
-    insert_row_add_column_value(irow3, "column", "test value3") ;
-    defer { insert_row_destroy(irow3); }
+        insert_row_t *irow3 = insert_row_create("part1001", 1);
+        insert_row_add_column_value(irow3, "column", "test value2") ;
+        insert_row_add_column_value(irow3, "column", "test value3") ;
+        defer { insert_row_destroy(irow3); }
 
-    cube_insert_row(cube, irow1);
-    cube_insert_row(cube, irow2);
-    cube_insert_row(cube, irow3);
+        cube_insert_row(cube, irow1);
+        cube_insert_row(cube, irow2);
+        cube_insert_row(cube, irow3);
+    }
 
-    htable_t *partition_to_value_to_count = cube_pcount_from_to(cube, "part1001", "part1001", NULL, "column");
+    filter_t *frow = filter_create();
+    filter_add_column_value(frow, "column", "test value");
+    filter_add_column_value(frow, "column", "test value2");
+    filter_add_column_value(frow, "column", "test value3");
+    defer { filter_destroy(frow); }
+
+    htable_t *partition_to_value_to_count = cube_pcount_from_to(cube, "part1001", "part1001", frow, "column");
     htable_t *value_to_count = htable_get(partition_to_value_to_count, "part1001");
     defer {
         htable_for_each(item, value_to_count) {
@@ -429,15 +454,20 @@ static char *test_pcount_from_to_filter_grouped()
 
     mu_assert("wrong value number", 3 == htable_size(value_to_count));
 
-    counter_t *count = NULL;
-    count = htable_get(value_to_count, "test value");
-    mu_assert("wrong value count", 3 == *count);
+    {
+        counter_t *count = htable_get(value_to_count, "test value");
+        mu_assert("wrong value count", 3 == *count);
+    }
 
-    count = htable_get(value_to_count, "test value2");
-    mu_assert("wrong value count", 2 == *count);
+    {
+        counter_t *count = htable_get(value_to_count, "test value2");
+        mu_assert("wrong value count", 2 == *count);
+    }
 
-    count = htable_get(value_to_count, "test value3");
-    mu_assert("wrong value count", 1 == *count);
+    {
+        counter_t *count = htable_get(value_to_count, "test value3");
+        mu_assert("wrong value count", 1 == *count);
+    }
 
     return 0;
 }
