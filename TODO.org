@@ -197,26 +197,26 @@
 
 * TODO backend DSs
 
+  - [X] hash table, overwrite an existing value
+
   - [ ] a more generic int hash instead of str by default and use that to fix the reverse mapping
     problem in partition.c:get_column_value_id_value
 
-  - [ ] make it impossible to use special values (UNSPECIFIED and UNKNOWN)
+  - [ ] hash table, a predefined data destructor
 
   - [ ] inserting should not go over everything, a proper position map should do
 
     currently it's just a list of rows, which is, ehm, wrong
 
-  - [ ] a list of partitions should be sorted, or, even better, should be a autosorted DS
+  - [ ] make it impossible to use special values (UNSPECIFIED and UNKNOWN) in value_ids
+
+  - [ ] a list of partitions should be sorted, or, even better, should be a autosorted DS (rb-tree?)
 
   - [ ] a list of clients should be a mapping
 
-  - [ ] hash table, overwrite an existing value
-
-  - [ ] hash table, a predefined data destructor
-
 * TODO sanitize=leak
 * TODO sanitize=asan
-* TODO sanitize=ubasn
+* TODO sanitize=ubsan
 * TODO client, C
 * TODO client, (Node) JS
 
@@ -227,7 +227,15 @@
   do we want to do this optionally?
 
 * TODO dumping or syncing
+
+  - [ ] walk cubes and dump into files
+
+  - [ ] dump path should be preconfigured on start
+
 * TODO advanced async server
 
-  a framework for those things, with proper extension points
+  - [ ] a framework for those things, with proper extension points
+
+  - [ ] epoll
+
 * TODO recursive grouping

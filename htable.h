@@ -81,7 +81,8 @@ static inline size_t htable_find_index(htable_t *table, char *key)
 {
     uint64_t hash = htable_hash(key);
     size_t index = hash % table->table_size;
-    while (!table->table[index].deleted && NULL != table->table[index].key) {
+    while (NULL != table->table[index].key &&
+           0 != strcmp(key, table->table[index].key)) {
         index++;
         index %= table->table_size;
     }
@@ -144,19 +145,22 @@ static inline void *htable_del(htable_t *table, char *key)
     return NULL;
 }
 
-static inline void htable_put(htable_t *table, char *key, void *value)
+static inline void *htable_put(htable_t *table, char *key, void *value)
 {
     size_t index = htable_find_index(table, key);
-    table->table[index] = (typeof(table->table[0])) {
-        .key = strdup(key),
-        .value = value,
-        .deleted = false
-    };
+    void *old_value = table->table[index].value;
+
+    table->table[index].value = value;
+    table->table[index].deleted = false;
+    if (!table->table[index].key)
+        table->table[index].key = strdup(key);
+
     table->item_num++;
 
-    if ((double)table->item_num / table->table_size >= HTABLE_LOAD_FACTOR) {
+    if ((double)table->item_num / table->table_size >= HTABLE_LOAD_FACTOR)
         htable_resize(table);
-    }
+
+    return old_value;
 }
 
 static inline void *htable_get(htable_t *table, char *key)

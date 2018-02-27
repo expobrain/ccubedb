@@ -35,6 +35,22 @@ char *test_htable_put_get()
     return 0;
 }
 
+char *test_htable_put_put()
+{
+    htable_t *table = htable_create(1024);
+    defer { htable_destroy(table); }
+
+    int value1 = 100;
+    int value2 = 101;
+    htable_put(table, "key", &value1);
+    htable_put(table, "key", &value2);
+
+    int *value_found = htable_get(table,"key");
+    mu_assert("Wrong value in the table", value2 == *value_found);
+
+    return 0;
+}
+
 char *test_htable_put_del()
 {
     htable_t *table = htable_create(1024);
@@ -153,6 +169,7 @@ static char *all_tests()
 {
     mu_run_test(test_htable_create);
     mu_run_test(test_htable_put_get);
+    mu_run_test(test_htable_put_put);
     mu_run_test(test_htable_put_del);
     mu_run_test(test_htable_for_each);
     mu_run_test(test_htable_for_each_filter);
