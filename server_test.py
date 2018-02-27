@@ -446,6 +446,24 @@ class CubeDBTest(CubeDBTestBase):
         partition_to_value_to_count = self.sendwithmapmap("PCOUNT cube p1 p9 null a")
         assert partition_to_value_to_count == {'p1': {'val1': '1'}, 'p2': {'val1': '2', 'val2': '4'}}
 
+    def test_pcount_grouped_complex_filter(self):
+        # Empty cube
+        self.sendwithok("ADDCUBE cube")
+
+        # Nothing here yet
+        partition_to_value_to_count = self.sendwithmapmap("PCOUNT cube p1 p9 null a")
+        assert not partition_to_value_to_count
+
+        # Insert some data into a partition
+        self.sendwithok("INSERT cube p1 a=val1 1")
+        self.sendwithok("INSERT cube p2 a=val1 2")
+        self.sendwithok("INSERT cube p2 a=val2 4")
+
+        # Check the mapping
+        partition_to_value_to_count = self.sendwithmapmap("PCOUNT cube p1 p9 a=val1&a=val2 a")
+        print(partition_to_value_to_count)
+        assert partition_to_value_to_count == {'p1': {'val1': '1'}, 'p2': {'val1': '2', 'val2': '4'}}
+
     def test_help(self):
         # This is help so no real testing here
         assert self.sendwithlines("HELP")

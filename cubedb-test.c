@@ -27,9 +27,59 @@ char *test_find_cube()
     return 0;
 }
 
+char *test_add_delete_cube()
+{
+    cubedb_t *cubedb = cubedb_create();
+
+    {
+        cube_t *test_cube = cubedb_find_cube(cubedb,"cube1");
+        mu_assert("Found a cube that should not exist", test_cube == NULL);
+    }
+
+    {
+        cube_t *test_cube = cubedb_find_cube(cubedb,"cube2");
+        mu_assert("Found a cube that should not exist", test_cube == NULL);
+    }
+
+    {
+        cube_t *test_cube = cubedb_find_cube(cubedb,"cube3");
+        mu_assert("Found a cube that should not exist", test_cube == NULL);
+    }
+
+    {
+        cube_t *cube = cube_create();
+        cubedb_add_cube(cubedb,"cube1",cube);
+        cube_t *test_cube = cubedb_find_cube(cubedb,"cube1");
+        mu_assert("Couldn't find a cube", cube == test_cube);
+    }
+
+    {
+        cube_t *cube = cube_create();
+        cubedb_add_cube(cubedb,"cube2",cube);
+        cube_t *test_cube = cubedb_find_cube(cubedb,"cube2");
+        mu_assert("Couldn't find a cube", cube == test_cube);
+    }
+
+    {
+        cube_t *cube = cube_create();
+        cubedb_add_cube(cubedb,"cube3",cube);
+        cube_t *test_cube = cubedb_find_cube(cubedb,"cube3");
+        mu_assert("Couldn't find a cube", cube == test_cube);
+    }
+
+    cubedb_del_cube(cubedb,"cube1");
+    cubedb_del_cube(cubedb,"cube2");
+    /* NOTE: Skipping cube3 as it should be destroy along with the db */
+
+    cubedb_destroy(cubedb);
+
+    return 0;
+}
+
 static char *all_tests()
 {
     mu_run_test(test_find_cube);
+    mu_run_test(test_add_delete_cube);
     return 0;
 }
 

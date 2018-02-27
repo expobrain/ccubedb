@@ -112,7 +112,11 @@ static inline void htable_resize(htable_t *table)
 
     for (size_t i = 0; i < old_size; i++) {
         htable_item_t item = old_table[i];
-        if (item.deleted || NULL == item.key)
+        if (item.deleted) {
+            free(item.key);
+            continue;
+        }
+        if (NULL == item.key)
             continue;
         htable_put_no_copy_no_resize(table, item.key, item.value);
     }

@@ -28,6 +28,7 @@ class CubeDB(object):
             'DELPART': self.cmd_delpart,
             'INSERT': self.cmd_insert,
             'COUNT': self.cmd_count,
+            'PCOUNT': self.cmd_pcount,
         }
 
     def execute_from_line(self, line):
@@ -70,6 +71,23 @@ class CubeDB(object):
             result[line_parts[0]] = line_parts[1]
         return result
 
+    def readmapmap(self):
+        mapnum = self.readcount()
+
+        map_to_map_to_count = {}
+        for _ in range(mapnum):
+            top_key = self.readline().strip()
+            map_to_map_to_count[top_key] = {}
+
+            innermapnum = self.readcount()
+            for _ in range(innermapnum):
+                line = self.readline().strip()
+                line_parts = line.split()
+                assert len(line_parts) == 2
+                map_to_map_to_count[top_key][line_parts[0]] = line_parts[1]
+
+        return map_to_map_to_count
+
     def cmd_cubes(self):
         self.sendline("CUBES")
         return self.readlines()
@@ -110,6 +128,15 @@ class CubeDB(object):
             return self.readmap()
         else:
             return self.readcount()
+
+    def cmd_pcount(self, name, _from, to, columnvalues='', groupcolumn=''):
+        self.sendline("PCOUNT {} {} {} {} {}".format(name, _from, to,
+                                                     self._column_values_to_str(columnvalues),
+                                                     groupcolumn))
+        if groupcolumn:
+            return self.readmapmap()
+        else:
+            return self.readmap()
 
 
 def main():
