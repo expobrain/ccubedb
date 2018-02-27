@@ -19,8 +19,9 @@ class CubeDB(object):
         self.sock.connect((host, port))
         self.sock_file = self.sock.makefile()
 
-        # TODO: PCOUNT
         self.cmd_table = {
+            'HELP': self.cmd_help,
+            'QUIT': self.cmd_quit,
             'CUBES': self.cmd_cubes,
             'ADDCUBE': self.cmd_addcube,
             'CUBE': self.cmd_cube,
@@ -137,6 +138,14 @@ class CubeDB(object):
             return self.readmapmap()
         else:
             return self.readmap()
+
+    def cmd_help(self):
+        self.sendline("HELP")
+        return self.readlines()
+
+    def cmd_quit(self):
+        self.sendline("QUIT")
+        return self.readok()
 
 
 def main():

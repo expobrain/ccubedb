@@ -174,7 +174,8 @@
 * DONE argument validation
 
   - [X] partitions names and cube names should be just graphical symbols
-* TODO valgrind
+
+* DONE valgrind
 
   - [X] fix basic DS memleaks
 
@@ -182,15 +183,17 @@
 
   - [X] a stupid python client loading the data
 
-  - [ ] data sets should touch all commands
+  - [X] run and fix memleaks for all cmds
 
-  - [ ] run and fix memleaks for all cmds
+  - [X] data sets should touch all basic commands
 
 * TODO client, Python
 
   - [X] basic client loading data from a file or stdin
 
-  - [ ] client should undestand commands and command return values
+  - [X] client should undestand commands and command return values
+
+  - [ ] client should properly report return values
 
 * TODO backend DSs
 
@@ -209,7 +212,8 @@
 
   - [ ] hash table, overwrite an existing value
 
-* TODO input fuzzy tests? test random broken input?
+  - [ ] hash table, a predefined data destructor
+
 * TODO ubsan, asan
 * TODO client, C
 * TODO client, (Node) JS
