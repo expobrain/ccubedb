@@ -11,6 +11,8 @@
 #define UNSPECIFIED_COLUMN_VALUE UINT16_MAX
 #define UNKNOWN_FILTER_COLUMN_VALUE (UINT16_MAX - 1)
 
+static value_id_t unknown_value_id = UNKNOWN_FILTER_COLUMN_VALUE;
+
 typedef struct column_mapping_t column_mapping_t;
 struct column_mapping_t {
     column_id_t id;
@@ -138,10 +140,8 @@ static slist_t **partition_convert_filter(partition_t *partition, filter_t *filt
 
         /* Unknown column value? Nothing is going to match it,use a special value to mark it */
         value_id_t *value_id_ptr = htable_get(column_mapping->value_to_id, str_pair->value);
-        if (!value_id_ptr) {
-            value_id_ptr = cdb_malloc(sizeof(*value_id_ptr));
-            *value_id_ptr = UNKNOWN_FILTER_COLUMN_VALUE;
-        }
+        if (!value_id_ptr)
+            value_id_ptr = &unknown_value_id;
 
         column_id_t column_id = column_mapping->id;
         slist_append(values_to_look_for[column_id], value_id_ptr);

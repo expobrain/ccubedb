@@ -214,7 +214,9 @@
 
   - [ ] hash table, a predefined data destructor
 
-* TODO ubsan, asan
+* TODO sanitize=leak
+* TODO sanitize=asan
+* TODO sanitize=ubasn
 * TODO client, C
 * TODO client, (Node) JS
 
@@ -223,6 +225,7 @@
   using mmaped DS as a backend would greatly simplify data flushing
 
   do we want to do this optionally?
+
 * TODO dumping or syncing
 * TODO advanced async server
 

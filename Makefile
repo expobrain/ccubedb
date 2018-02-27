@@ -1,7 +1,11 @@
 CC      = gcc-7
 LD      = gcc-7
 CFLAGS  = -MMD -MP -g -Wall -Wextra -Werror -Wshadow -std=gnu11
-LDFLAGS = -Wl,--no-undefined
+# CFLAGS  += -fsanitize=undefined
+# CFLAGS  += -fsanitize=address -fsanitize=leak
+LDFLAGS  =-Wl,--no-undefined
+# LDLIBS += -lubsan
+# LDLIBS += -lasan
 
 OBJ = cubedb.o cube.o partition.o sds.o insert_row.o filter.o log.o
 ALL_OBJ = server.o $(OBJ)
@@ -10,7 +14,9 @@ DEPS = $(ALL_OBJ:.o=.d)
 
 cubedb: $(ALL_OBJ)
 
-test: $(TESTS) external-test
+test: unit-test external-test
+
+unit-test: $(TESTS)
 	for test in $(TESTS); do \
 		./$$test; \
 	done
@@ -43,4 +49,4 @@ tags:
 
 -include $(DEPS)
 
-.PHONY: clean cppcheck tags test external-test
+.PHONY: clean cppcheck tags test unit-test external-test
