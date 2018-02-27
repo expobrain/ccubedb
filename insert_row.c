@@ -11,11 +11,16 @@ insert_row_t *insert_row_create(const char *partition_name, counter_t count)
     return row;
 }
 
+static void value_cleanup(void *sdsstr)
+{
+    sdsfree(sdsstr);
+}
+
 void insert_row_init(insert_row_t *row, const char *partition_name, counter_t count)
 {
     *row = (typeof(*row)) {
         .partition_name = sdsnew(partition_name),
-        .column_to_value = htable_create(32),
+        .column_to_value = htable_create(32, value_cleanup),
         .count = count
     };
 }
@@ -23,10 +28,6 @@ void insert_row_init(insert_row_t *row, const char *partition_name, counter_t co
 void insert_row_destroy(insert_row_t *row)
 {
     sdsfree(row->partition_name);
-    htable_for_each(node, row->column_to_value) {
-        char *column_value = htable_value(node);
-        sdsfree(column_value);
-    }
     htable_destroy(row->column_to_value);
     free(row);
 }

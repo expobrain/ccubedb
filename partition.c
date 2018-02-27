@@ -31,7 +31,7 @@ static void column_mapping_init(column_mapping_t *mapping, column_id_t id)
 {
     *mapping = (typeof(*mapping)){
         .id = id,
-        .value_to_id = htable_create(1024),
+        .value_to_id = htable_create(1024, free),
     };
 }
 
@@ -44,9 +44,6 @@ static column_mapping_t *column_mapping_create(column_id_t id)
 
 static void column_mapping_destroy(column_mapping_t *mapping)
 {
-    htable_for_each(item, mapping->value_to_id) {
-        free(htable_value(item));
-    }
     htable_destroy(mapping->value_to_id);
     free(mapping);
 }
@@ -59,13 +56,18 @@ static value_id_t *column_mapping_add_value(column_mapping_t *column_mapping, sd
     return id;
 }
 
+static void mapping_cleanup(void *mapping)
+{
+    column_mapping_destroy(mapping);
+}
+
 void partition_init(partition_t *partition)
 {
     *partition = (typeof(*partition)){
         .columns = NULL,
         .column_num = 0,
         .row_num = 0,
-        .column_name_to_mapping = htable_create(1024),
+        .column_name_to_mapping = htable_create(1024, mapping_cleanup),
         .counters = NULL,
     };
 }
@@ -79,10 +81,6 @@ partition_t *partition_create()
 
 void partition_destroy(partition_t *partition)
 {
-    htable_for_each(item, partition->column_name_to_mapping) {
-        column_mapping_t *mapping = htable_value(item);
-        column_mapping_destroy(mapping);
-    }
     htable_destroy(partition->column_name_to_mapping);
 
     for (size_t column_id = 0; column_id < partition->column_num; column_id++) {
@@ -261,7 +259,7 @@ static char *get_column_value_id_value(column_mapping_t *column_mapping, const v
 
 htable_t *partition_count_filter_grouped(partition_t *partition, filter_t *filter, char *group_by_column)
 {
-    htable_t *group_value_to_count = htable_create(partition->column_num * 2);
+    htable_t *group_value_to_count = htable_create(partition->column_num * 2, free);
 
     /* We need to know what column is used for grouping */
     column_mapping_t *group_column_mapping = htable_get(partition->column_name_to_mapping, group_by_column);
@@ -296,8 +294,7 @@ htable_t *partition_count_filter_grouped(partition_t *partition, filter_t *filte
         assert(group_column_row_value);
 
         if (!htable_has(group_value_to_count, group_column_row_value)) {
-            counter_t *counter = malloc(sizeof(*counter));
-            *counter = 0;
+            counter_t *counter = cdb_calloc(sizeof(*counter));
             htable_put(group_value_to_count, group_column_row_value, counter);
         }
 

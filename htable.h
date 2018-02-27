@@ -33,11 +33,14 @@ struct htable_index_item_t {
     htable_item_t pair;
 };
 
+typedef void htable_destructor_function(void *value);
+
 typedef struct htable_t htable_t;
 struct htable_t {
     size_t table_size;
     size_t item_num;
     htable_item_t *table;
+    htable_destructor_function *value_destructor;
 };
 
 static inline uint64_t htable_hash(char *key)
@@ -61,7 +64,7 @@ static inline void htable_reset_table(htable_t *table)
     }
 }
 
-static inline htable_t *htable_create(size_t table_size)
+static inline htable_t *htable_create(size_t table_size, htable_destructor_function destructor)
 {
     table_size = table_size > 1 ? table_size : 2u;
 
@@ -69,7 +72,8 @@ static inline htable_t *htable_create(size_t table_size)
     *table = (typeof(*table)) {
         .table_size = table_size,
         .item_num = 0,
-        .table = cdb_malloc(sizeof(table->table[0]) * table_size)
+        .table = cdb_malloc(sizeof(table->table[0]) * table_size),
+        .value_destructor = destructor
     };
 
     htable_reset_table(table);
@@ -125,24 +129,27 @@ static inline void htable_resize(htable_t *table)
     free(old_table);
 }
 
-static inline void *htable_del(htable_t *table, char *key)
+static inline bool htable_del(htable_t *table, char *key)
 {
     uint64_t hash = htable_hash(key);
     size_t index = hash % table->table_size;
     char *index_key = table->table[index].key;
     while (NULL != index_key) {
         if (!table->table[index].deleted && 0 == strcmp(index_key, key)) {
-            table->table[index].deleted = true;
             void *value = table->table[index].value;
+            if (table->value_destructor && !table->table[index].deleted)
+                table->value_destructor(value);
+
+            table->table[index].deleted = true;
             table->table[index].value = NULL;
             table->item_num--;
-            return value;
+            return true;
         }
         index++;
         index %= table->table_size;
         index_key = table->table[index].key;
     }
-    return NULL;
+    return false;
 }
 
 static inline void *htable_put(htable_t *table, char *key, void *value)
@@ -187,7 +194,11 @@ static inline void htable_destroy(htable_t *table)
 {
     for (size_t i = 0; i < table->table_size; i++) {
         char *key = table->table[i].key;
-        if (key) free(table->table[i].key);
+        if (key)
+            free(table->table[i].key);
+        void *value = table->table[i].value;
+        if (value && table->value_destructor && !table->table[i].deleted)
+            table->value_destructor(table->table[i].value);
     }
     free(table->table);
     free(table);

@@ -392,9 +392,6 @@ static char *test_pcount_from_to_grouped()
     htable_t *partition_to_value_to_count = cube_pcount_from_to(cube, "part1001", "part1001", NULL, "column");
     htable_t *value_to_count = htable_get(partition_to_value_to_count, "part1001");
     defer {
-        htable_for_each(item, value_to_count) {
-            free(htable_value(item));
-        }
         htable_destroy(value_to_count);
         htable_destroy(partition_to_value_to_count);
     }
@@ -443,9 +440,6 @@ static char *test_pcount_from_to_filter_grouped()
     htable_t *partition_to_value_to_count = cube_pcount_from_to(cube, "part1001", "part1001", frow, "column");
     htable_t *value_to_count = htable_get(partition_to_value_to_count, "part1001");
     defer {
-        htable_for_each(item, value_to_count) {
-            free(htable_value(item));
-        }
         htable_destroy(value_to_count);
         htable_destroy(partition_to_value_to_count);
     }

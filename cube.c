@@ -21,19 +21,19 @@ cube_t *cube_create(void)
     return cube;
 }
 
+static void partition_cleanup(void *partition) {
+    partition_destroy(partition);
+}
+
 void cube_init(cube_t *cube)
 {
     *cube = (typeof(*cube)) {
-        .name_to_partition = htable_create(1024),
+        .name_to_partition = htable_create(1024, partition_cleanup),
     };
 }
 
 void cube_destroy(cube_t *cube)
 {
-    htable_for_each(item, cube->name_to_partition) {
-        partition_t *partition = htable_value(item);
-        partition_destroy(partition);
-    }
     htable_destroy(cube->name_to_partition);
     free(cube);
 }
@@ -63,7 +63,7 @@ void cube_insert_row(cube_t *cube, insert_row_t *row)
 htable_t *cube_pcount_from_to(cube_t *cube, char *from, char *to, filter_t *filter, char *group_by_column)
 {
     size_t size = htable_size(cube->name_to_partition) * 2;
-    htable_t *partition_to_results = htable_create(size);
+    htable_t *partition_to_results = htable_create(size, NULL);
 
     bool partition_filter(void *key) {
         sds partition_name = key;
@@ -106,16 +106,12 @@ void *cube_count_from_to(cube_t *cube, char *from, char *to, filter_t *filter, c
         return count;
     } else {
         /* Grouping? Get value tables for each partition, merge them and return the result . */
-        htable_t *value_to_count = htable_create(1024);
+        htable_t *value_to_count = htable_create(1024, free);
         htable_for_each_filter(item, cube->name_to_partition, partition_filter) {
             partition_t *partition = htable_value(item);
             htable_t *partition_value_to_count = partition_count_filter_grouped(partition, filter, group_by_column);
-            defer {
-                htable_for_each(partition_item, partition_value_to_count) {
-                    free(htable_value(partition_item));
-                }
-                htable_destroy(partition_value_to_count);
-            }
+            defer { htable_destroy(partition_value_to_count); }
+
             htable_for_each(partition_item, partition_value_to_count) {
                 char *value = htable_key(partition_item);
                 counter_t *counter = htable_value(partition_item);
@@ -161,9 +157,7 @@ bool cube_delete_partition_from_to(cube_t *cube, char *from, char *to)
 
     htable_for_each_filter(item, cube->name_to_partition, partition_filter) {
         char *key = htable_key(item);
-        partition_t *partition = htable_del(cube->name_to_partition, key);
-        partition_destroy(partition);
-        deleted = true;
+        deleted = htable_del(cube->name_to_partition, key);
     }
 
     return deleted;

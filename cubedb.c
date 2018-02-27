@@ -17,19 +17,20 @@ cubedb_t *cubedb_create()
     return cubedb;
 }
 
+static void cube_cleanup(void *cube)
+{
+    cube_destroy(cube);
+}
+
 void cubedb_init(cubedb_t *cubedb)
 {
     *cubedb = (typeof(*cubedb)){
-        .name_to_cube = htable_create(1024)
+        .name_to_cube = htable_create(1024, cube_cleanup)
     };
 }
 
 void cubedb_destroy(cubedb_t *cubedb)
 {
-    htable_for_each(item, cubedb->name_to_cube) {
-        cube_t *cube = htable_value(item);
-        cube_destroy(cube);
-    }
     htable_destroy(cubedb->name_to_cube);
     free(cubedb);
 }
@@ -54,7 +55,6 @@ bool cubedb_del_cube(cubedb_t *cubedb, sds cube_name)
     cube_t *cube = htable_get(cube_table, cube_name);
     if (!cube) return false;
     htable_del(cube_table, cube_name);
-    cube_destroy(cube);
     return true;
 }
 

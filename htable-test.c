@@ -9,7 +9,7 @@ int tests_run = 0;
 char *test_htable_create()
 {
     /* Just make sure nothing crashes and valgrind doesn't complain here */
-    htable_t *table = htable_create(1024);
+    htable_t *table = htable_create(1024, NULL);
     defer { htable_destroy(table); }
 
     mu_assert("stupid sanity check", 0 == htable_size(table));
@@ -18,7 +18,7 @@ char *test_htable_create()
 
 char *test_htable_put_get()
 {
-    htable_t *table = htable_create(1024);
+    htable_t *table = htable_create(1024, NULL);
     defer { htable_destroy(table); }
 
     mu_assert("There should be nothing in the table", NULL == htable_get(table, "random key"));
@@ -37,7 +37,7 @@ char *test_htable_put_get()
 
 char *test_htable_put_put()
 {
-    htable_t *table = htable_create(1024);
+    htable_t *table = htable_create(1024, NULL);
     defer { htable_destroy(table); }
 
     int value1 = 100;
@@ -53,7 +53,7 @@ char *test_htable_put_put()
 
 char *test_htable_put_del()
 {
-    htable_t *table = htable_create(1024);
+    htable_t *table = htable_create(1024, NULL);
     defer { htable_destroy(table); }
 
     mu_assert("There should be nothing in the table", NULL == htable_get(table, "proper key"));
@@ -79,7 +79,7 @@ char *test_htable_put_del()
 
 char *test_htable_for_each()
 {
-    htable_t *table = htable_create(1024);
+    htable_t *table = htable_create(1024, NULL);
     defer { htable_destroy(table); }
 
     int value0 = 100;
@@ -104,7 +104,7 @@ char *test_htable_for_each()
 
 char *test_htable_for_each_filter()
 {
-    htable_t *table = htable_create(1024);
+    htable_t *table = htable_create(1024, NULL);
     defer { htable_destroy(table); }
 
     int value0 = 100;
@@ -135,7 +135,7 @@ char *test_htable_for_each_filter()
 
 char *test_htable_resize()
 {
-    htable_t *table = htable_create(2);
+    htable_t *table = htable_create(2, NULL);
     defer { htable_destroy(table); }
 
     int value0 = 100;

@@ -242,13 +242,7 @@ static cmd_result cmd_count(int conn_fd, sds *argv, int argc)
             return REPLY_ERR;
     } else {
         htable_t *value_to_count = result;
-        defer {
-            htable_for_each(item, value_to_count) {
-                counter_t *count = htable_value(item);
-                free(count);
-            }
-            htable_destroy(value_to_count);
-        }
+        defer { htable_destroy(value_to_count); }
 
         if (-1 == sendstrcntmap(conn_fd, value_to_count))
             return REPLY_ERR;
@@ -304,10 +298,6 @@ static cmd_result cmd_pcount(int conn_fd, sds *argv, int argc)
         defer {
             htable_for_each(item, partition_to_result) {
                 htable_t *value_to_count = htable_value(item);
-                htable_for_each(inner_item, value_to_count) {
-                    counter_t *count = htable_value(inner_item);
-                    free(count);
-                }
                 htable_destroy(value_to_count);
             }
             htable_destroy(partition_to_result);
