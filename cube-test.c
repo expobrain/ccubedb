@@ -427,7 +427,6 @@ static char *test_pcount_from_to_filter_grouped()
         defer { insert_row_destroy(irow2); }
 
         insert_row_t *irow3 = insert_row_create("part1001", 1);
-        insert_row_add_column_value(irow3, "column", "test value2") ;
         insert_row_add_column_value(irow3, "column", "test value3") ;
         defer { insert_row_destroy(irow3); }
 
@@ -437,7 +436,6 @@ static char *test_pcount_from_to_filter_grouped()
     }
 
     filter_t *frow = filter_create();
-    filter_add_column_value(frow, "column", "test value");
     filter_add_column_value(frow, "column", "test value2");
     filter_add_column_value(frow, "column", "test value3");
     defer { filter_destroy(frow); }
@@ -452,12 +450,7 @@ static char *test_pcount_from_to_filter_grouped()
         htable_destroy(partition_to_value_to_count);
     }
 
-    mu_assert("wrong value number", 3 == htable_size(value_to_count));
-
-    {
-        counter_t *count = htable_get(value_to_count, "test value");
-        mu_assert("wrong value count", 3 == *count);
-    }
+    mu_assert("wrong value number", 2 == htable_size(value_to_count));
 
     {
         counter_t *count = htable_get(value_to_count, "test value2");

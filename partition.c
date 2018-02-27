@@ -9,6 +9,7 @@
 #include "cdb_alloc.h"
 
 #define UNSPECIFIED_COLUMN_VALUE UINT16_MAX
+#define UNKNOWN_FILTER_COLUMN_VALUE (UINT16_MAX - 1)
 
 typedef struct column_mapping_t column_mapping_t;
 struct column_mapping_t {
@@ -130,13 +131,17 @@ static slist_t **partition_convert_filter(partition_t *partition, filter_t *filt
     slist_for_each(node, filter->column_to_value_list) {
         column_value_pair *str_pair = slist_data(node);
 
+        /* No mappings for the column? Abort */
         column_mapping_t *column_mapping = htable_get(partition->column_name_to_mapping, str_pair->column);
         if (!column_mapping)
             goto err;
 
+        /* Unknown column value? Nothing is going to match it,use a special value to mark it */
         value_id_t *value_id_ptr = htable_get(column_mapping->value_to_id, str_pair->value);
-        if (!value_id_ptr)
-            goto err;
+        if (!value_id_ptr) {
+            value_id_ptr = cdb_malloc(sizeof(*value_id_ptr));
+            *value_id_ptr = UNKNOWN_FILTER_COLUMN_VALUE;
+        }
 
         column_id_t column_id = column_mapping->id;
         slist_append(values_to_look_for[column_id], value_id_ptr);
@@ -209,8 +214,9 @@ static inline bool is_row_matching_filter(partition_t *partition, size_t row_ind
         }
         /* The filter was defined for the column and nothing matched - this means the row doesn't
          * match */
-        if (!any_value_matching)
+        if (!any_value_matching) {
             return false;
+        }
     }
     return true;
 }
@@ -278,24 +284,27 @@ htable_t *partition_count_filter_grouped(partition_t *partition, filter_t *filte
     }
 
     /* Now, walk all the rows while counting matching ones */
-    for (size_t row_index = 0; row_index < partition->row_num; row_index++)
-        if (is_row_matching_filter(partition, row_index, values_to_look_for)) {
-            value_id_t group_column_row_value_id = partition->columns[group_column_id][row_index];
-            char *group_column_row_value = \
-                get_column_value_id_value(group_column_mapping, group_column_row_value_id);
-            /* The value should always be there, it's a value in the partition, it should have a reverse
-             * mapping */
-            assert(group_column_row_value);
+    for (size_t row_index = 0; row_index < partition->row_num; row_index++) {
+        if (!is_row_matching_filter(partition, row_index, values_to_look_for))
+            continue;
 
-            if (!htable_has(group_value_to_count, group_column_row_value)) {
-                counter_t *counter = malloc(sizeof(*counter));
-                *counter = 0;
-                htable_put(group_value_to_count, group_column_row_value, counter);
-            }
+        value_id_t group_column_row_value_id = partition->columns[group_column_id][row_index];
+        char *group_column_row_value =                                  \
+            get_column_value_id_value(group_column_mapping, group_column_row_value_id);
+        /* The value should always be there, it's a value in the partition, it should have a reverse
+         * mapping */
+        assert(group_column_row_value);
 
-            counter_t *counter = htable_get(group_value_to_count, group_column_row_value);
-            *counter += partition->counters[row_index];
+        if (!htable_has(group_value_to_count, group_column_row_value)) {
+            counter_t *counter = malloc(sizeof(*counter));
+            *counter = 0;
+            htable_put(group_value_to_count, group_column_row_value, counter);
         }
+
+        counter_t *counter = htable_get(group_value_to_count, group_column_row_value);
+        *counter += partition->counters[row_index];
+    }
+
 
     return group_value_to_count;
 }

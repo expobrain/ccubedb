@@ -91,8 +91,6 @@ htable_t *cube_pcount_from_to(cube_t *cube, char *from, char *to, filter_t *filt
 
 void *cube_count_from_to(cube_t *cube, char *from, char *to, filter_t *filter, char *group_by_column)
 {
-    (void) group_by_column;
-
     bool partition_filter(void *key) {
         sds partition_name = key;
         return strcoll(partition_name, from) >= 0 && strcoll(partition_name, to) <= 0;

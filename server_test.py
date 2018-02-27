@@ -21,7 +21,7 @@ class CubeDBTestBase(unittest.TestCase):
         global start_port
         start_port += 1
 
-        cmd = "./{cmd} --port {port} --log-level 3".format(
+        cmd = "./{cmd} --port {port} --log-level 0".format(
             cmd=self.EXECUTABLE,
             port=str(start_port)
         )
@@ -461,7 +461,6 @@ class CubeDBTest(CubeDBTestBase):
 
         # Check the mapping
         partition_to_value_to_count = self.sendwithmapmap("PCOUNT cube p1 p9 a=val1&a=val2 a")
-        print(partition_to_value_to_count)
         assert partition_to_value_to_count == {'p1': {'val1': '1'}, 'p2': {'val1': '2', 'val2': '4'}}
 
     def test_help(self):

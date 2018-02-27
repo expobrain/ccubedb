@@ -178,9 +178,9 @@
 
   - [X] fix basic DS memleaks
 
-  - [ ] introduce a set of tests data
+  - [X] introduce a set of tests data
 
-  - [ ] a stupid python client loading the data
+  - [X] a stupid python client loading the data
 
   - [ ] data sets should touch all commands
 
@@ -196,6 +196,8 @@
 
   - [ ] a more generic int hash instead of str by default and use that to fix the reverse mapping
     problem in partition.c:get_column_value_id_value
+
+  - [ ] make it impossible to use special values (UNSPECIFIED and UNKNOWN)
 
   - [ ] inserting should not go over everything, a proper position map should do
 
