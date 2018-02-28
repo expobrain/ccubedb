@@ -187,6 +187,16 @@
 
   - [X] data sets should touch all basic commands
 
+* DONE htable destructors
+
+  - [X] hash table, overwrite an existing value
+
+  - [X] hash table, a predefined data destructor
+
+  - [X] reuse the destructor everywhere
+
+  - [X] check memleaks everywhere again
+
 * TODO client, Python
 
   - [X] basic client loading data from a file or stdin
@@ -197,12 +207,8 @@
 
 * TODO backend DSs
 
-  - [X] hash table, overwrite an existing value
-
   - [ ] a more generic int hash instead of str by default and use that to fix the reverse mapping
     problem in partition.c:get_column_value_id_value
-
-  - [ ] hash table, a predefined data destructor
 
   - [ ] inserting should not go over everything, a proper position map should do
 

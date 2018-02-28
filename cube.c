@@ -60,32 +60,43 @@ void cube_insert_row(cube_t *cube, insert_row_t *row)
     partition_insert_row(partition, row);
 }
 
+static void group_value_to_count_cleanup(void *value_to_count)
+{
+    htable_destroy(value_to_count);
+}
+
 htable_t *cube_pcount_from_to(cube_t *cube, char *from, char *to, filter_t *filter, char *group_by_column)
 {
-    size_t size = htable_size(cube->name_to_partition) * 2;
-    htable_t *partition_to_results = htable_create(size, NULL);
+    size_t result_size = htable_size(cube->name_to_partition) * 2;
 
     bool partition_filter(void *key) {
         sds partition_name = key;
         return strcoll(partition_name, from) >= 0 && strcoll(partition_name, to) <= 0;
     }
 
-    htable_for_each_filter(item, cube->name_to_partition, partition_filter) {
-        sds partition_name = htable_key(item);
-        partition_t *partition = htable_value(item);
+    htable_t *partition_to_results = NULL;
+    if (!group_by_column) {
+        /* Just counting? the htable with contain the counter */
+        partition_to_results = htable_create(result_size, free);
+        htable_for_each_filter(item, cube->name_to_partition, partition_filter) {
+            sds partition_name = htable_key(item);
+            partition_t *partition = htable_value(item);
 
-        if (!group_by_column) {
-            /* Just counting? the htable with contain the counter */
             counter_t *count = cdb_malloc(sizeof(*count));
             *count = partition_count_filter(partition, filter);
             htable_put(partition_to_results, partition_name, count);
-        } else {
-            /* Grouped counting? the htable with contain value to count mapping */
+        }
+    } else {
+        /* Grouped counting? the htable with contain value to count mapping */
+        partition_to_results = htable_create(result_size, group_value_to_count_cleanup);
+        htable_for_each_filter(item, cube->name_to_partition, partition_filter) {
+            sds partition_name = htable_key(item);
+            partition_t *partition = htable_value(item);
+
             htable_t *group_value_to_count = partition_count_filter_grouped(partition, filter, group_by_column);
             htable_put(partition_to_results, partition_name, group_value_to_count);
         }
     }
-
     return partition_to_results;
 }
 

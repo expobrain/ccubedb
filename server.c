@@ -279,30 +279,14 @@ static cmd_result cmd_pcount(int conn_fd, sds *argv, int argc)
     if (6 == argc) group_column = argv[5];
 
     htable_t *partition_to_result = cube_pcount_from_to(cube, from_partition, to_partition, filter, group_column);
+    defer { htable_destroy(partition_to_result); }
+
     if (!group_column) {
         /* Just a per-partition counter if there was not group_column specified */
-
-        defer {
-            htable_for_each(item, partition_to_result) {
-                counter_t *count = htable_value(item);
-                free(count);
-            }
-            htable_destroy(partition_to_result);
-        }
-
         if (-1 == sendstrcntmap(conn_fd, partition_to_result))
             return REPLY_ERR;
     } else {
         /* For grouped results dump an htable of values to counters for every partition */
-
-        defer {
-            htable_for_each(item, partition_to_result) {
-                htable_t *value_to_count = htable_value(item);
-                htable_destroy(value_to_count);
-            }
-            htable_destroy(partition_to_result);
-        }
-
         if (-1 == sendstrstrcntmap(conn_fd, partition_to_result))
             return REPLY_ERR;
     }
