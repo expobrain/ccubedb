@@ -16,5 +16,4 @@ void filter_init(filter_t *row);
 void filter_destroy(filter_t *row);
 void filter_add_column_value(filter_t *row, const char *column_name, const char *column_value);
 
-
 #endif //FILTER_H

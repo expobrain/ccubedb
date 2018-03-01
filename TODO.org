@@ -197,6 +197,12 @@
 
   - [X] check memleaks everywhere again
 
+* DONE index for locating row to insert
+
+  - [X] inserting should not go over everything, a proper position map should do
+
+    currently it's just a list of rows, which is, ehm, wrong
+
 * TODO client, Python
 
   - [X] basic client loading data from a file or stdin
@@ -205,20 +211,24 @@
 
   - [ ] client should properly report return values
 
+* TODO big data test
 * TODO backend DSs
 
   - [ ] a more generic int hash instead of str by default and use that to fix the reverse mapping
     problem in partition.c:get_column_value_id_value
 
-  - [ ] inserting should not go over everything, a proper position map should do
-
-    currently it's just a list of rows, which is, ehm, wrong
+    reuse khash.h this time? It might be reasonable to replace my htable with khash.h?
 
   - [ ] make it impossible to use special values (UNSPECIFIED and UNKNOWN) in value_ids
+
+    or maybe make repacking to a larger type automatic?
 
   - [ ] a list of partitions should be sorted, or, even better, should be a autosorted DS (rb-tree?)
 
   - [ ] a list of clients should be a mapping
+
+  - [ ] values_to_insert - come up with a generic vector or smth? or at least a quick struct should
+    do?
 
 * TODO sanitize=leak
 * TODO sanitize=asan

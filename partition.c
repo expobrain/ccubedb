@@ -7,6 +7,7 @@
 #include "slist.h"
 #include "htable.h"
 #include "cdb_alloc.h"
+#include "khash.h"
 
 #define UNSPECIFIED_COLUMN_VALUE UINT16_MAX
 #define UNKNOWN_FILTER_COLUMN_VALUE (UINT16_MAX - 1)
@@ -19,9 +20,15 @@ struct column_mapping_t {
     htable_t *value_to_id;
 };
 
+
+static inline uint64_t value_array_hash(value_id_t *value_array);
+static inline bool value_array_equal(value_id_t *left_value_array, value_id_t *right_value_array);
+KHASH_INIT(value_to_row, value_id_t *, size_t, 1, value_array_hash, value_array_equal);
+
 struct partition_t {
     value_id_t **columns;
     size_t column_num;
+    khash_t(value_to_row) *value_to_row;
     size_t row_num;
     htable_t *column_name_to_mapping;
     counter_t *counters;
@@ -66,6 +73,7 @@ void partition_init(partition_t *partition)
     *partition = (typeof(*partition)){
         .columns = NULL,
         .column_num = 0,
+        .value_to_row = kh_init(value_to_row),
         .row_num = 0,
         .column_name_to_mapping = htable_create(1024, mapping_cleanup),
         .counters = NULL,
@@ -87,6 +95,8 @@ void partition_destroy(partition_t *partition)
         free(partition->columns[column_id]);
     }
     free(partition->columns);
+
+    kh_destroy(value_to_row, partition->value_to_row);
 
     free(partition->counters);
     free(partition);
@@ -117,7 +127,7 @@ static void partition_add_column(partition_t *partition, sds column_name)
     }
 }
 
-static slist_t **partition_convert_filter(partition_t *partition, filter_t *filter)
+static slist_t **convert_filter(partition_t *partition, filter_t *filter)
 {
     /* Initialize the row to search for */
     slist_t **values_to_look_for = cdb_malloc(sizeof(&values_to_look_for[0]) * partition->column_num);
@@ -156,12 +166,15 @@ err:
 }
 
 
-static value_id_t *partition_convert_insert_row(partition_t *partition, insert_row_t *insert_row)
+static value_id_t *convert_insert_row(partition_t *partition, insert_row_t *insert_row)
 {
     /* Initialize the row to search for */
-    value_id_t *values_to_look_for = cdb_malloc(sizeof(partition->columns[0][0]) * partition->column_num);
-    for (size_t c = 0; c < partition->column_num; c++ ) {
-        values_to_look_for[c] = UNSPECIFIED_COLUMN_VALUE;
+    value_id_t *values_to_insert =
+        cdb_malloc(sizeof(partition->columns[0][0]) * partition->column_num + 1);
+    values_to_insert[0] = partition->column_num;
+
+    for (size_t c = 1; c < partition->column_num + 1; c++) {
+        values_to_insert[c] = UNSPECIFIED_COLUMN_VALUE;
     }
 
     /* Convert column name / column value strings into partition-specific ids */
@@ -183,10 +196,10 @@ static value_id_t *partition_convert_insert_row(partition_t *partition, insert_r
         }
 
         column_id_t column_id = column_mapping->id;
-        values_to_look_for[column_id] = *value_id_ptr;
+        values_to_insert[column_id + 1] = *value_id_ptr;
     }
 
-    return values_to_look_for;
+    return values_to_insert;
 }
 
 static inline bool is_row_matching_filter(partition_t *partition, size_t row_index, slist_t **values_to_look_for)
@@ -225,7 +238,7 @@ counter_t partition_count_filter(partition_t *partition, filter_t *filter)
 
     /* A list of value id lists instead of string values */
     slist_t **values_to_look_for =
-        partition_convert_filter(partition, filter);
+        convert_filter(partition, filter);
 
     /* Value mapping not found? Filtering meaningless  */
     if (!values_to_look_for)
@@ -269,7 +282,7 @@ htable_t *partition_count_filter_grouped(partition_t *partition, filter_t *filte
 
     /* A list of value id lists instead of string values */
     slist_t **values_to_look_for =
-        partition_convert_filter(partition, filter);
+        convert_filter(partition, filter);
 
     /* Value mapping not found? Filtering meaningless  */
     if (!values_to_look_for)
@@ -314,7 +327,7 @@ static size_t partition_increase_row_count(partition_t *partition, size_t target
 }
 
 
-static size_t partition_append_row(partition_t *partition, value_id_t *column_values)
+static size_t partition_append_row(partition_t *partition, value_id_t *values)
 {
     const size_t new_row_num = partition->row_num + 1;
 
@@ -323,7 +336,7 @@ static size_t partition_append_row(partition_t *partition, value_id_t *column_va
         value_id_t *column = partition->columns[c];
         partition->columns[c] = cdb_realloc(column, sizeof(column[0]) * new_row_num);
         column = partition->columns[c];
-        column[partition->row_num] = column_values[c];
+        column[partition->row_num] = values[c];
     }
 
     /* Resize the counters column */
@@ -338,7 +351,7 @@ static size_t partition_append_row(partition_t *partition, value_id_t *column_va
     return inserted_row_index;
 }
 
-static inline bool is_row_matching_insert(partition_t *partition, size_t row_index, value_id_t *values_to_look_for)
+static inline bool is_row_matching_insert(partition_t *partition, size_t row_index, value_id_t *values)
 {
     bool is_row_matching = true;
 
@@ -347,7 +360,7 @@ static inline bool is_row_matching_insert(partition_t *partition, size_t row_ind
         is_row_matching = true;
         value_id_t column_row_value = column[row_index];
 
-        is_row_matching = is_row_matching && column_row_value == values_to_look_for[c];
+        is_row_matching = is_row_matching && column_row_value == values[c];
         if (!is_row_matching)
             break;
     }
@@ -355,27 +368,46 @@ static inline bool is_row_matching_insert(partition_t *partition, size_t row_ind
     return is_row_matching;
 }
 
+static inline uint64_t value_array_hash(value_id_t *value_array)
+{
+    size_t value_array_size = value_array[0];
+    uint64_t hash = value_array_size;
+    for (size_t i = 1; i < value_array_size + 1; ++i) {
+        hash += hash * 17 + value_array[i];
+    }
+    return hash;
+}
+
+static inline bool value_array_equal(value_id_t *left_value_array, value_id_t *right_value_array)
+{
+    size_t array_size = left_value_array[0];
+    if (array_size != right_value_array[0])
+        return false;
+    return 0 == memcmp(left_value_array + 1, right_value_array + 1, array_size);
+}
+
 void partition_insert_row(partition_t *partition, insert_row_t *row)
 {
-    /* Get the ids instead of string values */
-    value_id_t *values_to_look_for =
-        partition_convert_insert_row(partition, row);
-    defer { if (values_to_look_for) free(values_to_look_for); }
+    /* Get the ids instead of string values (array size + values in the array) */
+    value_id_t *values_to_insert = convert_insert_row(partition, row);
+    defer { free(values_to_insert); }
 
     /* Search for the insertion target */
+    khint_t key = kh_get(value_to_row, partition->value_to_row, values_to_insert);
     bool is_row_found = false;
+    if (key != kh_end(partition->value_to_row))
+        is_row_found = true;
+
     size_t target_row = 0;
-    for (size_t row_index = 0; row_index < partition->row_num; row_index++)
-        if (is_row_matching_insert(partition, row_index, values_to_look_for)) {
-            target_row = row_index;
-            is_row_found = true;
-            break;
-        }
+    if (!is_row_found) {
+        /* Row not found? append the row, register it's values in the mapping */
+        int ret;
+        key = kh_put(value_to_row, partition->value_to_row, values_to_insert, &ret);
+        target_row = partition_append_row(partition, values_to_insert + 1);
+        kh_value(partition->value_to_row, key) = target_row;
+    } else {
+        target_row = kh_value(partition->value_to_row, key);
+    }
 
-    /* Not found? Insert the new row */
-    if (!is_row_found)
-        target_row = partition_append_row(partition, values_to_look_for);
-
-    /* Increase the counter */
     partition_increase_row_count(partition, target_row, row->count);
 }
