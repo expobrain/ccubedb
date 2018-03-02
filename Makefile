@@ -2,6 +2,10 @@ CC      = gcc-7
 LD      = gcc-7
 
 CFLAGS  = -MMD -MP -g -Wall -Wextra -Werror -Wshadow -std=gnu11
+
+# Fast build
+# CFLAGS  = -MMD -MP -O2 -Wall -Wextra -Werror -Wshadow -std=gnu11 -flto -march=native
+
 LDFLAGS =-Wl,--no-undefined
 
 # Tiny binary

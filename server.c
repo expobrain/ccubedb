@@ -13,6 +13,7 @@
 #include <signal.h>
 #include <assert.h>
 #include <limits.h>
+#include <time.h>
 
 #include "sds.h"
 #include "defs.h"
@@ -459,8 +460,10 @@ int read_from_client(client_t *client)
         }
 
         /* Process the cmds received */
-        log_info("%s received", clean_argv[0]);
+        clock_t start = clock();
         cmd_result result = process_cmd(client->fd, clean_argv, clean_argc);
+        double elapsed_time = (clock() - start)/(double)CLOCKS_PER_SEC;
+        log_verb("%s served in %.3f seconds", clean_argv[0], elapsed_time);
 
         /* It's fine */
         if (REPLY_OK == result) {

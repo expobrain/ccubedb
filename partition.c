@@ -370,9 +370,9 @@ static size_t partition_append_row(partition_t *partition, value_id_t *values)
 static inline uint64_t value_array_hash(const value_id_t *value_array)
 {
     size_t value_array_size = value_array[0] + 1u;
-    uint64_t hash = 0;
+    uint64_t hash = 1;
     for (size_t i = 0; i < value_array_size; i++)
-        hash += hash * 17 + value_array[i];
+        hash = hash * 31 + value_array[i];
     return hash;
 }
 

@@ -1,4 +1,5 @@
-* DONE cubedb - filtering data in partitions
+* DONE [17/17] Prototype
+** DONE cubedb - filtering data in partitions
 
   - [X] rename partition_row_t to become an external struct (insertion_row_t?)
 
@@ -8,7 +9,7 @@
 
   - [X] destroys should also free things
 
-* DONE cubedb - mappings everywhere
+** DONE cubedb - mappings everywhere
 
   - [X] simple mapping ds to use for oh so many mappings I have, to be replaced
 
@@ -37,7 +38,7 @@
 
   - [X] defer
 
-* DONE basic TCP server
+** DONE basic TCP server
 
   - [X] plan and find examples
 
@@ -75,13 +76,13 @@
 
   - [X] DELCUBE cube
 
-* DONE server configuration through args
+** DONE server configuration through args
 
   - [X] simplistic parse process args (port?)
 
   - [X] encapsulate configuration somehow
 
-* DONE logging
+** DONE logging
 
   - [X] it sould be possible to configure log paths
 
@@ -89,7 +90,7 @@
 
   - [X] inject
 
-* DONE urgent fixes
+** DONE urgent fixes
 
   - [X] deleting from the hash table should also reinsert all the following record, up to the next
     NULL
@@ -103,8 +104,8 @@
 
   - [X] when filtering data specifying same keys twice should *be* possible
 
-* DONE basic async server
-* DONE external tests
+** DONE basic async server
+** DONE external tests
 
   something like a Python-based test client that would run a bunch of commands on a running server
 
@@ -128,7 +129,7 @@
 
   - [X] cmd_help
 
-* DONE the framework
+** DONE the framework
 
   - [X] extract network stuff into a separate file to avoid server.c cluttering
 
@@ -149,13 +150,13 @@
 
   - [X] unify DELCUBEP/DELCUBEPFT
 
-* DONE when and how filter values should be ORed/ANDed?
+** DONE when and how filter values should be ORed/ANDed?
 
   - [X] introduce tests that should fail
 
   - [X] filter values should be ORed for the same column ANDed for different values
 
-* DONE grouped results
+** DONE grouped results
 
   - [X] result grouping in partition.c
 
@@ -171,11 +172,11 @@
 
   - [X] helper functions for send the data to the client
 
-* DONE argument validation
+** DONE argument validation
 
   - [X] partitions names and cube names should be just graphical symbols
 
-* DONE valgrind
+** DONE valgrind
 
   - [X] fix basic DS memleaks
 
@@ -187,7 +188,7 @@
 
   - [X] data sets should touch all basic commands
 
-* DONE htable destructors
+** DONE htable destructors
 
   - [X] hash table, overwrite an existing value
 
@@ -197,13 +198,13 @@
 
   - [X] check memleaks everywhere again
 
-* DONE index for locating row to insert
+** DONE index for locating row to insert
 
   - [X] inserting should not go over everything, a proper position map should do
 
     currently it's just a list of rows, which is, ehm, wrong
 
-* DONE client, Python
+** DONE client, Python
 
   - [X] basic client loading data from a file or stdin
 
@@ -211,32 +212,48 @@
 
   - [X] client should properly report return values
 
-* TODO big data test
+** DONE big data test
 
   - [X] basic load (small event)
 
-  - [ ] check leaks/asan/ubsan with small data
+  - [X] load a lot of data (ViewScreen=49, for a job)
 
-  - [ ] time small data
+  - [X] memory biggest data
 
-  - [ ] load a lot of data (ViewScreen=49, for a job)
+    120 MB
 
-  - [ ] check leaks/asan/ubsan
+  - [X] load even more data (ViewScreen=49, for a day)
 
-  - [ ] time big data
+  - [X] time biggest data
 
-  - [ ] load even more data (ViewScreen=49, for a day)
+    - [X] COUNT all group by app_version:
 
-  - [ ] check leaks/asan/ubsan
+      slow build: 3.066 s
 
-  - [ ] time big data
+      fast build (-O2 -flto -march=native): 0.634 seconds
 
-* TODO args with quotes
+      fastest build (-Ofast -flto -march=native): 0.640 seconds
 
-  to allow for whitespaces in values - it seems that we really need
+    - [X] PCOUNT all group by app_version:
 
-* TODO list partitions + list partition columns and values
-* TODO backend DSs
+      slow build: 3.073 s
+
+      fast build (-O2 -flto -march=native): 0.672 seconds
+
+      fastest build (-Ofast -flto -march=native):  0.642 seconds
+
+* TODO [0/8] Prepare for test launch (the project works in background)
+** TODO args with quotes
+
+  allow for whitespaces in values - it seems that we really need it
+** TODO profile and fix things
+
+** TODO list partitions + list partition columns and values
+** TODO a better makefile
+** TODO null values for start/stop partitions
+
+  ...if there's no need to limit the search (empty values are ok too - should be converted)
+** TODO backend DSs
 
   - [ ] a more generic int hash instead of str by default and use that to fix the reverse mapping
     problem in partition.c:get_column_value_id_value
@@ -254,29 +271,35 @@
   - [ ] values_to_insert - come up with a generic vector or smth? or at least a quick struct should
     do?
 
-* TODO sanitize=leak
-* TODO sanitize=asan
-* TODO sanitize=ubsan
-* TODO client, C
-* TODO client, (Node) JS
+** TODO sanitize=leak
+** TODO sanitize=asan
+** TODO sanitize=ubsan
+** TODO deploy and load data in a preliminary manner
+** TODO a big test suite based on counts of real event data
+* TODO [0/3] Full launch
+** TODO client, C
+** TODO client, (Node) JS
 
-* TODO dumping or syncing
+** TODO dumping
 
   - [ ] walk cubes and dump into files
 
   - [ ] dump path should be preconfigured on start
 
-* TODO mmaped DS
+* TODO [0/5] Post-launch
+
+** TODO mmaped DS
 
   using mmaped DS as a backend would greatly simplify data flushing
 
   do we want to do this optionally?
-* TODO once ready for the first release, valgrind again
+** TODO once ready for the first release, valgrind again
 
-* TODO advanced async server
+** TODO advanced async server
 
   - [ ] a framework for those things, with proper extension points
 
   - [ ] epoll
 
-* TODO recursive grouping
+** TODO recursive grouping
+** TODO column compression
