@@ -21,6 +21,81 @@ static char *test_empty()
     return 0;
 }
 
+static char *test_multiple_inserts()
+{
+    cube_t *cube = cube_create();
+    defer { cube_destroy(cube); }
+
+    /* Do a lot if comlicated inserts */
+    for (size_t i = 0; i < 100; i++) {
+        {
+            /* screen_name=214&gender=1&brand=2&country_id=65&platform=3&app_version=5.39.0 2*/
+
+            insert_row_t *row = insert_row_create("2018-02-02_21", 2);
+            defer { insert_row_destroy(row); }
+
+            insert_row_add_column_value(row, "screen_name", "214");
+            insert_row_add_column_value(row, "gender", "1");
+            insert_row_add_column_value(row, "brand", "2");
+            insert_row_add_column_value(row, "country_id", "65");
+            insert_row_add_column_value(row, "platform", "3");
+            insert_row_add_column_value(row, "app_version", "5.39.0");
+
+            cube_insert_row(cube, row);
+        }
+
+        {
+            /* screen_name=217&gender=1&brand=2&country_id=48&platform=3&app_version=5.39.0 3*/
+
+            insert_row_t *row = insert_row_create("2018-02-02_21", 3);
+            defer { insert_row_destroy(row); }
+
+            insert_row_add_column_value(row, "screen_name", "217");
+            insert_row_add_column_value(row, "gender", "1");
+            insert_row_add_column_value(row, "brand", "2");
+            insert_row_add_column_value(row, "country_id", "48");
+            insert_row_add_column_value(row, "platform", "3");
+            insert_row_add_column_value(row, "app_version", "5.39.0");
+
+            cube_insert_row(cube, row);
+        }
+
+        {
+            /* screen_name=8&gender=0&brand=2&country_id=66&platform=3&app_version=5.45.0 1 */
+
+            insert_row_t *row = insert_row_create("2018-02-02_21", 1);
+            defer { insert_row_destroy(row); }
+
+            insert_row_add_column_value(row, "screen_name", "8");
+            insert_row_add_column_value(row, "gender", "0");
+            insert_row_add_column_value(row, "brand", "2");
+            insert_row_add_column_value(row, "country_id", "66");
+            insert_row_add_column_value(row, "platform", "3");
+            insert_row_add_column_value(row, "app_version", "5.45.0");
+
+            cube_insert_row(cube, row);
+        }
+
+        {
+            /* screen_name=123&gender=2&brand=2&country_id=64&platform=2&app_version=6.212.0 1030 */
+
+            insert_row_t *row = insert_row_create("2018-02-02_21", 1030);
+            defer { insert_row_destroy(row); }
+
+            insert_row_add_column_value(row, "screen_name", "123");
+            insert_row_add_column_value(row, "gender", "2");
+            insert_row_add_column_value(row, "brand", "2");
+            insert_row_add_column_value(row, "country_id", "64");
+            insert_row_add_column_value(row, "platform", "2");
+            insert_row_add_column_value(row, "app_version", "6.212.0");
+
+            cube_insert_row(cube, row);
+        }
+    }
+
+    return 0;
+}
+
 static char *test_count_from_to_single_row()
 {
     cube_t *cube = cube_create();
@@ -32,13 +107,13 @@ static char *test_count_from_to_single_row()
 
     {
         counter_t *count = cube_count_from_to(cube,"part0000","part1000", NULL, NULL);
-        defer { free(count); count = NULL; }
+        defer { free(count); }
         mu_assert("Counted a row not from the specified interval", 0 == *count);
     }
 
     {
         counter_t *count = cube_count_from_to(cube,"part0000","part1001", NULL, NULL);
-        defer { free(count); count = NULL; }
+        defer { free(count); }
         mu_assert("Couldn't find the row!", 3 == *count);
     }
 
@@ -59,13 +134,13 @@ static char *test_count_from_to_single_row_with_field()
 
     {
         counter_t *count = cube_count_from_to(cube,"part0000","part1000", NULL, NULL);
-        defer { free(count); count = NULL; }
+        defer { free(count);  }
         mu_assert("Counted a row not from the specified interval", 0 == *count);
     }
 
     {
         counter_t *count = cube_count_from_to(cube,"part0000","part1001", NULL, NULL);
-        defer { free(count); count = NULL; }
+        defer { free(count);  }
         mu_assert("Couldn't find the row", 3 == *count);
     }
 
@@ -73,7 +148,7 @@ static char *test_count_from_to_single_row_with_field()
 
     {
         counter_t *count = cube_count_from_to(cube,"part0000","part1001", NULL, NULL);
-        defer { free(count); count = NULL; }
+        defer { free(count);  }
         mu_assert("Failed to increment a counter", 6 == *count);
 
     }
@@ -91,26 +166,25 @@ static char *test_count_from_to_filter_empty()
     insert_row_t *irow = insert_row_create("part1000", 3);
     defer { insert_row_destroy(irow); }
 
-    insert_row_add_column_value(irow, "test name", "test value") ;
+    insert_row_add_column_value(irow, "test name", "test value");
 
-    counter_t *count = NULL;
     {
-        count = cube_count_from_to(cube, "part0000", "part1001", frow, NULL);
-        defer { free(count); count = NULL; }
+        counter_t *count = cube_count_from_to(cube, "part0000", "part1001", frow, NULL);
+        defer { free(count);  }
         mu_assert("Empty cube with an empty filter", 0 == *count);
     }
 
     cube_insert_row(cube, irow);
     {
-        count = cube_count_from_to(cube, "part0000", "part1001", frow, NULL);
-        defer { free(count); count = NULL; }
+        counter_t *count = cube_count_from_to(cube, "part0000", "part1001", frow, NULL);
+        defer { free(count);  }
         mu_assert("Couldn't find the row", 3 == *count);
     }
 
     cube_insert_row(cube, irow);
     {
-        count = cube_count_from_to(cube, "part0000", "part1001", frow, NULL);
-        defer { free(count); count = NULL; }
+        counter_t *count = cube_count_from_to(cube, "part0000", "part1001", frow, NULL);
+        defer { free(count);  }
         mu_assert("Failed to increment a counter", 6 == *count);
     }
 
@@ -443,6 +517,8 @@ static char *test_pcount_from_to_filter_grouped()
 static char *all_tests()
 {
     mu_run_test(test_empty);
+
+    mu_run_test(test_multiple_inserts);
 
     mu_run_test(test_count_from_to_single_row);
     mu_run_test(test_count_from_to_single_row_with_field);

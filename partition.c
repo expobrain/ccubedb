@@ -21,8 +21,8 @@ struct column_mapping_t {
 };
 
 
-static inline uint64_t value_array_hash(value_id_t *value_array);
-static inline bool value_array_equal(value_id_t *left_value_array, value_id_t *right_value_array);
+static inline uint64_t value_array_hash(const value_id_t *value_array);
+static inline bool value_array_equal(const value_id_t *left_value_array, const value_id_t *right_value_array);
 KHASH_INIT(value_to_row, value_id_t *, size_t, 1, value_array_hash, value_array_equal);
 
 struct partition_t {
@@ -95,6 +95,11 @@ void partition_destroy(partition_t *partition)
         free(partition->columns[column_id]);
     }
     free(partition->columns);
+
+    value_id_t *key = NULL;
+    kh_foreach_key(partition->value_to_row, key, {
+            free(key);
+        });
 
     kh_destroy(value_to_row, partition->value_to_row);
 
@@ -362,34 +367,30 @@ static size_t partition_append_row(partition_t *partition, value_id_t *values)
     return inserted_row_index;
 }
 
-static inline uint64_t value_array_hash(value_id_t *value_array)
+static inline uint64_t value_array_hash(const value_id_t *value_array)
 {
-    size_t value_array_size = value_array[0];
-    uint64_t hash = value_array_size;
-    for (size_t i = 0; i < value_array_size; ++i)
-        hash += hash * 17 + value_array[i + 1];
+    size_t value_array_size = value_array[0] + 1u;
+    uint64_t hash = 0;
+    for (size_t i = 0; i < value_array_size; i++)
+        hash += hash * 17 + value_array[i];
     return hash;
 }
 
-static inline bool value_array_equal(value_id_t *left_value_array, value_id_t *right_value_array)
+static inline bool value_array_equal(const value_id_t *left_value_array, const value_id_t *right_value_array)
 {
-    size_t array_length = left_value_array[0];
-    if (array_length != right_value_array[0])
-        return false;
-    return 0 == memcmp(left_value_array + 1, right_value_array + 1, array_length * sizeof(left_value_array[0]));
+    size_t array_length = left_value_array[0] + 1u;
+    size_t array_size = array_length * sizeof(left_value_array[0]);
+    return 0 == memcmp(left_value_array, right_value_array, array_size);
 }
 
 void partition_insert_row(partition_t *partition, insert_row_t *row)
 {
     /* Get the ids instead of string values (array size + values in the array) */
     value_id_t *values_to_insert = convert_insert_row(partition, row);
-    defer { free(values_to_insert); }
 
     /* Search for the insertion target */
     khint_t key = kh_get(value_to_row, partition->value_to_row, values_to_insert);
-    bool is_row_found = false;
-    if (key != kh_end(partition->value_to_row))
-        is_row_found = true;
+    bool is_row_found = key != kh_end(partition->value_to_row);
 
     size_t target_row = 0;
     if (!is_row_found) {
@@ -401,6 +402,7 @@ void partition_insert_row(partition_t *partition, insert_row_t *row)
     } else {
         /* Found the row? This is where we increase the counter */
         target_row = kh_value(partition->value_to_row, key);
+        free(values_to_insert);
     }
 
     partition_increase_row_count(partition, target_row, row->count);

@@ -203,15 +203,39 @@
 
     currently it's just a list of rows, which is, ehm, wrong
 
-* TODO client, Python
+* DONE client, Python
 
   - [X] basic client loading data from a file or stdin
 
   - [X] client should undestand commands and command return values
 
-  - [ ] client should properly report return values
+  - [X] client should properly report return values
 
 * TODO big data test
+
+  - [X] basic load (small event)
+
+  - [ ] check leaks/asan/ubsan with small data
+
+  - [ ] time small data
+
+  - [ ] load a lot of data (ViewScreen=49, for a job)
+
+  - [ ] check leaks/asan/ubsan
+
+  - [ ] time big data
+
+  - [ ] load even more data (ViewScreen=49, for a day)
+
+  - [ ] check leaks/asan/ubsan
+
+  - [ ] time big data
+
+* TODO args with quotes
+
+  to allow for whitespaces in values - it seems that we really need
+
+* TODO list partitions + list partition columns and values
 * TODO backend DSs
 
   - [ ] a more generic int hash instead of str by default and use that to fix the reverse mapping
@@ -236,17 +260,18 @@
 * TODO client, C
 * TODO client, (Node) JS
 
-* TODO mmaped DS
-
-  using mmaped DS as a backend would greatly simplify data flushing
-
-  do we want to do this optionally?
-
 * TODO dumping or syncing
 
   - [ ] walk cubes and dump into files
 
   - [ ] dump path should be preconfigured on start
+
+* TODO mmaped DS
+
+  using mmaped DS as a backend would greatly simplify data flushing
+
+  do we want to do this optionally?
+* TODO once ready for the first release, valgrind again
 
 * TODO advanced async server
 
