@@ -180,6 +180,8 @@ def main():
                         help='CubeDB instance port (1985 by default)')
     parser.add_argument('--ignore-errors', action='store_true',
                         help='Do not abort execution on command errors')
+    parser.add_argument('--silent', action='store_true',
+                        help='Do not print cmds to be executed, and cmd execution results')
     args = parser.parse_args()
 
     cdb = CubeDB(args.host, args.port)
@@ -189,9 +191,12 @@ def main():
             continue
         if line.startswith('#'):
             continue
-        print(line, end='')
+        if not args.silent:
+            print(line, end='')
         try:
-            pprint(cdb.execute_from_line(line), indent=4)
+            cmd_result = cdb.execute_from_line(line)
+            if not args.silent:
+                pprint(cmd_result, indent=4)
         except CubeDBError as e:
             print("Command '{}' failed with server error: '{}'".format(line.strip(), e.message))
             if not args.ignore_errors:

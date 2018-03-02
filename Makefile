@@ -8,9 +8,9 @@ LDFLAGS =-Wl,--no-undefined
 # CFLAGS  = -MMD -MP -Wall -Wextra -Werror -Wshadow -std=gnu11 -Os -flto -ffast-math
 
 # Sanitizers are good
-CFLAGS  += -fsanitize=undefined
+# CFLAGS  += -fsanitize=undefined
 # CFLAGS  += -fsanitize=address -fsanitize=leak
-LDLIBS += -lubsan
+# LDLIBS += -lubsan
 # LDLIBS += -lasan
 
 OBJ = cubedb.o cube.o partition.o sds.o insert_row.o filter.o log.o
