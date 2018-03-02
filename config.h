@@ -76,6 +76,9 @@ static inline config_t *config_create(int argc, char **argv)
                 fprintf(stderr, "log level is not a valid number\n");
                 exit(EXIT_FAILURE);
             }
+        } else {
+            fprintf(stderr, "unknown argument: %s", argv[i]);
+            exit(EXIT_FAILURE);
         }
         i++;
     }
