@@ -14,16 +14,18 @@
 
 static value_id_t unknown_value_id = UNKNOWN_FILTER_COLUMN_VALUE;
 
-typedef struct column_mapping_t column_mapping_t;
-struct column_mapping_t {
-    column_id_t id;
-    htable_t *value_to_id;
-};
-
 
 static inline uint64_t value_array_hash(const value_id_t *value_array);
 static inline bool value_array_equal(const value_id_t *left_value_array, const value_id_t *right_value_array);
 KHASH_INIT(value_to_row, value_id_t *, size_t, 1, value_array_hash, value_array_equal);
+KHASH_MAP_INIT_INT(id_to_value, char *);
+
+typedef struct column_mapping_t column_mapping_t;
+struct column_mapping_t {
+    column_id_t id;
+    htable_t *value_to_id;
+    khash_t(id_to_value) *id_to_value;
+};
 
 struct partition_t {
     value_id_t **columns;
@@ -39,6 +41,7 @@ static void column_mapping_init(column_mapping_t *mapping, column_id_t id)
     *mapping = (typeof(*mapping)){
         .id = id,
         .value_to_id = htable_create(1024, free),
+        .id_to_value = kh_init(id_to_value)
     };
 }
 
@@ -52,6 +55,11 @@ static column_mapping_t *column_mapping_create(column_id_t id)
 static void column_mapping_destroy(column_mapping_t *mapping)
 {
     htable_destroy(mapping->value_to_id);
+    char *value = NULL;
+    kh_foreach_value(mapping->id_to_value, value, {
+            free(value);
+        });
+    kh_destroy(id_to_value, mapping->id_to_value);
     free(mapping);
 }
 
@@ -60,6 +68,11 @@ static value_id_t *column_mapping_add_value(column_mapping_t *column_mapping, sd
     value_id_t *id = cdb_malloc(sizeof(*id));
     *id = htable_size(column_mapping->value_to_id);
     htable_put(column_mapping->value_to_id, value, id);
+
+    int ret;
+    khint_t key = kh_put(id_to_value, column_mapping->id_to_value, *id, &ret);
+    kh_value(column_mapping->id_to_value, key) = strdup(value);
+
     return id;
 }
 
@@ -276,14 +289,12 @@ counter_t partition_count_filter(partition_t *partition, filter_t *filter)
 
 static char *get_column_value_id_value(column_mapping_t *column_mapping, const value_id_t column_value_id)
 {
-    /* TODO: this horror should be replaced by a proper constant time lookup */
-    htable_for_each(item, column_mapping->value_to_id) {
-        value_id_t *value_id_ptr = htable_value(item);
-        if (column_value_id == *value_id_ptr) {
-            return htable_key(item);
-        }
-    }
-    return NULL;
+    khint_t key = kh_get(id_to_value, column_mapping->id_to_value, column_value_id);
+    bool is_found = key != kh_end(column_mapping->id_to_value);
+    if (!is_found)
+        return NULL;
+    char *value = kh_value(column_mapping->id_to_value, key);
+    return value;
 }
 
 htable_t *partition_count_filter_grouped(partition_t *partition, filter_t *filter, char *group_by_column)

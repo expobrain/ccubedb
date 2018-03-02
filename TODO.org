@@ -224,23 +224,19 @@
 
   - [X] load even more data (ViewScreen=49, for a day)
 
-  - [X] time biggest data
+  - [X] COUNT all group by app_version:
 
-    - [X] COUNT all group by app_version:
+    slow build: 3.066 s
 
-      slow build: 3.066 s
+    fast build (-O2 -flto -march=native -ffast-math): 0.071 seconds
 
-      fast build (-O2 -flto -march=native): 0.634 seconds
+  - [X] PCOUNT all group by app_version:
 
-      fastest build (-Ofast -flto -march=native): 0.640 seconds
+    slow build: 3.073 s
 
-    - [X] PCOUNT all group by app_version:
+    fast build (-O2 -flto -march=native -ffast-math): 0.071 seconds
 
-      slow build: 3.073 s
-
-      fast build (-O2 -flto -march=native): 0.672 seconds
-
-      fastest build (-Ofast -flto -march=native):  0.642 seconds
+  - [ ] cubedb:  0.760ms
 
 * TODO [0/8] Prepare for test launch (the project works in background)
 ** TODO args with quotes
@@ -248,17 +244,26 @@
   allow for whitespaces in values - it seems that we really need it
 ** TODO profile and fix things
 
+   - [ ] prepare a big test cmd set
+
+   - [ ] inserts
+
+   - [ ] count/pcount
+
 ** TODO list partitions + list partition columns and values
-** TODO a better makefile
+** TODO a better build system?
 ** TODO null values for start/stop partitions
 
   ...if there's no need to limit the search (empty values are ok too - should be converted)
 ** TODO backend DSs
 
-  - [ ] a more generic int hash instead of str by default and use that to fix the reverse mapping
+  - [X] a more generic int hash instead of str by default and use that to fix the reverse mapping
     problem in partition.c:get_column_value_id_value
 
     reuse khash.h this time? It might be reasonable to replace my htable with khash.h?
+
+  - [ ] values_to_insert - come up with a generic vector or smth? or at least a quick struct should
+    do?
 
   - [ ] make it impossible to use special values (UNSPECIFIED and UNKNOWN) in value_ids
 
@@ -267,9 +272,6 @@
   - [ ] a list of partitions should be sorted, or, even better, should be a autosorted DS (rb-tree?)
 
   - [ ] a list of clients should be a mapping
-
-  - [ ] values_to_insert - come up with a generic vector or smth? or at least a quick struct should
-    do?
 
 ** TODO sanitize=leak
 ** TODO sanitize=asan

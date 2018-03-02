@@ -7,6 +7,115 @@ INSERT cube p2 a=4 4
 INSERT cube p3 b=1 4
 COUNT cube p1 p2
 COUNT cube p1 p4 null a
+COUNT cube p1 p4 a=1&a=4 a
+COUNT cube p1 p2
+COUNT cube p1 p4 null a
+COUNT cube p1 p4 a=1&a=4 a
+COUNT cube p1 p2
+COUNT cube p1 p4 null a
+COUNT cube p1 p4 a=1&a=4 a
+COUNT cube p1 p2
+COUNT cube p1 p4 null a
+COUNT cube p1 p4 a=1&a=4 a
+COUNT cube p1 p2
+COUNT cube p1 p4 null a
+COUNT cube p1 p4 a=1&a=4 a
+COUNT cube p1 p2
+COUNT cube p1 p4 null a
+COUNT cube p1 p4 a=1&a=4 a
+COUNT cube p1 p2
+COUNT cube p1 p4 null a
+COUNT cube p1 p4 a=1&a=4 a
+COUNT cube p1 p2
+COUNT cube p1 p4 null a
+COUNT cube p1 p4 a=1&a=4 a
+COUNT cube p1 p2
+COUNT cube p1 p4 null a
+COUNT cube p1 p4 a=1&a=4 a
+COUNT cube p1 p2
+COUNT cube p1 p4 null a
+COUNT cube p1 p4 a=1&a=4 a
+COUNT cube p1 p2
+COUNT cube p1 p4 null a
+COUNT cube p1 p4 a=1&a=4 a
+COUNT cube p1 p2
+COUNT cube p1 p4 null a
+COUNT cube p1 p4 a=1&a=4 a
+COUNT cube p1 p2
+COUNT cube p1 p4 null a
+COUNT cube p1 p4 a=1&a=4 a
+COUNT cube p1 p2
+COUNT cube p1 p4 null a
+COUNT cube p1 p4 a=1&a=4 a
+COUNT cube p1 p2
+COUNT cube p1 p4 null a
+COUNT cube p1 p4 a=1&a=4 a
+COUNT cube p1 p2
+COUNT cube p1 p4 null a
+COUNT cube p1 p4 a=1&a=4 a
+COUNT cube p1 p2
+COUNT cube p1 p4 null a
+COUNT cube p1 p4 a=1&a=4 a
+COUNT cube p1 p2
+COUNT cube p1 p4 null a
+COUNT cube p1 p4 a=1&a=4 a
+COUNT cube p1 p2
+COUNT cube p1 p4 null a
+COUNT cube p1 p4 a=1&a=4 a
+PCOUNT cube p1 p4
+PCOUNT cube p1 p4 a=1&a=4 a
+PCOUNT cube p1 p4 null a
+PCOUNT cube p1 p4
+PCOUNT cube p1 p4 a=1&a=4 a
+PCOUNT cube p1 p4 null a
+PCOUNT cube p1 p4
+PCOUNT cube p1 p4 a=1&a=4 a
+PCOUNT cube p1 p4 null a
+PCOUNT cube p1 p4
+PCOUNT cube p1 p4 a=1&a=4 a
+PCOUNT cube p1 p4 null a
+PCOUNT cube p1 p4
+PCOUNT cube p1 p4 a=1&a=4 a
+PCOUNT cube p1 p4 null a
+PCOUNT cube p1 p4
+PCOUNT cube p1 p4 a=1&a=4 a
+PCOUNT cube p1 p4 null a
+PCOUNT cube p1 p4
+PCOUNT cube p1 p4 a=1&a=4 a
+PCOUNT cube p1 p4 null a
+PCOUNT cube p1 p4
+PCOUNT cube p1 p4 a=1&a=4 a
+PCOUNT cube p1 p4 null a
+PCOUNT cube p1 p4
+PCOUNT cube p1 p4 a=1&a=4 a
+PCOUNT cube p1 p4 null a
+PCOUNT cube p1 p4
+PCOUNT cube p1 p4 a=1&a=4 a
+PCOUNT cube p1 p4 null a
+PCOUNT cube p1 p4
+PCOUNT cube p1 p4 a=1&a=4 a
+PCOUNT cube p1 p4 null a
+PCOUNT cube p1 p4
+PCOUNT cube p1 p4 a=1&a=4 a
+PCOUNT cube p1 p4 null a
+PCOUNT cube p1 p4
+PCOUNT cube p1 p4 a=1&a=4 a
+PCOUNT cube p1 p4 null a
+PCOUNT cube p1 p4
+PCOUNT cube p1 p4 a=1&a=4 a
+PCOUNT cube p1 p4 null a
+PCOUNT cube p1 p4
+PCOUNT cube p1 p4 a=1&a=4 a
+PCOUNT cube p1 p4 null a
+PCOUNT cube p1 p4
+PCOUNT cube p1 p4 a=1&a=4 a
+PCOUNT cube p1 p4 null a
+PCOUNT cube p1 p4
+PCOUNT cube p1 p4 a=1&a=4 a
+PCOUNT cube p1 p4 null a
+PCOUNT cube p1 p4
+PCOUNT cube p1 p4 a=1&a=4 a
+PCOUNT cube p1 p4 null a
 PCOUNT cube p1 p4
 PCOUNT cube p1 p4 a=1&a=4 a
 PCOUNT cube p1 p4 null a

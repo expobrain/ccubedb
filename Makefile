@@ -1,15 +1,16 @@
 CC      = gcc-7
 LD      = gcc-7
 
+# Default build
 CFLAGS  = -MMD -MP -g -Wall -Wextra -Werror -Wshadow -std=gnu11
 
 # Fast build
-# CFLAGS  = -MMD -MP -O2 -Wall -Wextra -Werror -Wshadow -std=gnu11 -flto -march=native
-
-LDFLAGS =-Wl,--no-undefined
+# CFLAGS  = -MMD -MP -Wall -Wextra -Werror -Wshadow -std=gnu11 -flto -march=native -ffast-math -O2
 
 # Tiny binary
 # CFLAGS  = -MMD -MP -Wall -Wextra -Werror -Wshadow -std=gnu11 -Os -flto -ffast-math
+
+LDFLAGS =-Wl,--no-undefined
 
 # Sanitizers are good
 # CFLAGS  += -fsanitize=undefined
