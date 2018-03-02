@@ -49,7 +49,7 @@ enum cmd_result {
     REPLY_ERR_NOT_FOUND,        /* Command not found */
     REPLY_ERR_WRONG_ARG,        /* Command argument is wrong */
     REPLY_ERR_WRONG_ARG_NUM,    /* Command argument number is wrong */
-    REPLY_ERR_MALFORMED_ARG,    /* Command argument is contains non-graphic symbols*/
+    REPLY_ERR_MALFORMED_ARG,    /* Command argument contains non-graphic symbols*/
     REPLY_ERR_OBJ_NOT_FOUND,    /* Command object not found */
     REPLY_ERR_OBJ_EXISTS,       /* Command object already exists */
 };

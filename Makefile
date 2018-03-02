@@ -1,10 +1,15 @@
 CC      = gcc-7
 LD      = gcc-7
+
 CFLAGS  = -MMD -MP -g -Wall -Wextra -Werror -Wshadow -std=gnu11
-# CFLAGS  = -MMD -MP -Wall -Wextra -Werror -Wshadow -std=gnu11 -Os
+LDFLAGS =-Wl,--no-undefined
+
+# Tiny binary
+# CFLAGS  = -MMD -MP -Wall -Wextra -Werror -Wshadow -std=gnu11 -Os -flto -ffast-math
+
+# Sanitizers are good
 # CFLAGS  += -fsanitize=undefined
 # CFLAGS  += -fsanitize=address -fsanitize=leak
-LDFLAGS  =-Wl,--no-undefined
 # LDLIBS += -lubsan
 # LDLIBS += -lasan
 

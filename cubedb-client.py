@@ -4,15 +4,34 @@ from __future__ import print_function, unicode_literals
 import argparse
 import socket
 import traceback
+from pprint import pprint
 
 
 class CubeDBError(Exception):
     pass
 
 
-class CubeDB(object):
+REPLY_OK = "0"
+REPLY_ERR = "-3"              # Command generic error  */
+REPLY_ERR_NOT_FOUND = "-4"            # Command not found */
+REPLY_ERR_WRONG_ARG = "-5"            # Command argument is wrong */
+REPLY_ERR_WRONG_ARG_NUM = "-6"        # Command argument number is wrong */
+REPLY_ERR_MALFORMED_ARG = "-7"        # Command argument is contains non-graphic symbols*/
+REPLY_ERR_OBJ_NOT_FOUND = "-8"        # Command object not found */
+REPLY_ERR_OBJ_EXISTS = "-9"           # Command object already exists */
 
-    REPLY_OK = "0\n"
+ERROR_TO_MSG = {
+    REPLY_ERR: "Command generic error",
+    REPLY_ERR_NOT_FOUND: "Command not found",
+    REPLY_ERR_WRONG_ARG: "Command argument is wrong",
+    REPLY_ERR_WRONG_ARG_NUM: "Command argument number is wrong",
+    REPLY_ERR_MALFORMED_ARG: "Command argument contains non-graphic symbols",
+    REPLY_ERR_OBJ_NOT_FOUND: "Command object not found",
+    REPLY_ERR_OBJ_EXISTS: "Command object already exists",
+}
+
+
+class CubeDB(object):
 
     def __init__(self, host, port):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -36,7 +55,7 @@ class CubeDB(object):
         parts = [p.strip() for p in line.split()]
         if not len(parts) >= 1:
             raise CubeDBError("Need at least one argument")
-        cmd = parts[0]
+        cmd = parts[0].upper()
         args = parts[1:]
         if cmd not in self.cmd_table:
             raise CubeDBError("Unknown command: {}".format(cmd))
@@ -51,10 +70,13 @@ class CubeDB(object):
         return self.sock_file.readline()
 
     def readok(self):
-        reply = self.readline()
-        if not reply == self.REPLY_OK:
-            raise CubeDBError("Expected REPLY_OK, got: {}".format(reply))
-        return True
+        reply = self.readline().strip()
+        if reply == REPLY_OK:
+            return True
+        elif reply in ERROR_TO_MSG:
+            raise CubeDBError("Expected REPLY_OK (0), got: {} ({})".format(ERROR_TO_MSG[reply], reply))
+        else:
+            raise CubeDBError("Expected REPLY_OK (0), got: {}".format(reply))
 
     def readcount(self):
         return int(self.readline())
@@ -169,11 +191,13 @@ def main():
             continue
         print(line, end='')
         try:
-            print(cdb.execute_from_line(line))
-        except CubeDBError, e:
+            pprint(cdb.execute_from_line(line), indent=4)
+        except CubeDBError as e:
+            print("Command '{}' failed with server error: '{}'".format(line.strip(), e.message))
             if not args.ignore_errors:
                 raise
-            print("Failed to execute '{}' with exception".format(line.strip()), traceback.format_exc(e))
+        except Exception as e:
+            print("Command '{}' failed with exception".format(line.strip()), traceback.format_exc(e))
 
 
 if __name__ == '__main__':
