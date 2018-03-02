@@ -533,6 +533,9 @@ int main(int argc, char **argv)
     while(1) {
         read_fds = master;
         if (-1 == select(fdmax + 1, &read_fds, NULL, NULL, NULL)) {
+            /* Interrupted? Just restart */
+            if (EINTR == errno)
+                continue;
             perror("select");
             exit(EXIT_FAILURE);
         }
