@@ -346,35 +346,46 @@ static char *test_pcount_from_to_grouped()
     cube_t *cube = cube_create();
     defer { cube_destroy(cube); }
 
-    insert_row_t *irow1 = insert_row_create("part1001", 3);
-    insert_row_add_column_value(irow1, "column", "test value") ;
-    defer { insert_row_destroy(irow1); }
+    {
+        insert_row_t *irow1 = insert_row_create("part1001", 3);
+        insert_row_add_column_value(irow1, "column", "test value") ;
+        defer { insert_row_destroy(irow1); }
+        cube_insert_row(cube, irow1);
 
-    insert_row_t *irow2 = insert_row_create("part1001", 2);
-    insert_row_add_column_value(irow2, "column", "test value2") ;
-    defer { insert_row_destroy(irow2); }
+    }
 
-    insert_row_t *irow3 = insert_row_create("part1001", 1);
-    insert_row_add_column_value(irow3, "column", "test value3") ;
-    defer { insert_row_destroy(irow3); }
+    {
+        insert_row_t *irow2 = insert_row_create("part1001", 2);
+        insert_row_add_column_value(irow2, "column", "test value2") ;
+        defer { insert_row_destroy(irow2); }
+        cube_insert_row(cube, irow2);
+    }
 
-    cube_insert_row(cube, irow1);
-    cube_insert_row(cube, irow2);
-    cube_insert_row(cube, irow3);
+    {
+        insert_row_t *irow3 = insert_row_create("part1001", 1);
+        insert_row_add_column_value(irow3, "column", "test value3") ;
+        defer { insert_row_destroy(irow3); }
+        cube_insert_row(cube, irow3);
+    }
 
     htable_t *partition_to_value_to_count = cube_pcount_from_to(cube, "part1001", "part1001", NULL, "column");
     htable_t *value_to_count = htable_get(partition_to_value_to_count, "part1001");
     defer { htable_destroy(partition_to_value_to_count); }
 
-    counter_t *count = NULL;
-    count = htable_get(value_to_count, "test value");
-    mu_assert("wrong value count", 3 == *count);
+    {
+        counter_t *count = htable_get(value_to_count, "test value");
+        mu_assert("wrong value count", 3 == *count);
+    }
 
-    count = htable_get(value_to_count, "test value2");
-    mu_assert("wrong value count", 2 == *count);
+    {
+        counter_t *count = htable_get(value_to_count, "test value2");
+        mu_assert("wrong value count", 2 == *count);
+    }
 
-    count = htable_get(value_to_count, "test value3");
-    mu_assert("wrong value count", 1 == *count);
+    {
+        counter_t *count = htable_get(value_to_count, "test value3");
+        mu_assert("wrong value count", 1 == *count);
+    }
 
     return 0;
 }

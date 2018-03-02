@@ -168,16 +168,7 @@ err:
 
 static value_id_t *convert_insert_row(partition_t *partition, insert_row_t *insert_row)
 {
-    /* Initialize the row to search for */
-    value_id_t *values_to_insert =
-        cdb_malloc(sizeof(partition->columns[0][0]) * partition->column_num + 1);
-    values_to_insert[0] = partition->column_num;
-
-    for (size_t c = 1; c < partition->column_num + 1; c++) {
-        values_to_insert[c] = UNSPECIFIED_COLUMN_VALUE;
-    }
-
-    /* Convert column name / column value strings into partition-specific ids */
+    /* Make sure all the columns and values are present in the partition mappings */
     htable_for_each(node, insert_row->column_to_value) {
         char *column_name = htable_key(node);
         sds column_value = htable_value(node);
@@ -194,6 +185,26 @@ static value_id_t *convert_insert_row(partition_t *partition, insert_row_t *inse
             value_id_ptr = column_mapping_add_value(column_mapping, column_value);
             assert(value_id_ptr);
         }
+    }
+
+    /* Now, initialize the row to search for */
+    value_id_t *values_to_insert =
+        cdb_malloc(sizeof(partition->columns[0][0]) * (partition->column_num + 1));
+    values_to_insert[0] = partition->column_num;
+
+    for (size_t c = 0; c < partition->column_num; c++)
+        values_to_insert[1 + c] = UNSPECIFIED_COLUMN_VALUE;
+
+
+    /* Convert column name / column value strings into partition-specific ids */
+    htable_for_each(node, insert_row->column_to_value) {
+        char *column_name = htable_key(node);
+        sds column_value = htable_value(node);
+
+        column_mapping_t *column_mapping = htable_get(partition->column_name_to_mapping, column_name);
+        value_id_t *value_id_ptr = htable_get(column_mapping->value_to_id, column_value);
+        assert(column_mapping);
+        assert(value_id_ptr);
 
         column_id_t column_id = column_mapping->id;
         values_to_insert[column_id + 1] = *value_id_ptr;
@@ -351,39 +362,21 @@ static size_t partition_append_row(partition_t *partition, value_id_t *values)
     return inserted_row_index;
 }
 
-static inline bool is_row_matching_insert(partition_t *partition, size_t row_index, value_id_t *values)
-{
-    bool is_row_matching = true;
-
-    for (size_t c = 0; c < partition->column_num; c++ ) {
-        value_id_t *column = partition->columns[c];
-        is_row_matching = true;
-        value_id_t column_row_value = column[row_index];
-
-        is_row_matching = is_row_matching && column_row_value == values[c];
-        if (!is_row_matching)
-            break;
-    }
-
-    return is_row_matching;
-}
-
 static inline uint64_t value_array_hash(value_id_t *value_array)
 {
     size_t value_array_size = value_array[0];
     uint64_t hash = value_array_size;
-    for (size_t i = 1; i < value_array_size + 1; ++i) {
-        hash += hash * 17 + value_array[i];
-    }
+    for (size_t i = 0; i < value_array_size; ++i)
+        hash += hash * 17 + value_array[i + 1];
     return hash;
 }
 
 static inline bool value_array_equal(value_id_t *left_value_array, value_id_t *right_value_array)
 {
-    size_t array_size = left_value_array[0];
-    if (array_size != right_value_array[0])
+    size_t array_length = left_value_array[0];
+    if (array_length != right_value_array[0])
         return false;
-    return 0 == memcmp(left_value_array + 1, right_value_array + 1, array_size);
+    return 0 == memcmp(left_value_array + 1, right_value_array + 1, array_length * sizeof(left_value_array[0]));
 }
 
 void partition_insert_row(partition_t *partition, insert_row_t *row)
@@ -406,6 +399,7 @@ void partition_insert_row(partition_t *partition, insert_row_t *row)
         target_row = partition_append_row(partition, values_to_insert + 1);
         kh_value(partition->value_to_row, key) = target_row;
     } else {
+        /* Found the row? This is where we increase the counter */
         target_row = kh_value(partition->value_to_row, key);
     }
 
