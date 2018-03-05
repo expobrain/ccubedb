@@ -71,7 +71,10 @@ htable_t *cube_pcount_from_to(cube_t *cube, char *from, char *to, filter_t *filt
 
     bool partition_filter(void *key) {
         sds partition_name = key;
-        return strcoll(partition_name, from) >= 0 && strcoll(partition_name, to) <= 0;
+        bool is_within_range = true;
+        if (from) is_within_range = is_within_range && strcoll(partition_name, from) >= 0;
+        if (to) is_within_range = is_within_range && strcoll(partition_name, to) <= 0;
+        return is_within_range;
     }
 
     htable_t *partition_to_results = NULL;
@@ -104,8 +107,11 @@ void *cube_count_from_to(cube_t *cube, char *from, char *to, filter_t *filter, c
 {
     bool partition_filter(void *key) {
         sds partition_name = key;
-        return strcoll(partition_name, from) >= 0 && strcoll(partition_name, to) <= 0;
-     }
+        bool is_within_range = true;
+        if (from) is_within_range = is_within_range && strcoll(partition_name, from) >= 0;
+        if (to) is_within_range = is_within_range && strcoll(partition_name, to) <= 0;
+        return is_within_range;
+    }
 
     if (!group_by_column) {
         /* No grouping? Just return the counter. */
@@ -163,7 +169,10 @@ bool cube_delete_partition_from_to(cube_t *cube, char *from, char *to)
 
     bool partition_filter(void *key) {
         sds partition_name = key;
-        return strcoll(partition_name, from) >= 0 && strcoll(partition_name, to) <= 0;
+        bool is_within_range = true;
+        if (from) is_within_range = is_within_range && strcoll(partition_name, from) >= 0;
+        if (to) is_within_range = is_within_range && strcoll(partition_name, to) <= 0;
+        return is_within_range;
     }
 
     htable_for_each_filter(item, cube->name_to_partition, partition_filter) {

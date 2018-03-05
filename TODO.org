@@ -242,19 +242,23 @@
 ** TODO args with quotes
 
   allow for whitespaces in values - it seems that we really need it
+
 ** TODO profile and fix things
 
    - [ ] prepare a big test cmd set
 
    - [ ] inserts
 
-   - [ ] count/pcount
+   - [ ] count plain, filtered, grouped
+
+   - [ ] pcount plain, filtered, grouped
 
 ** TODO list partitions + list partition columns and values
 ** TODO a better build system?
 ** TODO null values for start/stop partitions
 
   ...if there's no need to limit the search (empty values are ok too - should be converted)
+
 ** TODO backend DSs
 
   - [X] a more generic int hash instead of str by default and use that to fix the reverse mapping
