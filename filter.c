@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "filter.h"
 #include "cdb_alloc.h"
 #include "sds.h"
@@ -10,8 +12,12 @@ filter_t *filter_create()
     return row;
 }
 
-filter_t *filter_parse_from_args(sds column_to_value_list)
+filter_t *filter_parse_from_args(sds column_to_value_list, int *res)
 {
+    *res = 0;
+    if (0 == strcmp("null", column_to_value_list))
+        return NULL;
+
     filter_t *filter = filter_create();
 
     int cv_pair_num = 0;
@@ -29,8 +35,10 @@ filter_t *filter_parse_from_args(sds column_to_value_list)
         sds *pair_tokens = sdssplitlen(pair, sdslen(pair), "=", 1, &pair_tokens_len);
         defer { sdsfreesplitres(pair_tokens, pair_tokens_len); }
 
-        if (2 != pair_tokens_len)
+        if (2 != pair_tokens_len) {
+            *res = -1;
             return NULL;
+        }
 
         sds column = pair_tokens[0];
         sds value = pair_tokens[1];

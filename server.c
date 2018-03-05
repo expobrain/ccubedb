@@ -221,14 +221,9 @@ static cmd_result cmd_count(int conn_fd, sds *argv, int argc)
     filter_t *filter = NULL;
     defer { if (filter) filter_destroy(filter); }
     if (argc >= 5) {
-        sds column_to_value_list = argv[4];
-        if (0 == strcmp("null", column_to_value_list)) {
-            filter = NULL;
-        } else {
-            filter = filter_parse_from_args(column_to_value_list);
-            if (!filter)
-                return REPLY_ERR_WRONG_ARG;
-        }
+        int res = 0;
+        filter = filter_parse_from_args(argv[4], &res);
+        if (res != 0) return REPLY_ERR_WRONG_ARG;
     }
 
     sds group_column = NULL;
@@ -266,14 +261,9 @@ static cmd_result cmd_pcount(int conn_fd, sds *argv, int argc)
     filter_t *filter = NULL;
     defer { if (filter) filter_destroy(filter); }
     if (argc >= 5) {
-        sds column_to_value_list = argv[4];
-        if (0 == strcmp("null", column_to_value_list)) {
-            filter = NULL;
-        } else {
-            filter = filter_parse_from_args(column_to_value_list);
-            if (!filter)
-                return REPLY_ERR_WRONG_ARG;
-        }
+        int res = 0;
+        filter = filter_parse_from_args(argv[4], &res);
+        if (res != 0) return REPLY_ERR_WRONG_ARG;
     }
 
     sds group_column = NULL;
