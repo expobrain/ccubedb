@@ -2,21 +2,27 @@ CC      = gcc-7
 LD      = gcc-7
 
 # Default build
-CFLAGS  = -MMD -MP -g -Wall -Wextra -Werror -Wshadow -std=gnu11
-
-# Fast build
-# CFLAGS  = -MMD -MP -Wall -Wextra -Werror -Wshadow -std=gnu11 -flto -march=native -ffast-math -O2
-
-# Tiny binary
-# CFLAGS  = -MMD -MP -Wall -Wextra -Werror -Wshadow -std=gnu11 -Os -flto -ffast-math
-
+CFLAGS  = -MMD -MP -Wall -Wextra -Werror -Wshadow -std=gnu11
 LDFLAGS =-Wl,--no-undefined
 
-# Sanitizers are good
-# CFLAGS  += -fsanitize=undefined
-# CFLAGS  += -fsanitize=address -fsanitize=leak
-# LDLIBS += -lubsan
-# LDLIBS += -lasan
+ifdef FAST
+# Fast build
+CFLAGS += -flto -march=native -ffast-math -O2
+else ifdef TINY
+# Tiny binary
+CFLAGS += -flto -Os -ffast-math
+else ifdef UBSAN
+# Check undefined behaviour
+CFLAGS  += -g -fsanitize=undefined
+LDLIBS += -lubsan
+else ifdef ASAN
+# Check leaks, etc
+CFLAGS  += -g -fsanitize=address -fsanitize=leak
+LDLIBS += -lasan
+else
+# Debug symbols installed by default
+CFLAGS += -g
+endif
 
 OBJ = cubedb.o cube.o partition.o sds.o insert_row.o filter.o log.o
 ALL_OBJ = server.o $(OBJ)
