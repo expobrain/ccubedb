@@ -238,12 +238,12 @@
 
   - [ ] cubedb:  0.760ms
 
-* TODO [1/11] Prepare for test launch (the project works in background)
+* TODO [2/11] Prepare for test launch (the project works in background)
 ** DONE null values for start/stop partitions
 
   ...if there's no need to limit the search (empty values are ok too - should be converted)
 
-** TODO args with quotes
+** DONE args with quotes
 
   allow for whitespaces in values - it seems that we really need it
 
@@ -260,7 +260,7 @@
 ** TODO list partitions + list partition columns and values
 ** TODO a better build system?
 
-** TODO backend DSs
+** TODO [1/5] backend DSs
 
   - [X] a more generic int hash instead of str by default and use that to fix the reverse mapping
     problem in partition.c:get_column_value_id_value

@@ -371,14 +371,19 @@ static cubedb_cmd *find_cmd(char *name)
 
 bool is_correct_cmd_arg(const char *arg)
 {
-    while (*arg && isgraph(*arg) && *arg != ' ')
+    while (*arg && isprint(*arg))
         arg++;
     return '\0' == *arg;
 }
 
-cmd_result process_cmd(int conn_fd, sds *argv, int argc)
+cmd_result process_cmd(int conn_fd, sds query)
 {
-    assert(argc > 0);
+    /* Split the query into cmd + arguments */
+    int argc = 0;
+    sds *argv = sdssplitargs(query ,&argc);
+    if (!argv)
+        return REPLY_ERR_WRONG_ARG;
+    defer { sdsfreesplitres(argv, argc); }
 
     sds command = sdsdup(argv[0]);
     defer { sdsfree(command); }
@@ -440,34 +445,13 @@ int read_from_client(client_t *client)
         if (sdslen(query) == 0)
             return receive_size;
 
-        /* Split the query into raw arguments */
-        int raw_argc;
-        sds *raw_argv = sdssplitlen(query, sdslen(query)," ",1,&raw_argc);
-        defer { free(raw_argv); }
-
-        /* Strip empty args */
-        int clean_argc = 0;
-        sds *clean_argv = cdb_malloc(sizeof(clean_argv[0]) * raw_argc);
-        for (int j = 0; j < raw_argc; j++) {
-            if (sdslen(raw_argv[j])) {
-                clean_argv[clean_argc] = raw_argv[j];
-                clean_argc++;
-            } else {
-                sdsfree(raw_argv[j]);
-            }
-        }
-        defer {
-            for (int j = 0; j < clean_argc; j++) {
-                sdsfree(clean_argv[j]);
-            }
-            free(clean_argv);
-        }
-
         /* Process the cmds received */
         clock_t start = clock();
-        cmd_result result = process_cmd(client->fd, clean_argv, clean_argc);
+
+        cmd_result result = process_cmd(client->fd, query);
+
         double elapsed_time = (clock() - start)/(double)CLOCKS_PER_SEC;
-        log_verb("%s served in %.3f seconds", clean_argv[0], elapsed_time);
+        log_verb("'%s' served in %.3f seconds", query, elapsed_time);
 
         /* It's fine */
         if (REPLY_OK == result) {
