@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from __future__ import print_function, unicode_literals
 
+import shlex
 import argparse
 import socket
 import traceback
@@ -52,7 +53,7 @@ class CubeDB(object):
         }
 
     def execute_from_line(self, line):
-        parts = [p.strip() for p in line.split()]
+        parts = [p.strip() for p in shlex.split(line)]
         if not len(parts) >= 1:
             raise CubeDBError("Need at least one argument")
         cmd = parts[0].upper()
@@ -116,19 +117,19 @@ class CubeDB(object):
         return self.readlines()
 
     def cmd_addcube(self, name):
-        self.sendline("ADDCUBE {}".format(name))
+        self.sendline("ADDCUBE '{}'".format(name))
         return self.readok()
 
     def cmd_cube(self, name):
-        self.sendline("CUBE {}".format(name))
+        self.sendline("CUBE '{}'".format(name))
         return self.readlines()
 
     def cmd_delcube(self, name):
-        self.sendline("DELCUBE {}".format(name))
+        self.sendline("DELCUBE '{}'".format(name))
         return self.readok()
 
     def cmd_delpart(self, name, _from, to=''):
-        self.sendline("DELPART {} {} {}".format(name, _from, to))
+        self.sendline("DELPART '{}' '{}' '{}'".format(name, _from, to))
         return self.readok()
 
     def _column_values_to_str(self, columnvalues):
@@ -138,24 +139,24 @@ class CubeDB(object):
             return columnvalues
 
     def cmd_insert(self, name, partition, columnvalues, count):
-        self.sendline("INSERT {} {} {} {}".format(name, partition,
-                                                  self._column_values_to_str(columnvalues),
-                                                  count))
+        self.sendline("INSERT '{}' '{}' '{}' '{}'".format(name, partition,
+                                                          self._column_values_to_str(columnvalues),
+                                                          count))
         return self.readok()
 
-    def cmd_count(self, name, _from, to, columnvalues='', groupcolumn=''):
-        self.sendline("COUNT {} {} {} {} {}".format(name, _from, to,
-                                                    self._column_values_to_str(columnvalues),
-                                                    groupcolumn))
+    def cmd_count(self, name, _from='', to='', columnvalues='', groupcolumn=''):
+        self.sendline("COUNT '{}' '{}' '{}' '{}' '{}'".format(name, _from, to,
+                                                              self._column_values_to_str(columnvalues),
+                                                              groupcolumn))
         if groupcolumn:
             return self.readmap()
         else:
             return self.readcount()
 
-    def cmd_pcount(self, name, _from, to, columnvalues='', groupcolumn=''):
-        self.sendline("PCOUNT {} {} {} {} {}".format(name, _from, to,
-                                                     self._column_values_to_str(columnvalues),
-                                                     groupcolumn))
+    def cmd_pcount(self, name, _from='', to='', columnvalues='', groupcolumn=''):
+        self.sendline("PCOUNT '{}' '{}' '{}' '{}' '{}'".format(name, _from, to,
+                                                               self._column_values_to_str(columnvalues),
+                                                               groupcolumn))
         if groupcolumn:
             return self.readmapmap()
         else:
