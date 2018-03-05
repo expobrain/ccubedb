@@ -238,7 +238,11 @@
 
   - [ ] cubedb:  0.760ms
 
-* TODO [0/8] Prepare for test launch (the project works in background)
+* TODO [1/11] Prepare for test launch (the project works in background)
+** DONE null values for start/stop partitions
+
+  ...if there's no need to limit the search (empty values are ok too - should be converted)
+
 ** TODO args with quotes
 
   allow for whitespaces in values - it seems that we really need it
@@ -255,9 +259,6 @@
 
 ** TODO list partitions + list partition columns and values
 ** TODO a better build system?
-** TODO null values for start/stop partitions
-
-  ...if there's no need to limit the search (empty values are ok too - should be converted)
 
 ** TODO backend DSs
 

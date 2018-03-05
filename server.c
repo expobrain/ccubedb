@@ -68,6 +68,14 @@ struct cubedb_cmd {
 
 static cubedb_cmd cmd_table[];
 
+static inline sds parse_partition_range(sds range)
+{
+    if (0 == strcmp("null", range))
+        return NULL;
+    else
+        return range;
+}
+
 static cmd_result cmd_quit(int conn_fd, sds *argv, int argc)
 {
     (void) cubedb; (void) argv; (void) argc; (void) conn_fd;
@@ -123,8 +131,8 @@ static cmd_result cmd_del_cube_partition(int conn_fd, sds *argv, int argc)
     if (!cube) return REPLY_ERR_OBJ_NOT_FOUND;
 
     if (4 == argc) {
-        sds from_partition = argv[2];
-        sds to_partition = argv[3];
+        sds from_partition = parse_partition_range(argv[2]);
+        sds to_partition = parse_partition_range(argv[3]);
         cube_delete_partition_from_to(cube, from_partition, to_partition);
     } else if (3 == argc) {
         sds partition_name = argv[2];
@@ -209,14 +217,17 @@ static cmd_result cmd_insert(int conn_fd, sds *argv, int argc)
 
 static cmd_result cmd_count(int conn_fd, sds *argv, int argc)
 {
-    assert(argc >= 4 && argc <= 6);
-
     sds cube_name = argv[1];
     cube_t *cube = cubedb_find_cube(cubedb, cube_name);
     if (!cube) return REPLY_ERR_OBJ_NOT_FOUND;
 
-    sds from_partition = argv[2];
-    sds to_partition = argv[3];
+    sds from_partition = NULL;
+    if (argc >= 3)
+        from_partition = parse_partition_range(argv[2]);
+
+    sds to_partition = NULL;
+    if (argc >= 4)
+        to_partition = parse_partition_range(argv[3]);
 
     filter_t *filter = NULL;
     defer { if (filter) filter_destroy(filter); }
@@ -249,14 +260,17 @@ static cmd_result cmd_count(int conn_fd, sds *argv, int argc)
 
 static cmd_result cmd_pcount(int conn_fd, sds *argv, int argc)
 {
-    assert(argc >= 4 && argc <= 6);
-
     sds cube_name = argv[1];
     cube_t *cube = cubedb_find_cube(cubedb, cube_name);
     if (!cube) return REPLY_ERR_OBJ_NOT_FOUND;
 
-    sds from_partition = argv[2];
-    sds to_partition = argv[3];
+    sds from_partition = NULL;
+    if (argc >= 3)
+        from_partition = parse_partition_range(argv[2]);
+
+    sds to_partition = NULL;
+    if (argc >= 4)
+        to_partition = parse_partition_range(argv[3]);
 
     filter_t *filter = NULL;
     defer { if (filter) filter_destroy(filter); }
@@ -328,13 +342,13 @@ static cubedb_cmd cmd_table[] = {
       "INSERT <cube> <partition> <columnvalues> <count>: "
       "insert a row into a <cube> partition <partition> with given <columnvalues>, count <count>"},
 
-    { "COUNT", cmd_count, 3, 5,
-      "COUNT <cube> <from> <to> [<columnvalues> [<groupcolumn>]]: "
+    { "COUNT", cmd_count, 1, 5,
+      "COUNT <cube> [<from> [<to> [<columnvalues> [<groupcolumn>]]]]: "
       "count the sum of row counts in a <cube> between <from>/<to> partitions, inclusive, "
       "with optional given <columnvalues> (can be \"null\") <groupcolumn>"},
 
-    { "PCOUNT", cmd_pcount, 3, 5,
-      "PCOUNT <cube> <from> <to> [<columnvalues> [<groupcolumn>]]: "
+    { "PCOUNT", cmd_pcount, 1, 5,
+      "PCOUNT <cube> [<from> [<to> [<columnvalues> [<groupcolumn>]]]]: "
       "count the per-partition sum of row counts in a <cube> between <from>/<to> partitions, inclusive, "
       "with optional <columnvalues> (can be \"null\") and <groupcolumn>"},
 
