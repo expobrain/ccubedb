@@ -40,6 +40,7 @@ class CubeDB(object):
         self.sock_file = self.sock.makefile()
 
         self.cmd_table = {
+            'PING': self.cmd_ping,
             'HELP': self.cmd_help,
             'QUIT': self.cmd_quit,
             'CUBES': self.cmd_cubes,
@@ -111,6 +112,10 @@ class CubeDB(object):
                 map_to_map_to_count[top_key][line_parts[0]] = line_parts[1]
 
         return map_to_map_to_count
+
+    def cmd_ping(self):
+        self.sendline("PING")
+        return self.readline()
 
     def cmd_cubes(self):
         self.sendline("CUBES")

@@ -133,6 +133,11 @@ class CubeDBTest(CubeDBTestBase):
         reply = self.readline()
         assert reply == REPLY_OK
 
+    def test_ping(self):
+        self.sendline("PING")
+        reply = self.readline().strip()
+        assert reply == "PONG"
+
     def test_cube(self):
         # Does not exist
         self.sendline("CUBE cube")

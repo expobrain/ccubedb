@@ -238,7 +238,7 @@
 
   - [ ] cubedb:  0.760ms
 
-* TODO [2/11] Prepare for test launch (the project works in background)
+* TODO [3/12] Prepare for test launch (the project works in background)
 ** DONE null values for start/stop partitions
 
   ...if there's no need to limit the search (empty values are ok too - should be converted)
@@ -246,6 +246,7 @@
 ** DONE args with quotes
 
   allow for whitespaces in values - it seems that we really need it
+** DONE PING cmd
 
 ** TODO profile and fix things
 
@@ -258,7 +259,6 @@
    - [ ] pcount plain, filtered, grouped
 
 ** TODO list partitions + list partition columns and values
-** TODO PING cmd
 ** TODO a better build system?
 ** TODO [1/5] backend DSs
 
@@ -310,3 +310,8 @@
 
 ** TODO recursive grouping
 ** TODO column compression
+** TODO afl-gcc fuzzy testing
+
+   - [ ] allow for reading from stdin or a file (on a compile-time flag maybe?)
+
+   - [ ] use afl with some test input

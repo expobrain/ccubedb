@@ -78,8 +78,18 @@ static inline sds parse_partition_range(sds range)
 
 static cmd_result cmd_quit(int conn_fd, sds *argv, int argc)
 {
-    (void) cubedb; (void) argv; (void) argc; (void) conn_fd;
+    (void) argv; (void) argc; (void) conn_fd;
     return REPLY_QUIT;
+}
+
+static cmd_result cmd_ping(int conn_fd, sds *argv, int argc)
+{
+    (void) argv; (void) argc; (void) conn_fd;
+
+    if (-1 == sendstr(conn_fd, "PONG"))
+        return REPLY_ERR;
+
+    return REPLY_OK_NO_ANSWER;
 }
 
 static cmd_result cmd_cubes(int conn_fd, sds *argv, int argc)
@@ -321,6 +331,9 @@ static cmd_result cmd_help(int conn_fd, sds *argv, int argc)
 static cubedb_cmd cmd_table[] = {
     { "QUIT", cmd_quit, 0, 0,
       "QUIT: disconnect"},
+
+    { "PING", cmd_ping, 0, 0,
+      "PING: reply with \"PONG\""},
 
     { "CUBES", cmd_cubes, 0, 0,
       "CUBES: list all the cubes"},
