@@ -39,7 +39,7 @@ unit-test: $(TESTS)
 	done
 
 external-test: cubedb
-	./server_test.py
+	./server-test.py
 
 cubedb-test: cubedb-test.o $(OBJ)
 

@@ -258,8 +258,8 @@
    - [ ] pcount plain, filtered, grouped
 
 ** TODO list partitions + list partition columns and values
+** TODO PING cmd
 ** TODO a better build system?
-
 ** TODO [1/5] backend DSs
 
   - [X] a more generic int hash instead of str by default and use that to fix the reverse mapping
