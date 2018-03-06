@@ -68,12 +68,12 @@ struct cubedb_cmd {
 
 static cubedb_cmd cmd_table[];
 
-static inline sds parse_partition_range(sds range)
+static inline sds parse_nullable_arg(sds arg)
 {
-    if (0 == strcmp("null", range))
+    if (0 == sdslen(arg) || 0 == strcmp("null", arg))
         return NULL;
     else
-        return range;
+        return arg;
 }
 
 static cmd_result cmd_quit(int conn_fd, sds *argv, int argc)
@@ -141,8 +141,8 @@ static cmd_result cmd_del_cube_partition(int conn_fd, sds *argv, int argc)
     if (!cube) return REPLY_ERR_OBJ_NOT_FOUND;
 
     if (4 == argc) {
-        sds from_partition = parse_partition_range(argv[2]);
-        sds to_partition = parse_partition_range(argv[3]);
+        sds from_partition = parse_nullable_arg(argv[2]);
+        sds to_partition = parse_nullable_arg(argv[3]);
         cube_delete_partition_from_to(cube, from_partition, to_partition);
     } else if (3 == argc) {
         sds partition_name = argv[2];
@@ -233,11 +233,11 @@ static cmd_result cmd_count(int conn_fd, sds *argv, int argc)
 
     sds from_partition = NULL;
     if (argc >= 3)
-        from_partition = parse_partition_range(argv[2]);
+        from_partition = parse_nullable_arg(argv[2]);
 
     sds to_partition = NULL;
     if (argc >= 4)
-        to_partition = parse_partition_range(argv[3]);
+        to_partition = parse_nullable_arg(argv[3]);
 
     filter_t *filter = NULL;
     defer { if (filter) filter_destroy(filter); }
@@ -248,7 +248,8 @@ static cmd_result cmd_count(int conn_fd, sds *argv, int argc)
     }
 
     sds group_column = NULL;
-    if (6 == argc) group_column = argv[5];
+    if (6 == argc)
+        group_column = parse_nullable_arg(argv[5]);
 
     void *result = cube_count_from_to(cube, from_partition, to_partition, filter, group_column);
 
@@ -276,11 +277,11 @@ static cmd_result cmd_pcount(int conn_fd, sds *argv, int argc)
 
     sds from_partition = NULL;
     if (argc >= 3)
-        from_partition = parse_partition_range(argv[2]);
+        from_partition = parse_nullable_arg(argv[2]);
 
     sds to_partition = NULL;
     if (argc >= 4)
-        to_partition = parse_partition_range(argv[3]);
+        to_partition = parse_nullable_arg(argv[3]);
 
     filter_t *filter = NULL;
     defer { if (filter) filter_destroy(filter); }
@@ -291,7 +292,8 @@ static cmd_result cmd_pcount(int conn_fd, sds *argv, int argc)
     }
 
     sds group_column = NULL;
-    if (6 == argc) group_column = argv[5];
+    if (6 == argc)
+        group_column = parse_nullable_arg(argv[5]);
 
     htable_t *partition_to_result = cube_pcount_from_to(cube, from_partition, to_partition, filter, group_column);
     defer { htable_destroy(partition_to_result); }

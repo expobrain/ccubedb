@@ -253,6 +253,7 @@
 
    - [X] 3 days of data -> count ... app_version -> 0.232s
 
+** TODO bug with return values: if map keys contain whitespaces the client cannot parse it
 ** TODO profile and fix things
 
    - [X] prepare a big test cmd set
@@ -272,6 +273,11 @@
    - [ ] pcount grouped
 
 ** TODO list partitions + list partition columns and values
+
+   - [ ] add the cmd
+
+   - [ ] check for leaks
+
 ** TODO a better build system?
 ** TODO [1/5] backend DSs
 
