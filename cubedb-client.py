@@ -209,6 +209,8 @@ def main():
                 raise
         except Exception as e:
             print("Command '{}' failed with exception".format(line.strip()), traceback.format_exc(e))
+            if not args.ignore_errors:
+                raise
 
 
 if __name__ == '__main__':

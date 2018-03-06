@@ -238,7 +238,7 @@
 
   - [ ] cubedb:  0.760ms
 
-* TODO [3/12] Prepare for test launch (the project works in background)
+* TODO [4/12] Prepare for test launch (the project works in background)
 ** DONE null values for start/stop partitions
 
   ...if there's no need to limit the search (empty values are ok too - should be converted)
@@ -247,16 +247,29 @@
 
   allow for whitespaces in values - it seems that we really need it
 ** DONE PING cmd
+** DONE check speed on 3 days of hourly partitioned data
+
+   - [X] 3 days of data -> pcount ... app_version -> 0.244s
+
+   - [X] 3 days of data -> count ... app_version -> 0.232s
 
 ** TODO profile and fix things
 
-   - [ ] prepare a big test cmd set
+   - [X] prepare a big test cmd set
 
-   - [ ] inserts
+   - [ ] insert
 
-   - [ ] count plain, filtered, grouped
+   - [ ] count plain
 
-   - [ ] pcount plain, filtered, grouped
+   - [ ] count filtered
+
+   - [ ] count grouped
+
+   - [ ] pcount plain
+
+   - [ ] pcount filtered
+
+   - [ ] pcount grouped
 
 ** TODO list partitions + list partition columns and values
 ** TODO a better build system?
@@ -282,7 +295,7 @@
 ** TODO sanitize=asan
 ** TODO sanitize=ubsan
 ** TODO deploy and load data in a preliminary manner
-** TODO a big test suite based on counts of real event data
+
 * TODO [0/3] Full launch
 ** TODO client, C
 ** TODO client, (Node) JS
