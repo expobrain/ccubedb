@@ -333,12 +333,12 @@ htable_t *partition_count_filter_grouped(partition_t *partition, filter_t *filte
          * mapping */
         assert(group_column_row_value);
 
-        if (!htable_has(group_value_to_count, group_column_row_value)) {
-            counter_t *counter = cdb_calloc(sizeof(*counter));
+        counter_t *counter = htable_get(group_value_to_count, group_column_row_value);
+        if (!counter) {
+            counter = cdb_calloc(sizeof(*counter));
             htable_put(group_value_to_count, group_column_row_value, counter);
         }
 
-        counter_t *counter = htable_get(group_value_to_count, group_column_row_value);
         *counter += partition->counters[row_index];
     }
 
