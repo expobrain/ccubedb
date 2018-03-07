@@ -22,6 +22,7 @@ LDLIBS += -lasan
 else
 # Debug symbols installed by default
 CFLAGS += -g
+SDSCFLAGS = -g
 endif
 
 OBJ = cubedb.o cube.o partition.o sds.o insert_row.o filter.o log.o
@@ -50,7 +51,7 @@ slist-test: slist-test.o
 htable-test: htable-test.o
 
 sds.o: sds.c
-	$(CC) -Wall -std=c99 -pedantic -O2 -c $<
+	$(CC) -Wall -std=c99 -pedantic -O2 $(SDSCFLAGS)  -c $<
 
 clean:
 	$(RM) *.o

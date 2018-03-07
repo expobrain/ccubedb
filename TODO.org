@@ -258,7 +258,9 @@
 
    - [X] prepare a big test cmd set
 
-   - [ ] insert
+   - [X] insert
+
+     insert is very quick, but sds can be optimised
 
    - [ ] count plain
 
