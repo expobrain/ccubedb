@@ -92,8 +92,7 @@ class CubeDB(object):
         result = {}
         for line in lines:
             line_parts = line.split()
-            assert len(line_parts) == 2
-            result[line_parts[0]] = line_parts[1]
+            result[" ".join(line_parts[:-1])] = line_parts[-1]
         return result
 
     def readmapmap(self):
