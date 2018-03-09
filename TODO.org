@@ -238,7 +238,7 @@
 
   - [ ] cubedb:  0.760ms
 
-* TODO [6/13] Prepare for test launch (the project works in background)
+* TODO [7/13] Prepare for test launch (the project works in background)
 ** DONE null values for start/stop partitions
 
   ...if there's no need to limit the search (empty values are ok too - should be converted)
@@ -284,11 +284,19 @@
 
 ** DONE bug with return values: if map keys contain whitespaces the client cannot parse it
 
-** TODO list partitions + list partition columns and values
+** DONE add a command for displaying cube partition columns and values
 
-   - [ ] add the cmd
+   - [X] cube tests
 
-   - [ ] check for leaks
+   - [X] the cmd should return a per-column list of values for a cube's partition
+
+   - [X] check for leaks
+
+   - [X] cmd itself
+
+   - [X] client tests
+
+   - [X] update the client
 
 ** TODO [1/5] backend DSs
 
@@ -308,11 +316,13 @@
 
   - [ ] a list of clients should be a mapping
 
+  - [ ] instead of sending data to the client while still building dss -> prepare the data first,
+    then send. If the error condition happens - abort and drop the data
+
 ** TODO sanitize=leak
 ** TODO sanitize=asan
 ** TODO sanitize=ubsan
 ** TODO deploy and load data in a preliminary manner
-
 ** TODO dumping
 
   - [ ] walk cubes and dump into files

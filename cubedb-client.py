@@ -47,6 +47,7 @@ class CubeDB(object):
             'ADDCUBE': self.cmd_addcube,
             'CUBE': self.cmd_cube,
             'DELCUBE': self.cmd_delcube,
+            'PART': self.cmd_part,
             'DELPART': self.cmd_delpart,
             'INSERT': self.cmd_insert,
             'COUNT': self.cmd_count,
@@ -112,6 +113,21 @@ class CubeDB(object):
 
         return map_to_map_to_count
 
+    def readmaplist(self):
+        mapnum = self.readcount()
+
+        map_to_list = {}
+        for _ in range(mapnum):
+            top_key = self.readline().strip()
+            map_to_list[top_key] = []
+
+            listsize = self.readcount()
+            for _ in range(listsize):
+                line = self.readline().strip()
+                map_to_list[top_key].append(line)
+
+        return map_to_list
+
     def cmd_ping(self):
         self.sendline("PING")
         return self.readline()
@@ -131,6 +147,13 @@ class CubeDB(object):
     def cmd_delcube(self, name):
         self.sendline("DELCUBE '{}'".format(name))
         return self.readok()
+
+    def cmd_part(self, name, _from='', to=None):
+        cmd = "PART '{}' '{}'".format(name, _from)
+        if to is not None:
+            cmd.append(" '{}".format(to))
+        self.sendline(cmd)
+        return self.readmaplist()
 
     def cmd_delpart(self, name, _from, to=''):
         self.sendline("DELPART '{}' '{}' '{}'".format(name, _from, to))

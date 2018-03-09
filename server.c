@@ -131,6 +131,34 @@ static cmd_result cmd_del_cube(int conn_fd, sds *argv, int argc)
     return REPLY_OK;
 }
 
+static cmd_result cmd_part(int conn_fd, sds *argv, int argc)
+{
+    sds cube_name = argv[1];
+
+    cube_t *cube = cubedb_find_cube(cubedb, cube_name);
+    if (!cube) return REPLY_ERR_OBJ_NOT_FOUND;
+
+    htable_t *column_to_value_set = NULL;
+    if (4 == argc) {
+        sds from_partition = parse_nullable_arg(argv[2]);
+        sds to_partition = parse_nullable_arg(argv[3]);
+        column_to_value_set = cube_get_columns_to_value_set(cube, from_partition, to_partition);
+    } else if (3 == argc) {
+        sds partition = parse_nullable_arg(argv[2]);
+        if (!cube_has_partition(cube, partition))
+            return REPLY_ERR_OBJ_NOT_FOUND;
+        column_to_value_set = cube_get_columns_to_value_set(cube, partition, partition);
+    } else {
+        column_to_value_set = cube_get_columns_to_value_set(cube, NULL, NULL);
+    }
+    defer { htable_destroy(column_to_value_set); }
+
+    if (-1 == sendstrstrset(conn_fd, column_to_value_set))
+        return REPLY_ERR;
+
+    return REPLY_OK_NO_ANSWER;
+}
+
 static cmd_result cmd_del_cube_partition(int conn_fd, sds *argv, int argc)
 {
     (void) conn_fd;
@@ -348,6 +376,10 @@ static cubedb_cmd cmd_table[] = {
 
     { "DELCUBE", cmd_del_cube, 1, 1,
       "DELCUBE <name>: delete a cube with a given <name>"},
+
+    { "PART", cmd_part, 1, 3,
+      "PART <cube> [(<partition> | <from> <to>)]"
+      "list <cube> partition (or a <from>/<to> partition range) columns and column values"},
 
     { "DELPART", cmd_del_cube_partition, 2, 3,
       "DELPART <cube> (<partition> | <from> <to>): "

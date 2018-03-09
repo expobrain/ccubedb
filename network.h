@@ -70,6 +70,30 @@ static inline int sendstr(int conn_fd, char *str)
     return sendall(conn_fd, msg, sdslen(msg));
 }
 
+static inline int sendstrstrset(int conn_fd, htable_t *map)
+{
+    if (sendsize(conn_fd, htable_size(map)) < 0)
+        return -1;
+
+    htable_for_each(item, map) {
+        char *key = htable_key(item);
+        if (sendstr(conn_fd, key) < 0)
+            return -1;
+
+        htable_t *set = htable_value(item);
+        if (sendsize(conn_fd, htable_size(set)) < 0)
+            return -1;
+
+        htable_for_each(set_item, set) {
+            char *set_key = htable_key(set_item);
+            if (sendstr(conn_fd, set_key) < 0)
+                return -1;
+        }
+    }
+
+    return 0;
+}
+
 static inline int sendstrlist(int conn_fd, char **list, size_t list_size)
 {
     if (sendsize(conn_fd, list_size) < 0)

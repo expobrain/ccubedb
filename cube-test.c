@@ -512,7 +512,90 @@ static char *test_pcount_from_to_filter_grouped()
     return 0;
 }
 
+static char *test_get_columns_to_value_set()
+{
+    cube_t *cube = cube_create();
+    defer { cube_destroy(cube); }
 
+    /* Nothing in the cube yet */
+
+    {
+        htable_t *columns_to_value_set = cube_get_columns_to_value_set(cube, NULL, NULL);
+        defer { htable_destroy(columns_to_value_set); }
+        mu_assert("no columns should be there yet", 0 == htable_size(columns_to_value_set));
+    }
+
+    /* Insert a few row in different partitions */
+    {
+        insert_row_t *irow = insert_row_create("part1001", 3);
+        insert_row_add_column_value(irow, "column", "test value") ;
+        defer { insert_row_destroy(irow); }
+        cube_insert_row(cube, irow);
+    }
+
+    {
+        insert_row_t *irow = insert_row_create("part1002", 2);
+        insert_row_add_column_value(irow, "column", "test value") ;
+        defer { insert_row_destroy(irow); }
+        cube_insert_row(cube, irow);
+    }
+
+    {
+        insert_row_t *irow = insert_row_create("part1003", 2);
+        insert_row_add_column_value(irow, "column", "test value2") ;
+        defer { insert_row_destroy(irow); }
+        cube_insert_row(cube, irow);
+    }
+
+    {
+        insert_row_t *irow = insert_row_create("part1003", 2);
+        insert_row_add_column_value(irow, "column", "test value3") ;
+        defer { insert_row_destroy(irow); }
+        cube_insert_row(cube, irow);
+    }
+
+    {
+        insert_row_t *irow = insert_row_create("part1003", 2);
+        insert_row_add_column_value(irow, "column2", "test value3") ;
+        defer { insert_row_destroy(irow); }
+        cube_insert_row(cube, irow);
+    }
+
+    /* Check without a partition filter */
+
+    {
+        htable_t *columns_to_value_set = cube_get_columns_to_value_set(cube, NULL, NULL);
+        defer { htable_destroy(columns_to_value_set); }
+        mu_assert("wrong column number", 2 == htable_size(columns_to_value_set));
+        mu_assert("column not present", htable_has(columns_to_value_set, "column"));
+        mu_assert("column not present", htable_has(columns_to_value_set, "column2"));
+
+        htable_t *value_set = htable_get(columns_to_value_set, "column");
+        mu_assert("wrong value number", 3 == htable_size(value_set));
+        mu_assert("value not present", htable_has(value_set, "test value"));
+        mu_assert("value not present", htable_has(value_set, "test value2"));
+        mu_assert("value not present", htable_has(value_set, "test value3"));
+
+        value_set = htable_get(columns_to_value_set, "column2");
+        mu_assert("wrong value number", 1 == htable_size(value_set));
+        mu_assert("value not present", htable_has(value_set, "test value3"));
+    }
+
+    /* Check with a partition filter */
+
+    {
+        htable_t *columns_to_value_set = cube_get_columns_to_value_set(cube, "part1001", "part1002");
+        defer { htable_destroy(columns_to_value_set); }
+        mu_assert("wrong column number", 1 == htable_size(columns_to_value_set));
+        mu_assert("column not present", htable_has(columns_to_value_set, "column"));
+
+        htable_t *value_set = htable_get(columns_to_value_set, "column");
+        mu_assert("wrong value number", 1 == htable_size(value_set));
+        mu_assert("value not present", htable_has(value_set, "test value"));
+    }
+
+    return 0;
+}
 
 static char *all_tests()
 {
@@ -531,6 +614,8 @@ static char *all_tests()
     mu_run_test(test_pcount_from_to_filter_single_row);
     mu_run_test(test_pcount_from_to_grouped);
     mu_run_test(test_pcount_from_to_filter_grouped);
+
+    mu_run_test(test_get_columns_to_value_set);
     return 0;
 }
 
@@ -540,8 +625,7 @@ int main(int argc, char **argv)
     char *result = all_tests();
     if (result != 0) {
         printf("%s\n", result);
-    }
-    else {
+    } else {
         printf("ALL TESTS PASSED: %s\n", __FILE__);
     }
     printf("Tests run: %d\n", tests_run);

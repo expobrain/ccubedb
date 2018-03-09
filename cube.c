@@ -103,6 +103,32 @@ htable_t *cube_pcount_from_to(cube_t *cube, char *from, char *to, filter_t *filt
     return partition_to_results;
 }
 
+static void value_set_cleanup(void *value_set)
+{
+    htable_destroy(value_set);
+}
+
+htable_t *cube_get_columns_to_value_set(cube_t *cube, char *from, char *to)
+{
+    bool partition_filter(void *key) {
+        sds partition_name = key;
+        bool is_within_range = true;
+        if (from) is_within_range = is_within_range && strcoll(partition_name, from) >= 0;
+        if (to) is_within_range = is_within_range && strcoll(partition_name, to) <= 0;
+        return is_within_range;
+    }
+
+    /* TODO: setup destructors */
+    htable_t *column_to_value_set = htable_create(htable_size(cube->name_to_partition) * 2, value_set_cleanup);
+
+    htable_for_each_filter(item, cube->name_to_partition, partition_filter) {
+        partition_t *partition = htable_value(item);
+        partition_extend_column_value_set(partition, column_to_value_set);
+    }
+
+    return column_to_value_set;
+}
+
 void *cube_count_from_to(cube_t *cube, char *from, char *to, filter_t *filter, char *group_by_column)
 {
     bool partition_filter(void *key) {

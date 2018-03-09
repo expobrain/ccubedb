@@ -108,6 +108,23 @@ class CubeDBTestBase(unittest.TestCase):
 
         return result
 
+    def sendwithmapset(self, msg):
+        self.sendline(msg)
+        mapnum = int(self.readline())
+        assert mapnum >= 0
+        result = {}
+        for _ in range(mapnum):
+            top_key = self.readline().strip()
+
+            listsize = int(self.readline())
+            _list = []
+            assert listsize >= 0
+            for _ in range(listsize):
+                _list.append(self.readline().strip())
+            result[top_key] = _list
+
+        return result
+
     def tearDown(self):
         self.sock.close()
         self.process.kill()
@@ -471,6 +488,41 @@ class CubeDBTest(CubeDBTestBase):
     def test_help(self):
         # This is help so no real testing here
         assert self.sendwithlines("HELP")
+
+    def test_part(self):
+        self.sendwithok("ADDCUBE cube")
+
+        # Nothing yet
+        column_to_values = self.sendwithmapset("PART cube")
+        assert not column_to_values
+
+        # Insert some data
+        self.sendwithok("INSERT cube p1 c1=val1 1")
+        self.sendwithok("INSERT cube p2 c1=val2 2")
+        self.sendwithok("INSERT cube p3 c2=val3 4")
+
+        # No filtering at all
+        column_to_values = self.sendwithmapset("PART cube")
+        assert 'c1' in column_to_values
+        assert 'c2' in column_to_values
+        assert 2 == len(column_to_values['c1'])
+        assert 1 == len(column_to_values['c2'])
+        assert 'val1' in column_to_values['c1']
+        assert 'val2' in column_to_values['c1']
+        assert 'val3' in column_to_values['c2']
+
+        # Single partition
+        column_to_values = self.sendwithmapset("PART cube p1")
+        assert 1 == len(column_to_values)
+        assert 1 == len(column_to_values['c1'])
+        assert 'val1' in column_to_values['c1']
+
+        # Two partitions
+        column_to_values = self.sendwithmapset("PART cube p1 p2")
+        assert 1 == len(column_to_values)
+        assert 2 == len(column_to_values['c1'])
+        assert 'val1' in column_to_values['c1']
+        assert 'val2' in column_to_values['c1']
 
 
 if __name__ == '__main__':

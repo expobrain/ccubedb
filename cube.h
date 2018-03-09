@@ -16,6 +16,7 @@ void cube_init(cube_t *cube);
 void cube_destroy(cube_t *cube);
 
 htable_t *cube_pcount_from_to(cube_t *cube, char *from, char *to, filter_t *filter, char *group_by_column);
+htable_t *cube_get_columns_to_value_set(cube_t *cube, char *from, char *to);
 void *cube_count_from_to(cube_t *cube, char *from, char *to, filter_t *filter, char *group_by_column);
 void cube_insert_row(cube_t *cube, insert_row_t *row);
 char **cube_get_partition_names(cube_t *cube, size_t *partition_count);

@@ -418,3 +418,22 @@ void partition_insert_row(partition_t *partition, insert_row_t *row)
 
     partition_increase_row_count(partition, target_row, row->count);
 }
+
+void partition_extend_column_value_set(partition_t *partition, htable_t *column_to_value_set)
+{
+    htable_for_each(item, partition->column_name_to_mapping) {
+        char *column_name = htable_key(item);
+
+        htable_t *value_set = htable_get(column_to_value_set, column_name);
+        if (!value_set) {
+            value_set = htable_create(512, NULL);
+            htable_put(column_to_value_set, column_name, value_set);
+        }
+
+        column_mapping_t *column_mapping = htable_value(item);
+        htable_for_each(value_item, column_mapping->value_to_id) {
+            char *column_value = htable_key(value_item);
+            htable_put(value_set, column_value, NULL);
+        }
+    }
+}
