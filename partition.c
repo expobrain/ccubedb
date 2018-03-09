@@ -3,17 +3,15 @@
 #include <assert.h>
 #include <stdbool.h>
 
+#include "log.h"
 #include "partition.h"
 #include "slist.h"
 #include "htable.h"
 #include "cdb_alloc.h"
 #include "khash.h"
+#include "defs.h"
 
-#define UNSPECIFIED_COLUMN_VALUE UINT16_MAX
-#define UNKNOWN_FILTER_COLUMN_VALUE (UINT16_MAX - 1)
-
-static value_id_t unknown_value_id = UNKNOWN_FILTER_COLUMN_VALUE;
-
+static value_id_t unknown_value_id = VALUE_ID_FILTER_UNSPECIFIED;
 
 static inline uint64_t value_array_hash(const value_id_t *value_array);
 static inline bool value_array_equal(const value_id_t *left_value_array, const value_id_t *right_value_array);
@@ -61,6 +59,16 @@ static void column_mapping_destroy(column_mapping_t *mapping)
         });
     kh_destroy(id_to_value, mapping->id_to_value);
     free(mapping);
+}
+
+static inline bool column_mapping_can_add_value(column_mapping_t *column_mapping, sds column_value)
+{
+    /* The value is already there? it's ok, no need to add anything anyways */
+    if (htable_has(column_mapping->value_to_id, column_value))
+        return true;
+
+    /* Otherwise check if the number of values is below  */
+    return htable_size(column_mapping->value_to_id) <= VALUE_ID_MAX;
 }
 
 static value_id_t *column_mapping_add_value(column_mapping_t *column_mapping, sds value)
@@ -140,9 +148,8 @@ static void partition_add_column(partition_t *partition, sds column_name)
 
     /* fill with default values */
     value_id_t *column = partition->columns[mapping->id];
-    for (size_t r = 0; r > partition->row_num; r++) {
-        column[r] = UNSPECIFIED_COLUMN_VALUE;
-    }
+    for (size_t r = 0; r > partition->row_num; r++)
+        column[r] = VALUE_ID_UNKNOWN;
 }
 
 static slist_t **convert_filter(partition_t *partition, filter_t *filter)
@@ -211,8 +218,7 @@ static value_id_t *convert_insert_row(partition_t *partition, insert_row_t *inse
     values_to_insert[0] = partition->column_num;
 
     for (size_t c = 0; c < partition->column_num; c++)
-        values_to_insert[1 + c] = UNSPECIFIED_COLUMN_VALUE;
-
+        values_to_insert[1 + c] = VALUE_ID_UNKNOWN;
 
     /* Convert column name / column value strings into partition-specific ids */
     htable_for_each(node, insert_row->column_to_value) {
@@ -317,7 +323,7 @@ htable_t *partition_count_filter_grouped(partition_t *partition, filter_t *filte
 
     defer {
         for (size_t c = 0; c < partition->column_num; c++ )
-             slist_destroy(values_to_look_for[c]);
+            slist_destroy(values_to_look_for[c]);
         free(values_to_look_for);
     }
 
@@ -394,8 +400,36 @@ static inline bool value_array_equal(const value_id_t *left_value_array, const v
     return 0 == memcmp(left_value_array, right_value_array, array_size);
 }
 
-void partition_insert_row(partition_t *partition, insert_row_t *row)
+static inline bool partition_can_insert_row(const partition_t *partition, const insert_row_t *row)
 {
+    /* Go through rows inserted and check that all columns can accept new values */
+    htable_for_each(node, row->column_to_value) {
+        char *column_name = htable_key(node);
+        sds column_value = htable_value(node);
+
+        /* Mapping not present? it can definitely be added */
+        column_mapping_t *mapping = htable_get(partition->column_name_to_mapping, column_name);
+        if (!mapping)
+            continue;
+
+        /* Now, see if the value can be added  */
+        if (!column_mapping_can_add_value(mapping, column_value)) {
+            log_warn(
+                "Cannot add %s to %s because of too many values already present",
+                column_value, column_name
+            );
+            return false;
+        }
+    }
+    return true;
+}
+
+bool partition_insert_row(partition_t *partition, insert_row_t *row)
+{
+    /* Make sure the row can be added at all */
+    if (!partition_can_insert_row(partition, row))
+        return false;
+
     /* Get the ids instead of string values (array size + values in the array) */
     value_id_t *values_to_insert = convert_insert_row(partition, row);
 
@@ -417,6 +451,7 @@ void partition_insert_row(partition_t *partition, insert_row_t *row)
     }
 
     partition_increase_row_count(partition, target_row, row->count);
+    return true;
 }
 
 void partition_extend_column_value_set(partition_t *partition, htable_t *column_to_value_set)

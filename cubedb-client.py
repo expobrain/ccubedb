@@ -13,13 +13,14 @@ class CubeDBError(Exception):
 
 
 REPLY_OK = "0"
-REPLY_ERR = "-3"              # Command generic error  */
-REPLY_ERR_NOT_FOUND = "-4"            # Command not found */
-REPLY_ERR_WRONG_ARG = "-5"            # Command argument is wrong */
-REPLY_ERR_WRONG_ARG_NUM = "-6"        # Command argument number is wrong */
-REPLY_ERR_MALFORMED_ARG = "-7"        # Command argument is contains non-graphic symbols*/
-REPLY_ERR_OBJ_NOT_FOUND = "-8"        # Command object not found */
-REPLY_ERR_OBJ_EXISTS = "-9"           # Command object already exists */
+REPLY_ERR = "-3"
+REPLY_ERR_NOT_FOUND = "-4"
+REPLY_ERR_WRONG_ARG = "-5"
+REPLY_ERR_WRONG_ARG_NUM = "-6"
+REPLY_ERR_MALFORMED_ARG = "-7"
+REPLY_ERR_OBJ_NOT_FOUND = "-8"
+REPLY_ERR_OBJ_EXISTS = "-9"
+REPLY_ERR_ACTION_FAILED = "-10"
 
 ERROR_TO_MSG = {
     REPLY_ERR: "Command generic error",
@@ -29,6 +30,7 @@ ERROR_TO_MSG = {
     REPLY_ERR_MALFORMED_ARG: "Command argument contains non-graphic symbols",
     REPLY_ERR_OBJ_NOT_FOUND: "Command object not found",
     REPLY_ERR_OBJ_EXISTS: "Command object already exists",
+    REPLY_ERR_ACTION_FAILED: "Command execution aborted",
 }
 
 

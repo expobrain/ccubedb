@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <sys/time.h>
 #include <time.h>
+#include <assert.h>
 
 #include "log.h"
 #include "config.h"
@@ -39,6 +40,7 @@ static void do_log(int level, char *msg)
 void cdb_log(int level, const char *fmt, ...)
 {
     va_list ap;
+    assert(config);
 
     if (level > config->log_level) return;
 

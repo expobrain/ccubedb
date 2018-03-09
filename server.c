@@ -53,6 +53,7 @@ enum cmd_result {
     REPLY_ERR_MALFORMED_ARG,    /* Command argument contains non-graphic symbols*/
     REPLY_ERR_OBJ_NOT_FOUND,    /* Command object not found */
     REPLY_ERR_OBJ_EXISTS,       /* Command object already exists */
+    REPLY_ERR_ACTION_FAILED,    /* Command execution aborted */
 };
 
 typedef cmd_result cmd_function(int conn_fd, sds *argv, int argc);
@@ -250,7 +251,8 @@ static cmd_result cmd_insert(int conn_fd, sds *argv, int argc)
         insert_row_add_column_value(row, column, value);
     }
 
-    cube_insert_row(cube, row);
+    if (!cube_insert_row(cube, row))
+        return REPLY_ERR_ACTION_FAILED;
 
     return REPLY_OK;
 }

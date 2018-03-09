@@ -298,42 +298,39 @@
 
    - [X] update the client
 
-** TODO [1/5] backend DSs
+** TODO [2/6] backend DSs
 
   - [X] a more generic int hash instead of str by default and use that to fix the reverse mapping
     problem in partition.c:get_column_value_id_value
 
     reuse khash.h this time? It might be reasonable to replace my htable with khash.h?
 
-  - [ ] values_to_insert - come up with a generic vector or smth? or at least a quick struct should
-    do?
-
-  - [ ] make it impossible to use special values (UNSPECIFIED and UNKNOWN) in value_ids
-
-    or maybe make repacking to a larger type automatic?
-
-  - [ ] a list of partitions should be sorted, or, even better, should be a autosorted DS (rb-tree?)
+  - [X] make it impossible to use special values (UNSPECIFIED and UNKNOWN) in value_ids
 
   - [ ] a list of clients should be a mapping
 
+  - [ ] a list of partitions should be sorted, or, even better, should be an autosorted DS (rb-tree?)
+
   - [ ] instead of sending data to the client while still building dss -> prepare the data first,
     then send. If the error condition happens - abort and drop the data
+
+  - [ ] values_to_insert - come up with a generic vector or smth? or at least a quick struct should
+    do?
 
 ** TODO sanitize=leak
 ** TODO sanitize=asan
 ** TODO sanitize=ubsan
 ** TODO deploy and load data in a preliminary manner
-** TODO dumping
 
   - [ ] walk cubes and dump into files
 
   - [ ] dump path should be preconfigured on start
 
 * TODO [0/2] Full launch
-
+** TODO dumping and reloading
 ** TODO client, C
 ** TODO client, (Node) JS
-
+** TODO integration
 * TODO [0/5] Post-launch
 
 ** TODO mmaped DS

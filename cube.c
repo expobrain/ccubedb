@@ -52,12 +52,12 @@ static inline partition_t *cube_add_partition(cube_t *cube, sds partition_name)
     return new_partition;
 }
 
-void cube_insert_row(cube_t *cube, insert_row_t *row)
+bool cube_insert_row(cube_t *cube, insert_row_t *row)
 {
     partition_t *partition = cube_get_partition(cube, insert_row_name(row));
     if (!partition)
         partition = cube_add_partition(cube, insert_row_name(row));
-    partition_insert_row(partition, row);
+    return partition_insert_row(partition, row);
 }
 
 static void group_value_to_count_cleanup(void *value_to_count)

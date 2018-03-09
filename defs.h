@@ -11,6 +11,10 @@ typedef uint8_t column_id_t;
 typedef uint16_t value_id_t;
 typedef uint64_t counter_t;
 
+#define VALUE_ID_UNKNOWN UINT16_MAX
+#define VALUE_ID_FILTER_UNSPECIFIED (UINT16_MAX - 1)
+#define VALUE_ID_MAX (UINT16_MAX - 2)
+
 #define defer_(x) do{}while(0);                                         \
     auto void _dtor1_##x();                                             \
     auto void _dtor2_##x();                                             \

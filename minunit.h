@@ -1,7 +1,6 @@
 #ifndef MINUNIT_H
 #define MINUNIT_H
 
-/* NOTE: Only need this here because some of the tested files depend on extern config */
 #include "config.h"
 config_t *config = NULL;
 

@@ -3,6 +3,7 @@
 
 #include "minunit.h"
 #include "cube.h"
+#include "config.h"
 #include "partition.h"
 #include "defs.h"
 #include "htable.h"
@@ -597,6 +598,33 @@ static char *test_get_columns_to_value_set()
     return 0;
 }
 
+static char *test_max_value()
+{
+    cube_t *cube = cube_create();
+    defer { cube_destroy(cube); }
+
+    /* Insert A LOT of values, but below the limit */
+    for (size_t i = 0; i <= VALUE_ID_MAX; ++i) {
+        sds msg = sdscatprintf(sdsempty(), "%zu", i);
+        defer { sdsfree(msg); }
+
+        insert_row_t *irow = insert_row_create("part", 1);
+        insert_row_add_column_value(irow, "column", msg) ;
+        defer { insert_row_destroy(irow); }
+        mu_assert("failed to insert a row", cube_insert_row(cube, irow));
+    }
+
+    /* The last insertion should fail */
+    {
+        insert_row_t *irow = insert_row_create("part", 1);
+        insert_row_add_column_value(irow, "column", "one last value") ;
+        defer { insert_row_destroy(irow); }
+        mu_assert("should not be able to insert a row", !cube_insert_row(cube, irow));
+    }
+
+    return 0;
+}
+
 static char *all_tests()
 {
     mu_run_test(test_empty);
@@ -616,12 +644,16 @@ static char *all_tests()
     mu_run_test(test_pcount_from_to_filter_grouped);
 
     mu_run_test(test_get_columns_to_value_set);
+    mu_run_test(test_max_value);
     return 0;
 }
 
 int main(int argc, char **argv)
 {
-    (void) argc; (void) argv;
+    /* Do not log anything */
+    config = config_create(argc, argv);
+    config->log_level = -1;
+
     char *result = all_tests();
     if (result != 0) {
         printf("%s\n", result);
