@@ -145,6 +145,8 @@ static cmd_result cmd_part(int conn_fd, sds *argv, int argc)
         column_to_value_set = cube_get_columns_to_value_set(cube, from_partition, to_partition);
     } else if (3 == argc) {
         sds partition = parse_nullable_arg(argv[2]);
+        if (!partition)
+            return REPLY_ERR_WRONG_ARG;
         if (!cube_has_partition(cube, partition))
             return REPLY_ERR_OBJ_NOT_FOUND;
         column_to_value_set = cube_get_columns_to_value_set(cube, partition, partition);

@@ -148,10 +148,12 @@ class CubeDB(object):
         self.sendline("DELCUBE '{}'".format(name))
         return self.readok()
 
-    def cmd_part(self, name, _from='', to=None):
-        cmd = "PART '{}' '{}'".format(name, _from)
+    def cmd_part(self, name, _from=None, to=None):
+        cmd = "PART '{}'".format(name)
+        if _from is not None:
+            cmd += " '{}'".format(_from)
         if to is not None:
-            cmd.append(" '{}".format(to))
+            cmd += " '{}'".format(to)
         self.sendline(cmd)
         return self.readmaplist()
 
