@@ -238,7 +238,7 @@
 
   - [ ] cubedb:  0.760ms
 
-* TODO [7/13] Prepare for test launch (the project works in background)
+* TODO [8/13] Prepare for test launch (the project works in background)
 ** DONE null values for start/stop partitions
 
   ...if there's no need to limit the search (empty values are ok too - should be converted)
@@ -298,11 +298,11 @@
 
    - [X] update the client
 
-** TODO prepare the data first, then send.
+** DONE prepare the data first, then send.
 
    If the error condition happens - abort and drop the data
 
-** TODO [2/5] backend DSs
+** TODO [2/6] backend DSs
 
   - [X] a more generic int hash instead of str by default and use that to fix the reverse mapping
     problem in partition.c:get_column_value_id_value
@@ -310,6 +310,8 @@
     reuse khash.h this time? It might be reasonable to replace my htable with khash.h?
 
   - [X] make it impossible to use special values (UNSPECIFIED and UNKNOWN) in value_ids
+
+  - [ ] append for slist
 
   - [ ] a list of clients should be a mapping
 

@@ -170,7 +170,7 @@ static inline int bind_addr(struct addrinfo *servinfo)
     return sockfd;
 }
 
-static inline int socket_non_blocking (int fd)
+static inline int socket_non_blocking(int fd)
 {
 
     int flags = fcntl(fd, F_GETFL, 0);

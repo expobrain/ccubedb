@@ -532,9 +532,6 @@ int main(int argc, char **argv)
         /* Bind the first bindable address */
         listener_fd = bind_addr(servinfo);
 
-        /* /\* No need to block *\/ */
-        /* socket_non_blocking(listener_fd); */
-
         /* Accept things, finally */
         if (-1 == listen(listener_fd, config->connections)) {
             perror("listen");
@@ -589,6 +586,7 @@ int main(int argc, char **argv)
                     fdmax = new_fd;
 
                 client_t *client = client_create(new_fd);
+                socket_non_blocking(new_fd);
 
                 inet_ntop(their_addr.ss_family,
                           get_in_addr((struct sockaddr *)&their_addr),
