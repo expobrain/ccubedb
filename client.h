@@ -33,9 +33,9 @@ static inline client_t *client_create(int fd)
     return client;
 }
 
-static inline void client_add_reply(client_t *client, sds *reply)
+static inline void client_add_reply(client_t *client, sds reply)
 {
-    slist_prepend(client->replies, reply);
+    slist_append(client->replies, reply);
 }
 
 static inline bool client_has_replies(client_t *client)

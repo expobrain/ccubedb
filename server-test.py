@@ -21,7 +21,7 @@ class CubeDBTestBase(unittest.TestCase):
         global start_port
         start_port += 1
 
-        cmd = "./{cmd} --port {port} --log-level 10".format(
+        cmd = "./{cmd} --port {port} --log-level 0".format(
             cmd=self.EXECUTABLE,
             port=str(start_port)
         )

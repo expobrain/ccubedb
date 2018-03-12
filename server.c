@@ -86,10 +86,7 @@ static cmd_result cmd_quit(client_t *client, sds *argv, int argc)
 static cmd_result cmd_ping(client_t *client, sds *argv, int argc)
 {
     (void) argv; (void) argc;
-
-    if (-1 == sendstr(client, "PONG"))
-        return REPLY_ERR;
-
+    sendstr(client, "PONG");
     return REPLY_OK_NO_ANSWER;
 }
 
@@ -101,8 +98,7 @@ static cmd_result cmd_cubes(client_t *client, sds *argv, int argc)
     char **cube_names = cubedb_get_cube_names(cubedb, &cube_count);
     defer { free(cube_names); }
 
-    if (-1 == sendstrlist(client, cube_names, cube_count))
-        return REPLY_ERR;
+    sendstrlist(client, cube_names, cube_count);
 
     return REPLY_OK_NO_ANSWER;
 }
@@ -156,8 +152,7 @@ static cmd_result cmd_part(client_t *client, sds *argv, int argc)
     }
     defer { htable_destroy(column_to_value_set); }
 
-    if (-1 == sendstrstrset(client, column_to_value_set))
-        return REPLY_ERR;
+    sendstrstrset(client, column_to_value_set);
 
     return REPLY_OK_NO_ANSWER;
 }
@@ -287,14 +282,12 @@ static cmd_result cmd_count(client_t *client, sds *argv, int argc)
     if (!group_column) {
         counter_t *count = result;
         defer { free(count); }
-        if (-1 == sendcounter(client, *count))
-            return REPLY_ERR;
+        sendcounter(client, *count);
     } else {
         htable_t *value_to_count = result;
         defer { htable_destroy(value_to_count); }
 
-        if (-1 == sendstrcntmap(client, value_to_count))
-            return REPLY_ERR;
+        sendstrcntmap(client, value_to_count);
     }
 
     return REPLY_OK_NO_ANSWER;
@@ -331,12 +324,10 @@ static cmd_result cmd_pcount(client_t *client, sds *argv, int argc)
 
     if (!group_column) {
         /* Just a per-partition counter if there was not group_column specified */
-        if (-1 == sendstrcntmap(client, partition_to_result))
-            return REPLY_ERR;
+        sendstrcntmap(client, partition_to_result);
     } else {
         /* For grouped results dump an htable of values to counters for every partition */
-        if (-1 == sendstrstrcntmap(client, partition_to_result))
-            return REPLY_ERR;
+        sendstrstrcntmap(client, partition_to_result);
     }
 
     return REPLY_OK_NO_ANSWER;
@@ -350,13 +341,10 @@ static cmd_result cmd_help(client_t *client, sds *argv, int argc)
     while (NULL != cmd_table[table_size].name)
         table_size++;
 
-    if (-1 == sendsize(client, table_size))
-        return REPLY_ERR;
+    sendsize(client, table_size);
 
-    for (size_t i = 0; i < table_size; i++) {
-        if (-1 == sendstr(client, cmd_table[i].description))
-            return REPLY_ERR;
-    }
+    for (size_t i = 0; i < table_size; i++)
+        sendstr(client, cmd_table[i].description);
 
     return REPLY_OK_NO_ANSWER;
 }
@@ -639,6 +627,9 @@ int main(int argc, char **argv)
 
             client_t *client = client_find(this_fd);
             assert(client);
+
+            if (!client_has_replies(client))
+                continue;
 
             int replies_sent = client_send_replies(client);
             if (replies_sent < 0) {

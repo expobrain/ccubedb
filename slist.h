@@ -61,6 +61,23 @@ static inline slist_node_t *slist_prepend(slist_t *list, void *data)
     return node;
 }
 
+static inline slist_node_t *slist_append(slist_t *list, void *data)
+{
+    /* NOTE: linear!!! need a better DS */
+    slist_node_t *new_node = cdb_malloc(sizeof(*list));
+    *new_node = (typeof(*new_node)){
+        .next = NULL,
+        .data = data
+    };
+    slist_node_t **nodeptrptr = &list->head;
+    while (*nodeptrptr)
+        nodeptrptr = &(*nodeptrptr)->next;
+    *nodeptrptr = new_node;
+
+    list->size++;
+    return new_node;
+}
+
 static inline void *slist_data(slist_node_t *node)
 {
     return node->data;
