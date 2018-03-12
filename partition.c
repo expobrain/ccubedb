@@ -177,7 +177,7 @@ static slist_t **convert_filter(partition_t *partition, filter_t *filter)
             value_id_ptr = &unknown_value_id;
 
         column_id_t column_id = column_mapping->id;
-        slist_append(values_to_look_for[column_id], value_id_ptr);
+        slist_prepend(values_to_look_for[column_id], value_id_ptr);
     }
 
     return values_to_look_for;

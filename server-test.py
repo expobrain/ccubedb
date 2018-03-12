@@ -21,7 +21,7 @@ class CubeDBTestBase(unittest.TestCase):
         global start_port
         start_port += 1
 
-        cmd = "./{cmd} --port {port} --log-level 0".format(
+        cmd = "./{cmd} --port {port} --log-level 10".format(
             cmd=self.EXECUTABLE,
             port=str(start_port)
         )
@@ -139,16 +139,11 @@ class CubeDBTest(CubeDBTestBase):
         assert reply != REPLY_OK
         assert reply.startswith("-")
 
-    def test_wrong_arg_um(self):
+    def test_wrong_arg_num(self):
         self.sendline("QUIT arg")
         reply = self.readline()
         assert reply != REPLY_OK
         assert reply.startswith("-")
-
-    def test_quit(self):
-        self.sendline("QUIT")
-        reply = self.readline()
-        assert reply == REPLY_OK
 
     def test_ping(self):
         self.sendline("PING")

@@ -19,20 +19,20 @@ char *test_slist_create()
     return 0;
 }
 
-char *test_slist_append()
+char *test_slist_prepend()
 {
     slist_t *list = slist_create();
     defer { slist_destroy(list); }
 
     int i1 = 0;
-    slist_append(list, &i1);
+    slist_prepend(list, &i1);
     int *data = list->head->data;
-    mu_assert("Couldn't find the appended element", *data == i1);
+    mu_assert("Couldn't find the prepended element", *data == i1);
 
     int i2 = 1;
-    slist_append(list, &i2);
+    slist_prepend(list, &i2);
     data = list->head->data;
-    mu_assert("Couldn't find the second appended element", *data == i2);
+    mu_assert("Couldn't find the second prepended element", *data == i2);
 
     return 0;
 }
@@ -43,8 +43,8 @@ char *test_slist_for_each()
     defer { slist_destroy(list); }
 
     int i1 = 1, i2 = 2;
-    slist_append(list, &i1);
-    slist_append(list, &i2);
+    slist_prepend(list, &i1);
+    slist_prepend(list, &i2);
 
     int sum = 0;
     slist_for_each(node, list) {
@@ -62,10 +62,10 @@ char *test_slist_for_each_filter()
     defer { slist_destroy(list); }
 
     int i1 = 1, i2 = 2, i3 = 3, i4 = 4;
-    slist_append(list, &i1);
-    slist_append(list, &i2);
-    slist_append(list, &i3);
-    slist_append(list, &i4);
+    slist_prepend(list, &i1);
+    slist_prepend(list, &i2);
+    slist_prepend(list, &i3);
+    slist_prepend(list, &i4);
 
     bool filter(void *data) {
         int *element = data;
@@ -96,8 +96,8 @@ char *test_slist_find()
     mu_assert("found result in an empty list", NULL == result);
 
     int i1 = 1, i2 = 2;
-    slist_append(list, &i1);
-    slist_append(list, &i2);
+    slist_prepend(list, &i1);
+    slist_prepend(list, &i2);
 
     result = slist_find(list, finder);
     mu_assert("find couldn't find the result in a list", NULL != result);
@@ -120,8 +120,8 @@ char *test_slist_delete_single_if()
     mu_assert("found result in an empty list", NULL == result);
 
     int i1 = 1, i2 = 2;
-    slist_append(list, &i1);
-    slist_append(list, &i2);
+    slist_prepend(list, &i1);
+    slist_prepend(list, &i2);
 
     int *res = slist_delete_single_if(list, finder);
     mu_assert("deleted a wrong element", 2 == *res);
@@ -143,7 +143,7 @@ char *test_slist_delete_single_if()
 static char *all_tests()
 {
     mu_run_test(test_slist_create);
-    mu_run_test(test_slist_append);
+    mu_run_test(test_slist_prepend);
     mu_run_test(test_slist_for_each);
     mu_run_test(test_slist_for_each_filter);
     mu_run_test(test_slist_find);

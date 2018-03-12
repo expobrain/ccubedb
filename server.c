@@ -198,8 +198,7 @@ static cmd_result cmd_cube(client_t *client, sds *argv, int argc)
     size_t partition_count = 0;
     char **partition_names = cube_get_partition_names(cube, &partition_count);
 
-    if (-1 == sendstrlist(client, partition_names, partition_count))
-        return REPLY_ERR;
+    sendstrlist(client, partition_names, partition_count);
 
     return REPLY_OK_NO_ANSWER;
 }
@@ -513,12 +512,10 @@ int read_from_client(client_t *client)
         }
         /* Wanna quit? Go on */
         else if (REPLY_QUIT == result) {
-            sendok(client);
             return 0;
         }
         /* Something went seriosly wrong when executing the command, worth disconnecting */
         else if (REPLY_ERR == result) {
-            sendcode(client, -result);
             return 0;
         }
         /* Other errors (everything above the REPLY_ERR enum value) are command-specific, no need to
@@ -609,7 +606,7 @@ int main(int argc, char **argv)
                           get_in_addr((struct sockaddr *)&their_addr),
                           client->addrstr, sizeof(client->addrstr));
 
-                slist_append(client_list, client);
+                slist_prepend(client_list, client);
 
                 log_info("Connection accepted from %s", client->addrstr);
             } else {
@@ -619,15 +616,13 @@ int main(int argc, char **argv)
                 assert(client);
                 int res = read_from_client(client);
                 if (res <= 0) {
-                    close(client->fd);
-                    FD_CLR(client->fd, &master);
-                    FD_CLR(client->fd, &write_fds);
-                    client_delete(client->fd);
-                    client_destroy(client);
                     if (0 == res)
                         log_info("Connection closed with %s", client->addrstr);
                     else if (-1 == res)
                         log_warn("Connection error with %s", client->addrstr);
+                    FD_CLR(client->fd, &master);
+                    FD_CLR(client->fd, &write_fds);
+                    client_delete(client->fd);
                 } else {
                     /* Otherwise just go on with reading more data */
                 }
@@ -644,6 +639,15 @@ int main(int argc, char **argv)
 
             client_t *client = client_find(this_fd);
             assert(client);
+
+            int replies_sent = client_send_replies(client);
+            if (replies_sent < 0) {
+                log_warn("Connection error with %s", client->addrstr);
+                FD_CLR(client->fd, &master);
+                client_delete(client->fd);
+            } else {
+                /* Either we had nothing so send or couldn't send all of it*/
+            }
         }
     }
     return EXIT_SUCCESS;

@@ -49,7 +49,7 @@ static inline void slist_destroy(slist_t *list)
     free(list);
 }
 
-static inline slist_node_t *slist_append(slist_t *list, void *data)
+static inline slist_node_t *slist_prepend(slist_t *list, void *data)
 {
     slist_node_t *node = cdb_malloc(sizeof(*list));
     *node = (typeof(*node)){

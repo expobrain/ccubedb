@@ -4,6 +4,7 @@
 #include <arpa/inet.h>
 #include <assert.h>
 #include <errno.h>
+#include <unistd.h>
 
 #include "sds.h"
 #include "slist.h"
@@ -34,7 +35,7 @@ static inline client_t *client_create(int fd)
 
 static inline void client_add_reply(client_t *client, sds *reply)
 {
-    slist_append(client->replies, reply);
+    slist_prepend(client->replies, reply);
 }
 
 static inline bool client_has_replies(client_t *client)
@@ -65,6 +66,7 @@ static inline int client_send_replies(client_t *client)
 
         if (client->sentlen == replylen){
             client->sentlen = 0;
+            sdsfree(reply);
             slist_pop_head(client->replies);
             replies_sent++;
         }
@@ -93,15 +95,6 @@ static inline client_t *client_find(int fd)
     return NULL;
 }
 
-static inline client_t *client_delete(int fd)
-{
-    bool finder(void *data) {
-        client_t *client = data;
-        return client->fd == fd;
-    }
-    return slist_delete_single_if(client_list, finder);
-}
-
 static inline void client_destroy(client_t *client)
 {
     slist_for_each(node, client->replies)
@@ -109,6 +102,17 @@ static inline void client_destroy(client_t *client)
     slist_destroy(client->replies);
     sdsfree(client->querybuf);
     free(client);
+}
+
+static inline void client_delete(int fd)
+{
+    bool finder(void *data) {
+        client_t *client = data;
+        return client->fd == fd;
+    }
+    close(fd);
+    client_t *client = slist_delete_single_if(client_list, finder);
+    client_destroy(client);
 }
 
 #endif //CLIENT_H

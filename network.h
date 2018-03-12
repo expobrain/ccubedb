@@ -21,54 +21,38 @@ static inline void *get_in_addr(struct sockaddr *sa)
         return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
-static inline int sendall(client_t *client, char *buf, int len)
+static inline int sendtoclient(client_t *client, sds buf)
 {
-    assert(len > 0);
-
-    int total = 0;
-    int bytesleft = len;
-    int n;
-
-    while(total < len) {
-        n = send(client->fd, buf+total, (size_t)bytesleft, 0);
-        if (n < 0) { break; }
-        total += n;
-        bytesleft -= n;
-    }
-
-    return n == -1 ? -1 : 0;
+    slist_prepend(client->replies, buf);
+    return 0;
 }
 
 static inline int sendcounter(client_t *client, counter_t counter)
 {
     sds msg = sdsempty();
     msg = sdscatprintf(msg, "%zu\n", counter);
-    defer { sdsfree(msg); }
-    return sendall(client, msg, sdslen(msg));
+    return sendtoclient(client, msg);
 }
 
 static inline int sendstrcnt(client_t *client, char *str, counter_t counter)
 {
     sds msg = sdsempty();
-    defer { sdsfree(msg); }
     msg = sdscatprintf(msg, "%s %lu\n", str, counter);
-    return sendall(client, msg, sdslen(msg));
+    return sendtoclient(client, msg);
 }
 
 static inline int sendsize(client_t *client, size_t size)
 {
     sds msg = sdsempty();
     msg = sdscatprintf(msg, "%zu\n", size);
-    defer { sdsfree(msg); }
-    return sendall(client, msg, sdslen(msg));
+    return sendtoclient(client, msg);
 }
 
 static inline int sendstr(client_t *client, char *str)
 {
     sds msg = sdsempty();
     msg = sdscatprintf(msg, "%s\n", str);
-    defer { sdsfree(msg); }
-    return sendall(client, msg, sdslen(msg));
+    return sendtoclient(client, msg);
 }
 
 static inline int sendstrstrset(client_t *client, htable_t *map)
@@ -144,17 +128,15 @@ static inline int sendstrstrcntmap(client_t *client, htable_t *map)
 
 static inline int sendcode(client_t *client, int code) {
     sds msg = sdsempty();
-    defer { sdsfree(msg); }
     msg = sdscatprintf(msg, "%d\n", code);
-    return sendall(client, msg, sdslen(msg));
+    return sendtoclient(client, msg);
 }
 
 static inline int sendok(client_t *client)
 {
     sds msg = sdsempty();
-    defer { sdsfree(msg); }
     msg = sdscatprintf(msg, "%d\n", 0);
-    return sendall(client, msg, sdslen(msg));
+    return sendtoclient(client, msg);
 }
 
 

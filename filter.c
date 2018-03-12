@@ -69,5 +69,5 @@ void filter_add_column_value(filter_t *row, const char *column_name, const char 
 {
     column_value_pair *pair =
         column_value_pair_create(column_name, column_value);
-    slist_append(row->column_to_value_list, pair);
+    slist_prepend(row->column_to_value_list, pair);
 }
