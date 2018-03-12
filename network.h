@@ -11,6 +11,7 @@
 #include "defs.h"
 #include "sds.h"
 #include "config.h"
+#include "client.h"
 
 static inline void *get_in_addr(struct sockaddr *sa)
 {
@@ -20,7 +21,7 @@ static inline void *get_in_addr(struct sockaddr *sa)
         return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
-static inline int sendall(int conn_fd, char *buf, int len)
+static inline int sendall(client_t *client, char *buf, int len)
 {
     assert(len > 0);
 
@@ -29,7 +30,7 @@ static inline int sendall(int conn_fd, char *buf, int len)
     int n;
 
     while(total < len) {
-        n = send(conn_fd, buf+total, (size_t)bytesleft, 0);
+        n = send(client->fd, buf+total, (size_t)bytesleft, 0);
         if (n < 0) { break; }
         total += n;
         bytesleft -= n;
@@ -38,55 +39,55 @@ static inline int sendall(int conn_fd, char *buf, int len)
     return n == -1 ? -1 : 0;
 }
 
-static inline int sendcounter(int conn_fd, counter_t counter)
+static inline int sendcounter(client_t *client, counter_t counter)
 {
     sds msg = sdsempty();
     msg = sdscatprintf(msg, "%zu\n", counter);
     defer { sdsfree(msg); }
-    return sendall(conn_fd, msg, sdslen(msg));
+    return sendall(client, msg, sdslen(msg));
 }
 
-static inline int sendstrcnt(int conn_fd, char *str, counter_t counter)
+static inline int sendstrcnt(client_t *client, char *str, counter_t counter)
 {
     sds msg = sdsempty();
     defer { sdsfree(msg); }
     msg = sdscatprintf(msg, "%s %lu\n", str, counter);
-    return sendall(conn_fd, msg, sdslen(msg));
+    return sendall(client, msg, sdslen(msg));
 }
 
-static inline int sendsize(int conn_fd, size_t size)
+static inline int sendsize(client_t *client, size_t size)
 {
     sds msg = sdsempty();
     msg = sdscatprintf(msg, "%zu\n", size);
     defer { sdsfree(msg); }
-    return sendall(conn_fd, msg, sdslen(msg));
+    return sendall(client, msg, sdslen(msg));
 }
 
-static inline int sendstr(int conn_fd, char *str)
+static inline int sendstr(client_t *client, char *str)
 {
     sds msg = sdsempty();
     msg = sdscatprintf(msg, "%s\n", str);
     defer { sdsfree(msg); }
-    return sendall(conn_fd, msg, sdslen(msg));
+    return sendall(client, msg, sdslen(msg));
 }
 
-static inline int sendstrstrset(int conn_fd, htable_t *map)
+static inline int sendstrstrset(client_t *client, htable_t *map)
 {
-    if (sendsize(conn_fd, htable_size(map)) < 0)
+    if (sendsize(client, htable_size(map)) < 0)
         return -1;
 
     htable_for_each(item, map) {
         char *key = htable_key(item);
-        if (sendstr(conn_fd, key) < 0)
+        if (sendstr(client, key) < 0)
             return -1;
 
         htable_t *set = htable_value(item);
-        if (sendsize(conn_fd, htable_size(set)) < 0)
+        if (sendsize(client, htable_size(set)) < 0)
             return -1;
 
         htable_for_each(set_item, set) {
             char *set_key = htable_key(set_item);
-            if (sendstr(conn_fd, set_key) < 0)
+            if (sendstr(client, set_key) < 0)
                 return -1;
         }
     }
@@ -94,46 +95,46 @@ static inline int sendstrstrset(int conn_fd, htable_t *map)
     return 0;
 }
 
-static inline int sendstrlist(int conn_fd, char **list, size_t list_size)
+static inline int sendstrlist(client_t *client, char **list, size_t list_size)
 {
-    if (sendsize(conn_fd, list_size) < 0)
+    if (sendsize(client, list_size) < 0)
         return -1;
 
     for (size_t i = 0; i < list_size; i++ ) {
-        if (sendstr(conn_fd, list[i]) < 0)
+        if (sendstr(client, list[i]) < 0)
             return -1;
     }
 
     return 0;
 }
 
-static inline int sendstrcntmap(int conn_fd, htable_t *map)
+static inline int sendstrcntmap(client_t *client, htable_t *map)
 {
-    if (sendsize(conn_fd, htable_size(map)) < 0)
+    if (sendsize(client, htable_size(map)) < 0)
         return -1;
 
     htable_for_each(item, map) {
         char *key = htable_key(item);
         counter_t *count = htable_value(item);
-        if (sendstrcnt(conn_fd, key, *count) < 0)
+        if (sendstrcnt(client, key, *count) < 0)
             return -1;
     }
 
     return 0;
 }
 
-static inline int sendstrstrcntmap(int conn_fd, htable_t *map)
+static inline int sendstrstrcntmap(client_t *client, htable_t *map)
 {
-    if (sendsize(conn_fd, htable_size(map)) < 0)
+    if (sendsize(client, htable_size(map)) < 0)
         return -1;
 
     htable_for_each(item, map) {
         char *key = htable_key(item);
-        if (-1 == sendstr(conn_fd, key))
+        if (-1 == sendstr(client, key))
             return -1;
 
         htable_t *inner_map = htable_value(item);
-        if (-1 == sendstrcntmap(conn_fd, inner_map))
+        if (-1 == sendstrcntmap(client, inner_map))
             return -1;
     }
 
@@ -141,19 +142,19 @@ static inline int sendstrstrcntmap(int conn_fd, htable_t *map)
 }
 
 
-static inline int sendcode(int conn_fd, int code) {
+static inline int sendcode(client_t *client, int code) {
     sds msg = sdsempty();
     defer { sdsfree(msg); }
     msg = sdscatprintf(msg, "%d\n", code);
-    return sendall(conn_fd, msg, sdslen(msg));
+    return sendall(client, msg, sdslen(msg));
 }
 
-static inline int sendok(int conn_fd)
+static inline int sendok(client_t *client)
 {
     sds msg = sdsempty();
     defer { sdsfree(msg); }
     msg = sdscatprintf(msg, "%d\n", 0);
-    return sendall(conn_fd, msg, sdslen(msg));
+    return sendall(client, msg, sdslen(msg));
 }
 
 

@@ -71,6 +71,26 @@ static inline size_t slist_size(slist_t *list)
     return list->size;
 }
 
+
+static inline void *slist_head(slist_t *list)
+{
+    if (!slist_size(list))
+        return NULL;
+    return list->head->data;
+}
+
+static inline void *slist_pop_head(slist_t *list)
+{
+    if (!slist_size(list))
+        return NULL;
+    slist_node_t *head = list->head;
+    void *head_data = head->data;
+    list->head = head->next;
+    list->size--;
+    free(head);
+    return head_data;
+}
+
 static inline void *slist_delete_single_if(slist_t *list, bool predicate(void *data))
 {
     for (slist_node_t **nodeptrptr = &list->head; *nodeptrptr; nodeptrptr = &(*nodeptrptr)->next) {

@@ -56,7 +56,7 @@ enum cmd_result {
     REPLY_ERR_ACTION_FAILED,    /* Command execution aborted */
 };
 
-typedef cmd_result cmd_function(int conn_fd, sds *argv, int argc);
+typedef cmd_result cmd_function(client_t *client, sds *argv, int argc);
 
 typedef struct cubedb_cmd cubedb_cmd;
 struct cubedb_cmd {
@@ -77,23 +77,23 @@ static inline sds parse_nullable_arg(sds arg)
         return arg;
 }
 
-static cmd_result cmd_quit(int conn_fd, sds *argv, int argc)
+static cmd_result cmd_quit(client_t *client, sds *argv, int argc)
 {
-    (void) argv; (void) argc; (void) conn_fd;
+    (void) argv; (void) argc; (void) client;
     return REPLY_QUIT;
 }
 
-static cmd_result cmd_ping(int conn_fd, sds *argv, int argc)
+static cmd_result cmd_ping(client_t *client, sds *argv, int argc)
 {
-    (void) argv; (void) argc; (void) conn_fd;
+    (void) argv; (void) argc;
 
-    if (-1 == sendstr(conn_fd, "PONG"))
+    if (-1 == sendstr(client, "PONG"))
         return REPLY_ERR;
 
     return REPLY_OK_NO_ANSWER;
 }
 
-static cmd_result cmd_cubes(int conn_fd, sds *argv, int argc)
+static cmd_result cmd_cubes(client_t *client, sds *argv, int argc)
 {
     (void) argv; (void) argc;
 
@@ -101,15 +101,15 @@ static cmd_result cmd_cubes(int conn_fd, sds *argv, int argc)
     char **cube_names = cubedb_get_cube_names(cubedb, &cube_count);
     defer { free(cube_names); }
 
-    if (-1 == sendstrlist(conn_fd, cube_names, cube_count))
+    if (-1 == sendstrlist(client, cube_names, cube_count))
         return REPLY_ERR;
 
     return REPLY_OK_NO_ANSWER;
 }
 
-static cmd_result cmd_add_cube(int conn_fd, sds *argv, int argc)
+static cmd_result cmd_add_cube(client_t *client, sds *argv, int argc)
 {
-    (void) argc; (void) conn_fd;
+    (void) argc; (void) client;
 
     sds cube_name = argv[1];
     if (cubedb_find_cube(cubedb, cube_name))
@@ -119,9 +119,9 @@ static cmd_result cmd_add_cube(int conn_fd, sds *argv, int argc)
     return REPLY_OK;
 }
 
-static cmd_result cmd_del_cube(int conn_fd, sds *argv, int argc)
+static cmd_result cmd_del_cube(client_t *client, sds *argv, int argc)
 {
-    (void) argc; (void) conn_fd;
+    (void) argc; (void) client;
 
     sds cube_name = argv[1];
 
@@ -132,7 +132,7 @@ static cmd_result cmd_del_cube(int conn_fd, sds *argv, int argc)
     return REPLY_OK;
 }
 
-static cmd_result cmd_part(int conn_fd, sds *argv, int argc)
+static cmd_result cmd_part(client_t *client, sds *argv, int argc)
 {
     sds cube_name = argv[1];
 
@@ -156,15 +156,15 @@ static cmd_result cmd_part(int conn_fd, sds *argv, int argc)
     }
     defer { htable_destroy(column_to_value_set); }
 
-    if (-1 == sendstrstrset(conn_fd, column_to_value_set))
+    if (-1 == sendstrstrset(client, column_to_value_set))
         return REPLY_ERR;
 
     return REPLY_OK_NO_ANSWER;
 }
 
-static cmd_result cmd_del_cube_partition(int conn_fd, sds *argv, int argc)
+static cmd_result cmd_del_cube_partition(client_t *client, sds *argv, int argc)
 {
-    (void) conn_fd;
+    (void) client;
 
     sds cube_name = argv[1];
 
@@ -187,7 +187,7 @@ static cmd_result cmd_del_cube_partition(int conn_fd, sds *argv, int argc)
     return REPLY_OK;
 }
 
-static cmd_result cmd_cube(int conn_fd, sds *argv, int argc)
+static cmd_result cmd_cube(client_t *client, sds *argv, int argc)
 {
     (void) argc;
 
@@ -198,15 +198,15 @@ static cmd_result cmd_cube(int conn_fd, sds *argv, int argc)
     size_t partition_count = 0;
     char **partition_names = cube_get_partition_names(cube, &partition_count);
 
-    if (-1 == sendstrlist(conn_fd, partition_names, partition_count))
+    if (-1 == sendstrlist(client, partition_names, partition_count))
         return REPLY_ERR;
 
     return REPLY_OK_NO_ANSWER;
 }
 
-static cmd_result cmd_insert(int conn_fd, sds *argv, int argc)
+static cmd_result cmd_insert(client_t *client, sds *argv, int argc)
 {
-    (void) argc; (void) conn_fd;
+    (void) argc; (void) client;
 
     sds cube_name = argv[1];
     cube_t *cube = cubedb_find_cube(cubedb, cube_name);
@@ -257,7 +257,7 @@ static cmd_result cmd_insert(int conn_fd, sds *argv, int argc)
     return REPLY_OK;
 }
 
-static cmd_result cmd_count(int conn_fd, sds *argv, int argc)
+static cmd_result cmd_count(client_t *client, sds *argv, int argc)
 {
     sds cube_name = argv[1];
     cube_t *cube = cubedb_find_cube(cubedb, cube_name);
@@ -288,20 +288,20 @@ static cmd_result cmd_count(int conn_fd, sds *argv, int argc)
     if (!group_column) {
         counter_t *count = result;
         defer { free(count); }
-        if (-1 == sendcounter(conn_fd, *count))
+        if (-1 == sendcounter(client, *count))
             return REPLY_ERR;
     } else {
         htable_t *value_to_count = result;
         defer { htable_destroy(value_to_count); }
 
-        if (-1 == sendstrcntmap(conn_fd, value_to_count))
+        if (-1 == sendstrcntmap(client, value_to_count))
             return REPLY_ERR;
     }
 
     return REPLY_OK_NO_ANSWER;
 }
 
-static cmd_result cmd_pcount(int conn_fd, sds *argv, int argc)
+static cmd_result cmd_pcount(client_t *client, sds *argv, int argc)
 {
     sds cube_name = argv[1];
     cube_t *cube = cubedb_find_cube(cubedb, cube_name);
@@ -332,18 +332,18 @@ static cmd_result cmd_pcount(int conn_fd, sds *argv, int argc)
 
     if (!group_column) {
         /* Just a per-partition counter if there was not group_column specified */
-        if (-1 == sendstrcntmap(conn_fd, partition_to_result))
+        if (-1 == sendstrcntmap(client, partition_to_result))
             return REPLY_ERR;
     } else {
         /* For grouped results dump an htable of values to counters for every partition */
-        if (-1 == sendstrstrcntmap(conn_fd, partition_to_result))
+        if (-1 == sendstrstrcntmap(client, partition_to_result))
             return REPLY_ERR;
     }
 
     return REPLY_OK_NO_ANSWER;
 }
 
-static cmd_result cmd_help(int conn_fd, sds *argv, int argc)
+static cmd_result cmd_help(client_t *client, sds *argv, int argc)
 {
     (void) argc; (void) argv;
 
@@ -351,11 +351,11 @@ static cmd_result cmd_help(int conn_fd, sds *argv, int argc)
     while (NULL != cmd_table[table_size].name)
         table_size++;
 
-    if (-1 == sendsize(conn_fd, table_size))
+    if (-1 == sendsize(client, table_size))
         return REPLY_ERR;
 
     for (size_t i = 0; i < table_size; i++) {
-        if (-1 == sendstr(conn_fd, cmd_table[i].description))
+        if (-1 == sendstr(client, cmd_table[i].description))
             return REPLY_ERR;
     }
 
@@ -427,7 +427,7 @@ bool is_correct_cmd_arg(const char *arg)
     return '\0' == *arg;
 }
 
-cmd_result process_cmd(int conn_fd, sds query)
+cmd_result process_cmd(client_t *client, sds query)
 {
     /* Split the query into cmd + arguments */
     int argc = 0;
@@ -451,7 +451,7 @@ cmd_result process_cmd(int conn_fd, sds query)
     if (cmd->min_arity > argc - 1 || cmd->max_arity < argc - 1)
         return REPLY_ERR_WRONG_ARG_NUM;
 
-    return cmd->cmd(conn_fd, argv, argc);
+    return cmd->cmd(client, argv, argc);
 }
 
 /* TCP server */
@@ -469,7 +469,7 @@ int read_from_client(client_t *client)
         log_info("Client closed connection");
         return receive_size;
     }
-    client->querybuf = sdscatlen(client->querybuf, receive_buffer, receive_size);
+    client->querybuf = sdscatlen(client->querybuf, receive_buffer, (size_t)receive_size);
 
     char *p = strchr(client->querybuf, '\n');
     if (!p) return receive_size;
@@ -499,32 +499,32 @@ int read_from_client(client_t *client)
         /* Process the cmds received */
         clock_t start = clock();
 
-        cmd_result result = process_cmd(client->fd, query);
+        cmd_result result = process_cmd(client, query);
 
         double elapsed_time = (clock() - start)/(double)CLOCKS_PER_SEC;
         log_verb("'%s' served in %.3f seconds", query, elapsed_time);
 
         /* It's fine */
         if (REPLY_OK == result) {
-            sendok(client->fd);
+            sendok(client);
         }
         /* It's fine, no need to add anything */
         else if (REPLY_OK_NO_ANSWER == result) {
         }
         /* Wanna quit? Go on */
         else if (REPLY_QUIT == result) {
-            sendok(client->fd);
+            sendok(client);
             return 0;
         }
         /* Something went seriosly wrong when executing the command, worth disconnecting */
         else if (REPLY_ERR == result) {
-            sendcode(client->fd, -result);
+            sendcode(client, -result);
             return 0;
         }
         /* Other errors (everything above the REPLY_ERR enum value) are command-specific, no need to
          * disconnect */
         else if (REPLY_ERR < result) {
-            sendcode(client->fd, -result);
+            sendcode(client, -result);
         }
     }
 
@@ -563,21 +563,26 @@ int main(int argc, char **argv)
 
     fd_set master;
     fd_set read_fds;
+    fd_set write_fds;
     int fdmax = listener_fd;
 
     FD_ZERO(&master);
     FD_ZERO(&read_fds);
+    FD_ZERO(&write_fds);
     FD_SET(listener_fd, &master);
 
     while(1) {
         read_fds = master;
-        if (-1 == select(fdmax + 1, &read_fds, NULL, NULL, NULL)) {
-            /* Interrupted? Just restart */
+        write_fds = master;
+        if (-1 == select(fdmax + 1, &read_fds, &write_fds, NULL, NULL)) {
+            /* Interrupted? Just restart the polling */
             if (EINTR == errno)
                 continue;
             perror("select");
             exit(EXIT_FAILURE);
         }
+
+        /* Handle read events */
 
         for (int this_fd = 0; this_fd <= fdmax; this_fd++) {
             if (!FD_ISSET(this_fd, &read_fds))
@@ -613,9 +618,10 @@ int main(int argc, char **argv)
                 client_t *client = client_find(this_fd);
                 assert(client);
                 int res = read_from_client(client);
-                if (0 >= res) {
+                if (res <= 0) {
                     close(client->fd);
                     FD_CLR(client->fd, &master);
+                    FD_CLR(client->fd, &write_fds);
                     client_delete(client->fd);
                     client_destroy(client);
                     if (0 == res)
@@ -626,6 +632,18 @@ int main(int argc, char **argv)
                     /* Otherwise just go on with reading more data */
                 }
             }
+        }
+
+        /* Handle write events */
+
+        for (int this_fd = 0; this_fd <= fdmax; this_fd++) {
+            if (!FD_ISSET(this_fd, &write_fds))
+                continue;
+            if (this_fd == listener_fd)
+                continue;
+
+            client_t *client = client_find(this_fd);
+            assert(client);
         }
     }
     return EXIT_SUCCESS;

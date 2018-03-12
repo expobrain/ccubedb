@@ -298,7 +298,11 @@
 
    - [X] update the client
 
-** TODO [2/6] backend DSs
+** TODO prepare the data first, then send.
+
+   If the error condition happens - abort and drop the data
+
+** TODO [2/5] backend DSs
 
   - [X] a more generic int hash instead of str by default and use that to fix the reverse mapping
     problem in partition.c:get_column_value_id_value
@@ -311,16 +315,13 @@
 
   - [ ] a list of partitions should be sorted, or, even better, should be an autosorted DS (rb-tree?)
 
-  - [ ] instead of sending data to the client while still building dss -> prepare the data first,
-    then send. If the error condition happens - abort and drop the data
-
   - [ ] values_to_insert - come up with a generic vector or smth? or at least a quick struct should
     do?
 
 ** TODO sanitize=leak
 ** TODO sanitize=asan
 ** TODO sanitize=ubsan
-** TODO deploy and load data in a preliminary manner
+** TODO deploy and start loading data in a preliminary manner
 
   - [ ] walk cubes and dump into files
 
