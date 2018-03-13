@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <assert.h>
 
 #include "cdb_alloc.h"
 
@@ -21,6 +22,7 @@ typedef struct slist_node_t slist_node_t;
 struct slist_t {
     size_t size;
     slist_node_t *head;
+    slist_node_t *tail;
 };
 
 struct slist_node_t {
@@ -34,6 +36,7 @@ static inline slist_t *slist_create(void)
     *list = (slist_t){
         .size = 0,
         .head = NULL,
+        .tail = NULL,
     };
     return list;
 }
@@ -57,22 +60,27 @@ static inline slist_node_t *slist_prepend(slist_t *list, void *data)
         .data = data
     };
     list->head = node;
+    if (!list->tail)
+        list->tail = node;
     list->size++;
     return node;
 }
 
 static inline slist_node_t *slist_append(slist_t *list, void *data)
 {
-    /* NOTE: linear!!! need a better DS */
     slist_node_t *new_node = cdb_malloc(sizeof(*list));
     *new_node = (typeof(*new_node)){
         .next = NULL,
         .data = data
     };
-    slist_node_t **nodeptrptr = &list->head;
-    while (*nodeptrptr)
-        nodeptrptr = &(*nodeptrptr)->next;
-    *nodeptrptr = new_node;
+    if (!list->tail) {
+        assert(!list->tail);
+        list->head = new_node;
+        list->tail = new_node;
+    } else {
+        list->tail->next = new_node;
+        list->tail = new_node;
+    }
 
     list->size++;
     return new_node;
@@ -96,12 +104,21 @@ static inline void *slist_head(slist_t *list)
     return list->head->data;
 }
 
+static inline void *slist_tail(slist_t *list)
+{
+    if (!slist_size(list))
+        return NULL;
+    return list->tail->data;
+}
+
 static inline void *slist_pop_head(slist_t *list)
 {
     if (!slist_size(list))
         return NULL;
     slist_node_t *head = list->head;
     void *head_data = head->data;
+    if (head == list->tail)
+        list->tail = NULL;
     list->head = head->next;
     list->size--;
     free(head);
@@ -110,13 +127,19 @@ static inline void *slist_pop_head(slist_t *list)
 
 static inline void *slist_delete_single_if(slist_t *list, bool predicate(void *data))
 {
-    for (slist_node_t **nodeptrptr = &list->head; *nodeptrptr; nodeptrptr = &(*nodeptrptr)->next) {
-        if (predicate((*nodeptrptr)->data)) {
-            void *data = (*nodeptrptr)->data;
-            slist_node_t *old_node = *nodeptrptr;
-            *nodeptrptr = old_node->next;
+    for (slist_node_t *this = list->head, *prev = NULL; this; prev = this, this = this->next) {
+        if (predicate(this->data)) {
+            void *data = this->data;
+
+            if (this == list->head)
+                list->head = this->next;
+            if (this == list->tail)
+                list->tail = prev;
+            if (prev)
+                prev->next = this->next;
+
+            free(this);
             list->size--;
-            free(old_node);
             return data;
         }
     }

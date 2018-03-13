@@ -238,7 +238,7 @@
 
   - [ ] cubedb:  0.760ms
 
-* TODO [9/17] Prepare for test launch (the project works in background)
+* TODO [11/17] Prepare for test launch (the project works in background)
 ** DONE null values for start/stop partitions
 
   ...if there's no need to limit the search (empty values are ok too - should be converted)
@@ -313,9 +313,9 @@
    4k/49_day_1 - 227.11user 23.04system 5:20.02elapsed
 
    TR;DL Doesn't change much
-** TODO no need to use a lot of return codes apart from "quit"
+** DONE no need to use a lot of return codes apart from "quit"
+** DONE append for slist
 ** TODO  a list of clients should be a mapping
-** TODO append for slist
 
 ** TODO [2/5] backend DSs
 
