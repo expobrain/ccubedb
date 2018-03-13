@@ -40,17 +40,8 @@ slist_t *client_list;
 
 typedef enum cmd_result cmd_result;
 enum cmd_result {
-    REPLY_OK,                   /* Just reply with success code */
-    REPLY_OK_NO_ANSWER,         /* Success, no need to add anything to cmd */
-    REPLY_QUIT,                 /* Reply with success and disconnect*/
-    REPLY_ERR,                  /* Command generic error  */
-    REPLY_ERR_NOT_FOUND,        /* Command not found */
-    REPLY_ERR_WRONG_ARG,        /* Command argument is wrong */
-    REPLY_ERR_WRONG_ARG_NUM,    /* Command argument number is wrong */
-    REPLY_ERR_MALFORMED_ARG,    /* Command argument contains non-graphic symbols*/
-    REPLY_ERR_OBJ_NOT_FOUND,    /* Command object not found */
-    REPLY_ERR_OBJ_EXISTS,       /* Command object already exists */
-    REPLY_ERR_ACTION_FAILED,    /* Command execution aborted */
+    CMD_DONE,                   /* Everything is fine */
+    CMD_QUIT,                   /* Disconnect immediately*/
 };
 
 typedef cmd_result cmd_function(client_t *client, sds *argv, int argc);
@@ -77,14 +68,14 @@ static inline sds parse_nullable_arg(sds arg)
 static cmd_result cmd_quit(client_t *client, sds *argv, int argc)
 {
     (void) argv; (void) argc; (void) client;
-    return REPLY_QUIT;
+    return CMD_QUIT;
 }
 
 static cmd_result cmd_ping(client_t *client, sds *argv, int argc)
 {
     (void) argv; (void) argc;
     client_sendstr(client, "PONG");
-    return REPLY_OK_NO_ANSWER;
+    return CMD_DONE;
 }
 
 static cmd_result cmd_cubes(client_t *client, sds *argv, int argc)
@@ -97,7 +88,7 @@ static cmd_result cmd_cubes(client_t *client, sds *argv, int argc)
 
     client_sendstrlist(client, cube_names, cube_count);
 
-    return REPLY_OK_NO_ANSWER;
+    return CMD_DONE;
 }
 
 static cmd_result cmd_add_cube(client_t *client, sds *argv, int argc)
@@ -105,11 +96,16 @@ static cmd_result cmd_add_cube(client_t *client, sds *argv, int argc)
     (void) argc; (void) client;
 
     sds cube_name = argv[1];
-    if (cubedb_find_cube(cubedb, cube_name))
-        return REPLY_ERR_OBJ_EXISTS;
+    if (cubedb_find_cube(cubedb, cube_name)) {
+        client_sendcode(client, REPLY_ERR_OBJ_EXISTS);
+        return CMD_DONE;
+    }
+
     cube_t *cube = cube_create();
     cubedb_add_cube(cubedb, cube_name, cube);
-    return REPLY_OK;
+    client_sendcode(client, REPLY_OK);
+
+    return CMD_DONE;
 }
 
 static cmd_result cmd_del_cube(client_t *client, sds *argv, int argc)
@@ -119,10 +115,15 @@ static cmd_result cmd_del_cube(client_t *client, sds *argv, int argc)
     sds cube_name = argv[1];
 
     cube_t *cube = cubedb_find_cube(cubedb, cube_name);
-    if (!cube) return REPLY_ERR_OBJ_NOT_FOUND;
+    if (!cube) {
+        client_sendcode(client, REPLY_ERR_OBJ_NOT_FOUND);
+        return CMD_DONE;
+    }
 
     cubedb_del_cube(cubedb, cube_name);
-    return REPLY_OK;
+    client_sendcode(client, REPLY_OK);
+
+    return CMD_DONE;
 }
 
 static cmd_result cmd_part(client_t *client, sds *argv, int argc)
@@ -130,7 +131,10 @@ static cmd_result cmd_part(client_t *client, sds *argv, int argc)
     sds cube_name = argv[1];
 
     cube_t *cube = cubedb_find_cube(cubedb, cube_name);
-    if (!cube) return REPLY_ERR_OBJ_NOT_FOUND;
+    if (!cube) {
+        client_sendcode(client, REPLY_ERR_OBJ_NOT_FOUND);
+        return CMD_DONE;
+    }
 
     htable_t *column_to_value_set = NULL;
     if (4 == argc) {
@@ -139,10 +143,14 @@ static cmd_result cmd_part(client_t *client, sds *argv, int argc)
         column_to_value_set = cube_get_columns_to_value_set(cube, from_partition, to_partition);
     } else if (3 == argc) {
         sds partition = parse_nullable_arg(argv[2]);
-        if (!partition)
-            return REPLY_ERR_WRONG_ARG;
-        if (!cube_has_partition(cube, partition))
-            return REPLY_ERR_OBJ_NOT_FOUND;
+        if (!partition) {
+            client_sendcode(client, REPLY_ERR_WRONG_ARG);
+            return CMD_DONE;
+        }
+        if (!cube_has_partition(cube, partition)) {
+            client_sendcode(client, REPLY_ERR_OBJ_NOT_FOUND);
+            return CMD_DONE;
+        }
         column_to_value_set = cube_get_columns_to_value_set(cube, partition, partition);
     } else {
         column_to_value_set = cube_get_columns_to_value_set(cube, NULL, NULL);
@@ -150,8 +158,7 @@ static cmd_result cmd_part(client_t *client, sds *argv, int argc)
     defer { htable_destroy(column_to_value_set); }
 
     client_sendstrstrset(client, column_to_value_set);
-
-    return REPLY_OK_NO_ANSWER;
+    return CMD_DONE;
 }
 
 static cmd_result cmd_del_cube_partition(client_t *client, sds *argv, int argc)
@@ -161,7 +168,10 @@ static cmd_result cmd_del_cube_partition(client_t *client, sds *argv, int argc)
     sds cube_name = argv[1];
 
     cube_t *cube = cubedb_find_cube(cubedb, cube_name);
-    if (!cube) return REPLY_ERR_OBJ_NOT_FOUND;
+    if (!cube) {
+        client_sendcode(client, REPLY_ERR_OBJ_NOT_FOUND);
+        return CMD_DONE;
+    }
 
     if (4 == argc) {
         sds from_partition = parse_nullable_arg(argv[2]);
@@ -169,14 +179,17 @@ static cmd_result cmd_del_cube_partition(client_t *client, sds *argv, int argc)
         cube_delete_partition_from_to(cube, from_partition, to_partition);
     } else if (3 == argc) {
         sds partition_name = argv[2];
-        if (!cube_has_partition(cube, partition_name))
-            return REPLY_ERR_OBJ_NOT_FOUND;
+        if (!cube_has_partition(cube, partition_name)) {
+            client_sendcode(client, REPLY_ERR_OBJ_NOT_FOUND);
+            return CMD_DONE;
+        }
         cube_delete_partition_from_to(cube, partition_name, partition_name);
     } else {
         assert(false);
     }
 
-    return REPLY_OK;
+    client_sendcode(client, REPLY_OK);
+    return CMD_DONE;
 }
 
 static cmd_result cmd_cube(client_t *client, sds *argv, int argc)
@@ -185,14 +198,17 @@ static cmd_result cmd_cube(client_t *client, sds *argv, int argc)
 
     sds cube_name = argv[1];
     cube_t *cube = cubedb_find_cube(cubedb, cube_name);
-    if (!cube) return REPLY_ERR_OBJ_NOT_FOUND;
+    if (!cube) {
+        client_sendcode(client, REPLY_ERR_OBJ_NOT_FOUND);
+        return CMD_DONE;
+    }
 
     size_t partition_count = 0;
     char **partition_names = cube_get_partition_names(cube, &partition_count);
 
     client_sendstrlist(client, partition_names, partition_count);
 
-    return REPLY_OK_NO_ANSWER;
+    return CMD_DONE;
 }
 
 static cmd_result cmd_insert(client_t *client, sds *argv, int argc)
@@ -201,7 +217,10 @@ static cmd_result cmd_insert(client_t *client, sds *argv, int argc)
 
     sds cube_name = argv[1];
     cube_t *cube = cubedb_find_cube(cubedb, cube_name);
-    if (!cube) return REPLY_ERR_OBJ_NOT_FOUND;
+    if (!cube) {
+        client_sendcode(client, REPLY_ERR_OBJ_NOT_FOUND);
+        return CMD_DONE;
+    }
 
     /* No need to parse anything in partition_name */
     sds partition_name = argv[2];
@@ -209,7 +228,10 @@ static cmd_result cmd_insert(client_t *client, sds *argv, int argc)
     /* Parse the counter */
     sds counter_str = argv[4];
     counter_t counter = strtoul(counter_str, NULL, 0);
-    if (ULONG_MAX == counter) return REPLY_ERR_WRONG_ARG;
+    if (ULONG_MAX == counter) {
+        client_sendcode(client, REPLY_ERR_WRONG_ARG);
+        return CMD_DONE;
+    }
 
     insert_row_t *row = insert_row_create(partition_name, counter);
     defer { insert_row_destroy(row); }
@@ -231,28 +253,39 @@ static cmd_result cmd_insert(client_t *client, sds *argv, int argc)
         sds *pair_tokens = sdssplitlen(pair, sdslen(pair), "=", 1, &pair_tokens_len);
         defer { sdsfreesplitres(pair_tokens, pair_tokens_len); }
 
-        if (2 != pair_tokens_len) return REPLY_ERR_WRONG_ARG;
+        if (2 != pair_tokens_len) {
+            client_sendcode(client, REPLY_ERR_WRONG_ARG);
+            return CMD_DONE;
+        }
 
         sds column = pair_tokens[0];
         sds value = pair_tokens[1];
 
-        if (insert_row_has_column(row, column))
-            return REPLY_ERR_WRONG_ARG;
+        if (insert_row_has_column(row, column)){
+            client_sendcode(client, REPLY_ERR_WRONG_ARG);
+            return CMD_DONE;
+        }
 
         insert_row_add_column_value(row, column, value);
     }
 
-    if (!cube_insert_row(cube, row))
-        return REPLY_ERR_ACTION_FAILED;
+    if (!cube_insert_row(cube, row)) {
+        client_sendcode(client, REPLY_ERR_ACTION_FAILED);
+        return CMD_DONE;
+    }
 
-    return REPLY_OK;
+    client_sendcode(client, REPLY_OK);
+    return CMD_DONE;
 }
 
 static cmd_result cmd_count(client_t *client, sds *argv, int argc)
 {
     sds cube_name = argv[1];
     cube_t *cube = cubedb_find_cube(cubedb, cube_name);
-    if (!cube) return REPLY_ERR_OBJ_NOT_FOUND;
+    if (!cube) {
+        client_sendcode(client, REPLY_ERR_OBJ_NOT_FOUND);
+        return CMD_DONE;
+    }
 
     sds from_partition = NULL;
     if (argc >= 3)
@@ -267,7 +300,10 @@ static cmd_result cmd_count(client_t *client, sds *argv, int argc)
     if (argc >= 5) {
         int res = 0;
         filter = filter_parse_from_args(argv[4], &res);
-        if (res != 0) return REPLY_ERR_WRONG_ARG;
+        if (res != 0) {
+            client_sendcode(client, REPLY_ERR_WRONG_ARG);
+            return CMD_DONE;
+        }
     }
 
     sds group_column = NULL;
@@ -287,14 +323,17 @@ static cmd_result cmd_count(client_t *client, sds *argv, int argc)
         client_sendstrcntmap(client, value_to_count);
     }
 
-    return REPLY_OK_NO_ANSWER;
+    return CMD_DONE;
 }
 
 static cmd_result cmd_pcount(client_t *client, sds *argv, int argc)
 {
     sds cube_name = argv[1];
     cube_t *cube = cubedb_find_cube(cubedb, cube_name);
-    if (!cube) return REPLY_ERR_OBJ_NOT_FOUND;
+    if (!cube) {
+        client_sendcode(client, REPLY_ERR_OBJ_NOT_FOUND);
+        return CMD_DONE;
+    }
 
     sds from_partition = NULL;
     if (argc >= 3)
@@ -309,7 +348,10 @@ static cmd_result cmd_pcount(client_t *client, sds *argv, int argc)
     if (argc >= 5) {
         int res = 0;
         filter = filter_parse_from_args(argv[4], &res);
-        if (res != 0) return REPLY_ERR_WRONG_ARG;
+        if (res != 0) {
+            client_sendcode(client, REPLY_ERR_WRONG_ARG);
+            return CMD_DONE;
+        }
     }
 
     sds group_column = NULL;
@@ -327,7 +369,7 @@ static cmd_result cmd_pcount(client_t *client, sds *argv, int argc)
         client_sendstrstrcntmap(client, partition_to_result);
     }
 
-    return REPLY_OK_NO_ANSWER;
+    return CMD_DONE;
 }
 
 static cmd_result cmd_help(client_t *client, sds *argv, int argc)
@@ -343,7 +385,7 @@ static cmd_result cmd_help(client_t *client, sds *argv, int argc)
     for (size_t i = 0; i < table_size; i++)
         client_sendstr(client, cmd_table[i].description);
 
-    return REPLY_OK_NO_ANSWER;
+    return CMD_DONE;
 }
 
 static cubedb_cmd cmd_table[] = {
@@ -416,8 +458,11 @@ cmd_result process_cmd(client_t *client, sds query)
     /* Split the query into cmd + arguments */
     int argc = 0;
     sds *argv = sdssplitargs(query ,&argc);
-    if (!argv)
-        return REPLY_ERR_WRONG_ARG;
+    if (!argv){
+        client_sendcode(client, REPLY_ERR_WRONG_ARG);
+        return CMD_DONE;
+    }
+
     defer { sdsfreesplitres(argv, argc); }
 
     sds command = sdsdup(argv[0]);
@@ -425,15 +470,21 @@ cmd_result process_cmd(client_t *client, sds query)
     sdstoupper(command);
 
     for (int i = 0; i < argc; i++)
-        if (!is_correct_cmd_arg(argv[i]))
-            return REPLY_ERR_MALFORMED_ARG;
+        if (!is_correct_cmd_arg(argv[i])) {
+            client_sendcode(client, REPLY_ERR_MALFORMED_ARG);
+            return CMD_DONE;
+        }
 
     cubedb_cmd *cmd = find_cmd(command);
-    if (!cmd)
-        return REPLY_ERR_NOT_FOUND;
+    if (!cmd) {
+        client_sendcode(client, REPLY_ERR_NOT_FOUND);
+        return CMD_DONE;
+    }
 
-    if (cmd->min_arity > argc - 1 || cmd->max_arity < argc - 1)
-        return REPLY_ERR_WRONG_ARG_NUM;
+    if (cmd->min_arity > argc - 1 || cmd->max_arity < argc - 1) {
+        client_sendcode(client, REPLY_ERR_WRONG_ARG_NUM);
+        return CMD_DONE;
+    }
 
     return cmd->cmd(client, argv, argc);
 }
@@ -488,26 +539,9 @@ int read_from_client(client_t *client)
         double elapsed_time = (clock() - start)/(double)CLOCKS_PER_SEC;
         log_verb("'%s' served in %.3f seconds", query, elapsed_time);
 
-        /* It's fine */
-        if (REPLY_OK == result) {
-            client_sendok(client);
-        }
-        /* It's fine, no need to add anything */
-        else if (REPLY_OK_NO_ANSWER == result) {
-        }
         /* Wanna quit? Go on */
-        else if (REPLY_QUIT == result) {
+        if (CMD_QUIT == result)
             return 0;
-        }
-        /* Something went seriosly wrong when executing the command, worth disconnecting */
-        else if (REPLY_ERR == result) {
-            return 0;
-        }
-        /* Other errors (everything above the REPLY_ERR enum value) are command-specific, no need to
-         * disconnect */
-        else if (REPLY_ERR < result) {
-            client_sendcode(client, -result);
-        }
     }
 
     return receive_size;

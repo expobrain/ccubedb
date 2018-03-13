@@ -238,7 +238,7 @@
 
   - [ ] cubedb:  0.760ms
 
-* TODO [9/14] Prepare for test launch (the project works in background)
+* TODO [9/17] Prepare for test launch (the project works in background)
 ** DONE null values for start/stop partitions
 
   ...if there's no need to limit the search (empty values are ok too - should be converted)
@@ -313,8 +313,11 @@
    4k/49_day_1 - 227.11user 23.04system 5:20.02elapsed
 
    TR;DL Doesn't change much
+** TODO no need to use a lot of return codes apart from "quit"
+** TODO  a list of clients should be a mapping
+** TODO append for slist
 
-** TODO [2/7] backend DSs
+** TODO [2/5] backend DSs
 
   - [X] a more generic int hash instead of str by default and use that to fix the reverse mapping
     problem in partition.c:get_column_value_id_value
@@ -322,12 +325,6 @@
     reuse khash.h this time? It might be reasonable to replace my htable with khash.h?
 
   - [X] make it impossible to use special values (UNSPECIFIED and UNKNOWN) in value_ids
-
-  - [ ] no need to use a lot of return codes apart from "quit"
-
-  - [ ] append for slist
-
-  - [ ] a list of clients should be a mapping
 
   - [ ] a list of partitions should be sorted, or, even better, should be an autosorted DS (rb-tree?)
 
@@ -354,6 +351,7 @@
 
   - [ ] dump path should be preconfigured on start
 
+** TODO cached responses
 ** TODO client, C
 ** TODO client, (Node) JS
 ** TODO integration

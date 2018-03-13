@@ -34,6 +34,19 @@ static inline client_t *client_create(int fd)
     return client;
 }
 
+
+typedef enum cmd_reply cmd_reply;
+enum cmd_reply {
+    REPLY_OK = 0,                 /* All correct */
+    REPLY_ERR_NOT_FOUND = -1,     /* Command not found */
+    REPLY_ERR_WRONG_ARG = -2,     /* Command argument is wrong */
+    REPLY_ERR_WRONG_ARG_NUM = -3, /* Command argument number is wrong */
+    REPLY_ERR_MALFORMED_ARG = -4, /* Command argument contains non-graphic symbols*/
+    REPLY_ERR_OBJ_NOT_FOUND = -5, /* Command object not found */
+    REPLY_ERR_OBJ_EXISTS = -6,    /* Command object already exists */
+    REPLY_ERR_ACTION_FAILED = -7, /* Command execution aborted */
+};
+
 static inline void client_add_reply(client_t *client, sds reply)
 {
     slist_append(client->replies, reply);
@@ -206,17 +219,9 @@ static inline void client_sendstrstrcntmap(client_t *client, htable_t *map)
     }
 }
 
-
-static inline void client_sendcode(client_t *client, int code) {
+static inline void client_sendcode(client_t *client, cmd_reply code) {
     sds msg = sdsempty();
     msg = sdscatprintf(msg, "%d\n", code);
-    client_add_reply(client, msg);
-}
-
-static inline void client_sendok(client_t *client)
-{
-    sds msg = sdsempty();
-    msg = sdscatprintf(msg, "%d\n", 0);
     client_add_reply(client, msg);
 }
 
