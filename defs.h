@@ -25,6 +25,8 @@ typedef uint64_t counter_t;
 #define defer__(x) defer_(x)
 #define defer defer__(__COUNTER__)
 
+#define RECEIVE_BUFSIZE 512
+
 typedef struct column_value_pair column_value_pair;
 struct column_value_pair {
     sds column;
@@ -41,7 +43,7 @@ static inline void column_value_pair_init(column_value_pair *pair, const char *c
 
 static inline column_value_pair *column_value_pair_create(const char *column, const char *value)
 {
-    column_value_pair *pair = cdb_malloc(sizeof(column_value_pair));
+    column_value_pair *pair = cdb_malloc(sizeof(*pair));
     column_value_pair_init(pair, column, value);
     return pair;
 }

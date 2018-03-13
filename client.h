@@ -8,6 +8,7 @@
 
 #include "sds.h"
 #include "slist.h"
+#include "network.h"
 
 extern slist_t *client_list;
 
@@ -104,6 +105,18 @@ static inline void client_destroy(client_t *client)
     free(client);
 }
 
+static inline void client_register(client_t *client, struct sockaddr_storage *their_addr)
+{
+    socket_non_blocking(client->fd);
+
+    inet_ntop(their_addr->ss_family,
+              get_in_addr((struct sockaddr *)&their_addr),
+              client->addrstr, sizeof(client->addrstr));
+
+    slist_prepend(client_list, client);
+
+}
+
 static inline void client_delete(int fd)
 {
     bool finder(void *data) {
@@ -113,6 +126,98 @@ static inline void client_delete(int fd)
     close(fd);
     client_t *client = slist_delete_single_if(client_list, finder);
     client_destroy(client);
+}
+
+
+static inline void client_sendcounter(client_t *client, counter_t counter)
+{
+    sds msg = sdsempty();
+    msg = sdscatprintf(msg, "%zu\n", counter);
+    client_add_reply(client, msg);
+}
+
+static inline void client_sendstrcnt(client_t *client, char *str, counter_t counter)
+{
+    sds msg = sdsempty();
+    msg = sdscatprintf(msg, "%s %lu\n", str, counter);
+    client_add_reply(client, msg);
+}
+
+static inline void client_sendsize(client_t *client, size_t size)
+{
+    sds msg = sdsempty();
+    msg = sdscatprintf(msg, "%zu\n", size);
+    client_add_reply(client, msg);
+}
+
+static inline void client_sendstr(client_t *client, char *str)
+{
+    sds msg = sdsempty();
+    msg = sdscatprintf(msg, "%s\n", str);
+    client_add_reply(client, msg);
+}
+
+static inline void client_sendstrstrset(client_t *client, htable_t *map)
+{
+    client_sendsize(client, htable_size(map));
+
+    htable_for_each(item, map) {
+        char *key = htable_key(item);
+        client_sendstr(client, key);
+
+        htable_t *set = htable_value(item);
+        client_sendsize(client, htable_size(set));
+
+        htable_for_each(set_item, set) {
+            char *set_key = htable_key(set_item);
+            client_sendstr(client, set_key);
+        }
+    }
+}
+
+static inline void client_sendstrlist(client_t *client, char **list, size_t list_size)
+{
+    client_sendsize(client, list_size);
+    for (size_t i = 0; i < list_size; i++ )
+        client_sendstr(client, list[i]);
+}
+
+static inline void client_sendstrcntmap(client_t *client, htable_t *map)
+{
+    client_sendsize(client, htable_size(map));
+
+    htable_for_each(item, map) {
+        char *key = htable_key(item);
+        counter_t *count = htable_value(item);
+        client_sendstrcnt(client, key, *count);
+    }
+}
+
+static inline void client_sendstrstrcntmap(client_t *client, htable_t *map)
+{
+    client_sendsize(client, htable_size(map));
+
+    htable_for_each(item, map) {
+        char *key = htable_key(item);
+        client_sendstr(client, key);
+
+        htable_t *inner_map = htable_value(item);
+        client_sendstrcntmap(client, inner_map);
+    }
+}
+
+
+static inline void client_sendcode(client_t *client, int code) {
+    sds msg = sdsempty();
+    msg = sdscatprintf(msg, "%d\n", code);
+    client_add_reply(client, msg);
+}
+
+static inline void client_sendok(client_t *client)
+{
+    sds msg = sdsempty();
+    msg = sdscatprintf(msg, "%d\n", 0);
+    client_add_reply(client, msg);
 }
 
 #endif //CLIENT_H

@@ -238,7 +238,7 @@
 
   - [ ] cubedb:  0.760ms
 
-* TODO [8/13] Prepare for test launch (the project works in background)
+* TODO [9/14] Prepare for test launch (the project works in background)
 ** DONE null values for start/stop partitions
 
   ...if there's no need to limit the search (empty values are ok too - should be converted)
@@ -302,7 +302,19 @@
 
    If the error condition happens - abort and drop the data
 
-** TODO [2/6] backend DSs
+** DONE increase the receive buffer size? Will it make insertion faster?
+
+   512/49_day_1 - 214.41 user 21.65 system 4:43.44 elapsed
+   512/49_day_1 - 205.13user 20.82system 4:28.17elapsed
+   512/49_day_1 - 233.86user 25.29system 5:56.94elapsed
+
+   1024/49_day_1 - 212.58user 21.36system 4:49.04elapsed
+
+   4k/49_day_1 - 227.11user 23.04system 5:20.02elapsed
+
+   TR;DL Doesn't change much
+
+** TODO [2/7] backend DSs
 
   - [X] a more generic int hash instead of str by default and use that to fix the reverse mapping
     problem in partition.c:get_column_value_id_value
@@ -310,6 +322,8 @@
     reuse khash.h this time? It might be reasonable to replace my htable with khash.h?
 
   - [X] make it impossible to use special values (UNSPECIFIED and UNKNOWN) in value_ids
+
+  - [ ] no need to use a lot of return codes apart from "quit"
 
   - [ ] append for slist
 
@@ -323,14 +337,23 @@
 ** TODO sanitize=leak
 ** TODO sanitize=asan
 ** TODO sanitize=ubsan
-** TODO deploy and start loading data in a preliminary manner
+** TODO deploy in a container
+
+   - [ ] build scripts in the repo
+
+   - [ ] deploy to an actual machine
+
+   - [ ] start loading data
+
+   - [ ] visualising data using the CLI client
+
+* TODO [0/2] Full launch
+** TODO dumping and reloading
 
   - [ ] walk cubes and dump into files
 
   - [ ] dump path should be preconfigured on start
 
-* TODO [0/2] Full launch
-** TODO dumping and reloading
 ** TODO client, C
 ** TODO client, (Node) JS
 ** TODO integration

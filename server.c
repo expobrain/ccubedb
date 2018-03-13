@@ -27,9 +27,6 @@
 #include "cdb_alloc.h"
 #include "log.h"
 
-
-#define RECEIVE_BUFSIZE 512
-
 /* The database itself, to be init-ed in main */
 static cubedb_t *cubedb;
 
@@ -86,7 +83,7 @@ static cmd_result cmd_quit(client_t *client, sds *argv, int argc)
 static cmd_result cmd_ping(client_t *client, sds *argv, int argc)
 {
     (void) argv; (void) argc;
-    sendstr(client, "PONG");
+    client_sendstr(client, "PONG");
     return REPLY_OK_NO_ANSWER;
 }
 
@@ -98,7 +95,7 @@ static cmd_result cmd_cubes(client_t *client, sds *argv, int argc)
     char **cube_names = cubedb_get_cube_names(cubedb, &cube_count);
     defer { free(cube_names); }
 
-    sendstrlist(client, cube_names, cube_count);
+    client_sendstrlist(client, cube_names, cube_count);
 
     return REPLY_OK_NO_ANSWER;
 }
@@ -152,7 +149,7 @@ static cmd_result cmd_part(client_t *client, sds *argv, int argc)
     }
     defer { htable_destroy(column_to_value_set); }
 
-    sendstrstrset(client, column_to_value_set);
+    client_sendstrstrset(client, column_to_value_set);
 
     return REPLY_OK_NO_ANSWER;
 }
@@ -193,7 +190,7 @@ static cmd_result cmd_cube(client_t *client, sds *argv, int argc)
     size_t partition_count = 0;
     char **partition_names = cube_get_partition_names(cube, &partition_count);
 
-    sendstrlist(client, partition_names, partition_count);
+    client_sendstrlist(client, partition_names, partition_count);
 
     return REPLY_OK_NO_ANSWER;
 }
@@ -282,12 +279,12 @@ static cmd_result cmd_count(client_t *client, sds *argv, int argc)
     if (!group_column) {
         counter_t *count = result;
         defer { free(count); }
-        sendcounter(client, *count);
+        client_sendcounter(client, *count);
     } else {
         htable_t *value_to_count = result;
         defer { htable_destroy(value_to_count); }
 
-        sendstrcntmap(client, value_to_count);
+        client_sendstrcntmap(client, value_to_count);
     }
 
     return REPLY_OK_NO_ANSWER;
@@ -324,10 +321,10 @@ static cmd_result cmd_pcount(client_t *client, sds *argv, int argc)
 
     if (!group_column) {
         /* Just a per-partition counter if there was not group_column specified */
-        sendstrcntmap(client, partition_to_result);
+        client_sendstrcntmap(client, partition_to_result);
     } else {
         /* For grouped results dump an htable of values to counters for every partition */
-        sendstrstrcntmap(client, partition_to_result);
+        client_sendstrstrcntmap(client, partition_to_result);
     }
 
     return REPLY_OK_NO_ANSWER;
@@ -341,10 +338,10 @@ static cmd_result cmd_help(client_t *client, sds *argv, int argc)
     while (NULL != cmd_table[table_size].name)
         table_size++;
 
-    sendsize(client, table_size);
+    client_sendsize(client, table_size);
 
     for (size_t i = 0; i < table_size; i++)
-        sendstr(client, cmd_table[i].description);
+        client_sendstr(client, cmd_table[i].description);
 
     return REPLY_OK_NO_ANSWER;
 }
@@ -493,7 +490,7 @@ int read_from_client(client_t *client)
 
         /* It's fine */
         if (REPLY_OK == result) {
-            sendok(client);
+            client_sendok(client);
         }
         /* It's fine, no need to add anything */
         else if (REPLY_OK_NO_ANSWER == result) {
@@ -509,7 +506,7 @@ int read_from_client(client_t *client)
         /* Other errors (everything above the REPLY_ERR enum value) are command-specific, no need to
          * disconnect */
         else if (REPLY_ERR < result) {
-            sendcode(client, -result);
+            client_sendcode(client, -result);
         }
     }
 
@@ -586,13 +583,7 @@ int main(int argc, char **argv)
                     fdmax = new_fd;
 
                 client_t *client = client_create(new_fd);
-                socket_non_blocking(new_fd);
-
-                inet_ntop(their_addr.ss_family,
-                          get_in_addr((struct sockaddr *)&their_addr),
-                          client->addrstr, sizeof(client->addrstr));
-
-                slist_prepend(client_list, client);
+                client_register(client, &their_addr);
 
                 log_info("Connection accepted from %s", client->addrstr);
             } else {
