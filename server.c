@@ -33,9 +33,6 @@ static cubedb_t *cubedb;
 /* Server configuration itself, to be init-ed in main */
 config_t *config;
 
-/* A list of currently connected clients, to be init-ed in main */
-slist_t *client_list;
-
 /* Cubedb commands and the command table */
 
 typedef enum cmd_result cmd_result;
@@ -552,7 +549,7 @@ int main(int argc, char **argv)
     /* Global state init */
     cubedb = cubedb_create();
     config = config_create(argc, argv);
-    client_list = slist_create();
+    client_mapping_init();
 
     int listener_fd;
     {
@@ -633,7 +630,7 @@ int main(int argc, char **argv)
                         log_warn("Connection error with %s", client->addrstr);
                     FD_CLR(client->fd, &master);
                     FD_CLR(client->fd, &write_fds);
-                    client_delete(client->fd);
+                    client_unregister(client->fd);
                 } else {
                     /* Otherwise just go on with reading more data */
                 }
@@ -658,7 +655,7 @@ int main(int argc, char **argv)
             if (replies_sent < 0) {
                 log_warn("Connection error with %s", client->addrstr);
                 FD_CLR(client->fd, &master);
-                client_delete(client->fd);
+                client_unregister(client->fd);
             } else {
                 /* Either we had nothing so send or couldn't send all of it*/
             }

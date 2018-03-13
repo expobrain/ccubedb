@@ -238,7 +238,7 @@
 
   - [ ] cubedb:  0.760ms
 
-* TODO [11/17] Prepare for test launch (the project works in background)
+* TODO [13/17] Prepare for test launch (the project works in background)
 ** DONE null values for start/stop partitions
 
   ...if there's no need to limit the search (empty values are ok too - should be converted)
@@ -315,9 +315,7 @@
    TR;DL Doesn't change much
 ** DONE no need to use a lot of return codes apart from "quit"
 ** DONE append for slist
-** TODO  a list of clients should be a mapping
-
-** TODO [2/5] backend DSs
+** DONE [2/2] backend DSs
 
   - [X] a more generic int hash instead of str by default and use that to fix the reverse mapping
     problem in partition.c:get_column_value_id_value
@@ -326,11 +324,7 @@
 
   - [X] make it impossible to use special values (UNSPECIFIED and UNKNOWN) in value_ids
 
-  - [ ] a list of partitions should be sorted, or, even better, should be an autosorted DS (rb-tree?)
-
-  - [ ] values_to_insert - come up with a generic vector or smth? or at least a quick struct should
-    do?
-
+** DONE a list of clients should be a mapping
 ** TODO sanitize=leak
 ** TODO sanitize=asan
 ** TODO sanitize=ubsan
@@ -344,7 +338,8 @@
 
    - [ ] visualising data using the CLI client
 
-* TODO [0/2] Full launch
+* TODO [0/6] Full launch
+
 ** TODO dumping and reloading
 
   - [ ] walk cubes and dump into files
@@ -352,6 +347,12 @@
   - [ ] dump path should be preconfigured on start
 
 ** TODO cached responses
+** TODO [0/2] DS improvements
+
+  - [ ] a list of partitions should be sorted, or, even better, should be an autosorted DS (rb-tree?)
+
+  - [ ] values_to_insert - come up with a generic vector or smth? or at least a quick struct should
+    do?
 ** TODO client, C
 ** TODO client, (Node) JS
 ** TODO integration

@@ -8,9 +8,8 @@
 
 #include "sds.h"
 #include "slist.h"
+#include "khash.h"
 #include "network.h"
-
-extern slist_t *client_list;
 
 typedef struct client_t client_t;
 struct client_t {
@@ -20,6 +19,9 @@ struct client_t {
     slist_t *replies;
     size_t sentlen;
 };
+
+KHASH_MAP_INIT_INT(fd_to_client, client_t*);
+khash_t(fd_to_client) *client_mapping = NULL;
 
 static inline client_t *client_create(int fd)
 {
@@ -46,6 +48,11 @@ enum cmd_reply {
     REPLY_ERR_OBJ_EXISTS = -6,    /* Command object already exists */
     REPLY_ERR_ACTION_FAILED = -7, /* Command execution aborted */
 };
+
+static inline void client_mapping_init()
+{
+    client_mapping = kh_init(fd_to_client);
+}
 
 static inline void client_add_reply(client_t *client, sds reply)
 {
@@ -101,12 +108,11 @@ static inline int client_send_replies(client_t *client)
 
 static inline client_t *client_find(int fd)
 {
-    slist_for_each(node, client_list) {
-        client_t *client = slist_data(node);
-        if (fd == client->fd)
-            return client;
-    }
-    return NULL;
+    khint_t key = kh_get(fd_to_client, client_mapping, (khint_t)fd);
+    bool is_found = key != kh_end(client_mapping);
+    if (!is_found)
+        return NULL;
+    return kh_value(client_mapping, key);
 }
 
 static inline void client_destroy(client_t *client)
@@ -126,18 +132,20 @@ static inline void client_register(client_t *client, struct sockaddr_storage *th
               get_in_addr((struct sockaddr *)&their_addr),
               client->addrstr, sizeof(client->addrstr));
 
-    slist_prepend(client_list, client);
-
+    int ret;
+    khint_t key = kh_put(fd_to_client, client_mapping, (khint_t)client->fd, &ret);
+    kh_value(client_mapping, key) = client;
 }
 
-static inline void client_delete(int fd)
+static inline void client_unregister(int fd)
 {
-    bool finder(void *data) {
-        client_t *client = data;
-        return client->fd == fd;
-    }
     close(fd);
-    client_t *client = slist_delete_single_if(client_list, finder);
+
+    khint_t key = kh_get(fd_to_client, client_mapping, (khint_t)fd);
+    assert(key != kh_end(client_mapping));
+    client_t *client = kh_value(client_mapping, key);
+    kh_del(fd_to_client, client_mapping, key);
+
     client_destroy(client);
 }
 
