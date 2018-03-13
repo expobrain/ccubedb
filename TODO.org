@@ -238,7 +238,7 @@
 
   - [ ] cubedb:  0.760ms
 
-* TODO [13/17] Prepare for test launch (the project works in background)
+* TODO [16/17] Prepare for test launch (the project works in background)
 ** DONE null values for start/stop partitions
 
   ...if there's no need to limit the search (empty values are ok too - should be converted)
@@ -325,9 +325,9 @@
   - [X] make it impossible to use special values (UNSPECIFIED and UNKNOWN) in value_ids
 
 ** DONE a list of clients should be a mapping
-** TODO sanitize=leak
-** TODO sanitize=asan
-** TODO sanitize=ubsan
+** DONE sanitize=leak
+** DONE sanitize=asan
+** DONE sanitize=ubsan
 ** TODO deploy in a container
 
    - [ ] build scripts in the repo
