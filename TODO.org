@@ -238,7 +238,7 @@
 
   - [ ] cubedb:  0.760ms
 
-* TODO [16/17] Prepare for test launch (the project works in background)
+* DONE [17/17] Prepare for test launch (the project works in background)
 ** DONE null values for start/stop partitions
 
   ...if there's no need to limit the search (empty values are ok too - should be converted)
@@ -328,20 +328,21 @@
 ** DONE sanitize=leak
 ** DONE sanitize=asan
 ** DONE sanitize=ubsan
-** TODO deploy in a container
+** DONE deploy in a container
 
    - [X] build/deploy scripts in the main repo
 
-   - [ ] add acubedb convertion utility to the repo
+   - [X] add acubedb convertion utility to the repo
 
-   - [ ] start loading data
+   - [X] start loading data
 
-   - [ ] visualising data using the CLI client
+   - [X] a simple monitor
 
-   - [ ] a simple monitor
+   - [X] visualising data using the CLI client
 
 * TODO [0/6] Full launch
-
+** TODO data retention (delpart works here?)
+** TODO check for leaking memory
 ** TODO dumping and reloading
 
   - [ ] walk cubes and dump into files
@@ -349,6 +350,8 @@
   - [ ] dump path should be preconfigured on start
 
 ** TODO cached responses
+** TODO column number increase should use precooked columns
+** TODO row number increase should preallocate things
 ** TODO [0/2] DS improvements
 
   - [ ] a list of partitions should be sorted, or, even better, should be an autosorted DS (rb-tree?)
@@ -358,8 +361,7 @@
 ** TODO client, C
 ** TODO client, (Node) JS
 ** TODO integration
-* TODO [0/5] Post-launch
-
+* TODO [0/7] Post-launch
 ** TODO mmaped DS
 
   using mmaped DS as a backend would greatly simplify data flushing

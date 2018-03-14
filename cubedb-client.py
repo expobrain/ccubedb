@@ -31,6 +31,8 @@ ERROR_TO_MSG = {
     REPLY_ERR_ACTION_FAILED: "Command execution aborted",
 }
 
+MAX_PLOT_WIDTH = 50
+
 
 class CubeDB(object):
 
@@ -42,7 +44,6 @@ class CubeDB(object):
         self.cmd_table = {
             'PING': self.cmd_ping,
             'HELP': self.cmd_help,
-            'QUIT': self.cmd_quit,
             'CUBES': self.cmd_cubes,
             'ADDCUBE': self.cmd_addcube,
             'CUBE': self.cmd_cube,
@@ -54,15 +55,42 @@ class CubeDB(object):
             'PCOUNT': self.cmd_pcount,
         }
 
+        self.visualiser_table = {
+            'PING': self.vis_ping,
+            'HELP': self.vis_help,
+            'CUBES': self.vis_cubes,
+            'ADDCUBE': self.vis_addcube,
+            'CUBE': self.vis_cube,
+            'DELCUBE': self.vis_delcube,
+            'PART': self.vis_part,
+            'DELPART': self.vis_delpart,
+            'INSERT': self.vis_insert,
+            'COUNT': self.vis_count,
+            'PCOUNT': self.vis_pcount,
+        }
+
     def execute_from_line(self, line):
+        cmd, args = self.parse_cmd(line)
+        return self.cmd_table[cmd](*args)
+
+    def execute_from_line_and_visualise(self, line):
+        cmd, args = self.parse_cmd(line)
+        result = self.cmd_table[cmd](*args)
+        visualiser = self.visualiser_table.get(cmd)
+        if not visualiser:
+            pprint(result, indent=4)
+        else:
+            visualiser(result, *args)
+
+    def parse_cmd(self, line):
         parts = [p.strip() for p in shlex.split(line)]
         if not len(parts) >= 1:
             raise CubeDBError("Need at least one argument")
         cmd = parts[0].upper()
-        args = parts[1:]
         if cmd not in self.cmd_table:
             raise CubeDBError("Unknown command: {}".format(cmd))
-        return self.cmd_table[cmd](*args)
+        args = parts[1:]
+        return cmd, args
 
     def sendline(self, cmd_line):
         if cmd_line[-1] != "\n":
@@ -132,21 +160,45 @@ class CubeDB(object):
         self.sendline("PING")
         return self.readline()
 
+    def vis_ping(self, response):
+        print(response.strip())
+
     def cmd_cubes(self):
         self.sendline("CUBES")
         return self.readlines()
+
+    def vis_cubes(self, cube_names):
+        for line in cube_names:
+            print(line)
 
     def cmd_addcube(self, name):
         self.sendline("ADDCUBE '{}'".format(name))
         return self.readok()
 
+    def vis_addcube(self, result, name):
+        if result:
+            print("OK")
+        else:
+            print("FAIL")
+
     def cmd_cube(self, name):
         self.sendline("CUBE '{}'".format(name))
         return self.readlines()
 
+    def vis_cube(self, partition_names, cube_name):
+        print(cube_name)
+        for line in partition_names:
+            print(" ", line)
+
     def cmd_delcube(self, name):
         self.sendline("DELCUBE '{}'".format(name))
         return self.readok()
+
+    def vis_delcube(self, result, name):
+        if result:
+            print("OK")
+        else:
+            print("FAIL")
 
     def cmd_part(self, name, _from=None, to=None):
         cmd = "PART '{}'".format(name)
@@ -157,9 +209,22 @@ class CubeDB(object):
         self.sendline(cmd)
         return self.readmaplist()
 
+    def vis_part(self, partition_to_columns, cube_name, _from=None, to=None):
+        print(cube_name)
+        for column, column_values in partition_to_columns.iteritems():
+            print(" ", column)
+            for value in sorted(column_values, reverse=True):
+                print("  ", value)
+
     def cmd_delpart(self, name, _from, to=''):
         self.sendline("DELPART '{}' '{}' '{}'".format(name, _from, to))
         return self.readok()
+
+    def vis_delpart(self, result, name, _from, to=''):
+        if result:
+            print("OK")
+        else:
+            print("FAIL")
 
     def _column_values_to_str(self, columnvalues):
         if isinstance(columnvalues, dict):
@@ -173,6 +238,12 @@ class CubeDB(object):
                                                           count))
         return self.readok()
 
+    def vis_insert(self, result, name, partition, columnvalues, count):
+        if result:
+            print("OK")
+        else:
+            print("FAIL")
+
     def cmd_count(self, name, _from='', to='', columnvalues='', groupcolumn=''):
         self.sendline("COUNT '{}' '{}' '{}' '{}' '{}'".format(name, _from, to,
                                                               self._column_values_to_str(columnvalues),
@@ -181,6 +252,17 @@ class CubeDB(object):
             return self.readmap()
         else:
             return self.readcount()
+
+    def vis_count(self, result, cube_name, _from='', to='', columnvalues='', groupcolumn=''):
+        print(cube_name)
+        if groupcolumn:
+            max_count = max(int(count) for _, count in result.iteritems())
+            for value, count in sorted(result.iteritems(), reverse=True):
+                char_num = int(MAX_PLOT_WIDTH * float(count) / max_count)
+                line = " {:>20} {:>10} {:<}".format(value, count, "*" * char_num)
+                print(line)
+        else:
+            print(result)
 
     def cmd_pcount(self, name, _from='', to='', columnvalues='', groupcolumn=''):
         self.sendline("PCOUNT '{}' '{}' '{}' '{}' '{}'".format(name, _from, to,
@@ -191,9 +273,35 @@ class CubeDB(object):
         else:
             return self.readmap()
 
+    def vis_pcount(self, result, cube_name, _from='', to='', columnvalues='', groupcolumn=''):
+        print(cube_name)
+        if groupcolumn:
+            max_count = 0
+            for partition, value_to_count in result.iteritems():
+                for value, count in value_to_count.iteritems():
+                    max_count = max(int(count), max_count)
+
+            for partition, value_to_count in sorted(result.iteritems(), reverse=True):
+                print(" ", partition)
+                for value, count in sorted(value_to_count.iteritems(), reverse=True):
+                    char_num = int(MAX_PLOT_WIDTH * float(count) / max_count)
+                    line = " {:>20} {:>10} {:<}".format(value, count, "*" * char_num)
+                    print(line)
+        else:
+            partition_counts = result.iteritems()
+            max_count = max(int(count) for _, count in partition_counts)
+            for partition, count in sorted(result.iteritems(), reverse=True):
+                char_num = int(MAX_PLOT_WIDTH * float(count) / max_count)
+                line = " {:>20} {:>10} {:<}".format(partition, count, "*" * char_num)
+                print(line)
+
     def cmd_help(self):
         self.sendline("HELP")
         return self.readlines()
+
+    def vis_help(self, help_lines):
+        for line in help_lines:
+            print(line)
 
     def cmd_quit(self):
         self.sendline("QUIT")
@@ -212,6 +320,8 @@ def main():
                         help='Do not abort execution on command errors')
     parser.add_argument('--silent', action='store_true',
                         help='Do not print cmds to be executed, and cmd execution results')
+    parser.add_argument('--visual', action='store_true',
+                        help='Pretty print cmd output')
     args = parser.parse_args()
 
     cdb = CubeDB(args.host, args.port)
@@ -224,9 +334,15 @@ def main():
         if not args.silent:
             print(line, end='')
         try:
-            cmd_result = cdb.execute_from_line(line)
-            if not args.silent:
-                pprint(cmd_result, indent=4)
+            if args.silent:
+                cdb.execute_from_line(line)
+                continue
+            if not args.visual:
+                result = cdb.execute_from_line(line)
+                pprint(result, indent=4)
+            else:
+                cdb.execute_from_line_and_visualise(line)
+
         except CubeDBError as e:
             print("Command '{}' failed with server error: '{}'".format(line.strip(), e.message))
             if not args.ignore_errors:
