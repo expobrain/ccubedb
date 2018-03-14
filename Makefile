@@ -11,6 +11,7 @@ CFLAGS += -flto -march=native -ffast-math -O2
 else ifdef PROD
 # same as FAST but targets haswell Xeons
 CFLAGS += -flto -march=haswell -ffast-math -O2
+LDFLAGS += -static
 else ifdef TINY
 # Tiny binary
 CFLAGS += -flto -Os -ffast-math
