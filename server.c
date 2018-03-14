@@ -551,6 +551,7 @@ int main(int argc, char **argv)
     config = config_create(argc, argv);
     client_mapping_init();
 
+    /* The server, using select only for now */
     int listener_fd;
     {
         /* Get a list of bindable network addresses */
@@ -588,36 +589,40 @@ int main(int argc, char **argv)
             /* Interrupted? Just restart the polling */
             if (EINTR == errno)
                 continue;
+
+            /* Otherwise something went seriously wrong, abort */
             perror("select");
             exit(EXIT_FAILURE);
         }
 
-        /* Handle read events */
-
         for (int this_fd = 0; this_fd <= fdmax; this_fd++) {
-            if (!FD_ISSET(this_fd, &read_fds))
-                continue;
 
-            if (this_fd == listener_fd) {
-                /* New incoming connection */
+            /* Handle read events */
 
-                struct sockaddr_storage their_addr;
-                socklen_t sin_size = sizeof(their_addr);
-                int new_fd = accept(listener_fd, (struct sockaddr *)&their_addr, &sin_size);
-                if (new_fd == -1) {
-                    perror("accept");
+            if (FD_ISSET(this_fd, &read_fds)) {
+
+                if (this_fd == listener_fd) {
+                    /* New incoming connection */
+
+                    struct sockaddr_storage their_addr;
+                    socklen_t sin_size = sizeof(their_addr);
+                    int new_fd = accept(listener_fd, (struct sockaddr *)&their_addr, &sin_size);
+                    if (new_fd == -1) {
+                        perror("accept");
+                        continue;
+                    }
+
+                    FD_SET(new_fd, &master);
+                    if (new_fd > fdmax)
+                        fdmax = new_fd;
+
+                    client_t *client = client_create(new_fd);
+                    client_register(client, &their_addr);
+
+                    log_info("Connection accepted from %s", client->addrstr);
                     continue;
                 }
 
-                FD_SET(new_fd, &master);
-                if (new_fd > fdmax)
-                    fdmax = new_fd;
-
-                client_t *client = client_create(new_fd);
-                client_register(client, &their_addr);
-
-                log_info("Connection accepted from %s", client->addrstr);
-            } else {
                 /* New data from the client */
 
                 client_t *client = client_find(this_fd);
@@ -635,31 +640,25 @@ int main(int argc, char **argv)
                     /* Otherwise just go on with reading more data */
                 }
             }
-        }
 
-        /* Handle write events */
+            /* Handle write events */
 
-        for (int this_fd = 0; this_fd <= fdmax; this_fd++) {
-            if (!FD_ISSET(this_fd, &write_fds))
-                continue;
-            if (this_fd == listener_fd)
-                continue;
+            if (FD_ISSET(this_fd, &write_fds)) {
+                client_t *client = client_find(this_fd);
+                assert(client);
+                if (!client_has_replies(client))
+                    continue;
 
-            client_t *client = client_find(this_fd);
-            assert(client);
-
-            if (!client_has_replies(client))
-                continue;
-
-            int replies_sent = client_send_replies(client);
-            if (replies_sent < 0) {
-                log_warn("Connection error with %s", client->addrstr);
-                FD_CLR(client->fd, &master);
-                client_unregister(client->fd);
-            } else {
-                /* Either we had nothing so send or couldn't send all of it*/
+                int replies_sent = client_send_replies(client);
+                if (replies_sent < 0) {
+                    log_warn("Connection error with %s", client->addrstr);
+                    FD_CLR(client->fd, &master);
+                    client_unregister(client->fd);
+                }
             }
+
         }
+
     }
     return EXIT_SUCCESS;
 }

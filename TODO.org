@@ -330,13 +330,15 @@
 ** DONE sanitize=ubsan
 ** TODO deploy in a container
 
-   - [ ] build scripts in the repo
+   - [ ] build/deploy scripts in the main repo
 
-   - [ ] deploy to an actual machine
+   - [ ] add acubedb convertion utility to the repo
 
    - [ ] start loading data
 
    - [ ] visualising data using the CLI client
+
+   - [ ] a simple monitor
 
 * TODO [0/6] Full launch
 

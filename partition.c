@@ -333,7 +333,7 @@ htable_t *partition_count_filter_grouped(partition_t *partition, filter_t *filte
             continue;
 
         value_id_t group_column_row_value_id = partition->columns[group_column_id][row_index];
-        char *group_column_row_value =                                  \
+        char *group_column_row_value =
             get_column_value_id_value(group_column_mapping, group_column_row_value_id);
         /* The value should always be there, it's a value in the partition, it should have a reverse
          * mapping */
