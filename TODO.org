@@ -330,7 +330,7 @@
 ** DONE sanitize=ubsan
 ** TODO deploy in a container
 
-   - [ ] build/deploy scripts in the main repo
+   - [X] build/deploy scripts in the main repo
 
    - [ ] add acubedb convertion utility to the repo
 

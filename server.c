@@ -215,8 +215,8 @@ static cmd_result cmd_insert(client_t *client, sds *argv, int argc)
     sds cube_name = argv[1];
     cube_t *cube = cubedb_find_cube(cubedb, cube_name);
     if (!cube) {
-        client_sendcode(client, REPLY_ERR_OBJ_NOT_FOUND);
-        return CMD_DONE;
+        cube = cube_create();
+        cubedb_add_cube(cubedb, cube_name, cube);
     }
 
     /* No need to parse anything in partition_name */
