@@ -33,6 +33,9 @@ static cubedb_t *cubedb;
 /* Server configuration itself, to be init-ed in main */
 cdb_config *config;
 
+/* A map of fds to clients */
+khash_t(fd_to_client) *client_mapping = NULL;
+
 /* Cubedb commands and the command table */
 
 typedef enum cmd_result cmd_result;

@@ -7,6 +7,7 @@ sources = files([
   'partition.c',
   'sds.c',
   'cdb_config.c',
+  'cdb_client.c',
 ])
 
 executable('cubedb', ['server.c'] + sources)
