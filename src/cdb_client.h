@@ -1,5 +1,5 @@
-#ifndef CLIENT_H
-#define CLIENT_H
+#ifndef CDB_CLIENT_H
+#define CDB_CLIENT_H
 
 #include <arpa/inet.h>
 #include <assert.h>
@@ -11,8 +11,8 @@
 #include "khash.h"
 #include "network.h"
 
-typedef struct client_t client_t;
-struct client_t {
+typedef struct cdb_client cdb_client;
+struct cdb_client {
     int fd;
     sds querybuf;
     char addrstr[INET6_ADDRSTRLEN];
@@ -20,12 +20,12 @@ struct client_t {
     size_t sentlen;
 };
 
-KHASH_MAP_INIT_INT(fd_to_client, client_t*);
+KHASH_MAP_INIT_INT(fd_to_client, cdb_client*);
 khash_t(fd_to_client) *client_mapping = NULL;
 
-static inline client_t *client_create(int fd)
+static inline cdb_client *cdb_client_create(int fd)
 {
-    client_t *client = cdb_malloc(sizeof(*client));
+    cdb_client *client = cdb_malloc(sizeof(*client));
     *client = (typeof(*client)) {
         .fd = fd,
         .querybuf = sdsempty(),
@@ -49,26 +49,26 @@ enum cmd_reply {
     REPLY_ERR_ACTION_FAILED = -7, /* Command execution aborted */
 };
 
-static inline void client_mapping_init()
+static inline void cdb_client_mapping_init()
 {
     client_mapping = kh_init(fd_to_client);
 }
 
-static inline void client_add_reply(client_t *client, sds reply)
+static inline void cdb_client_add_reply(cdb_client *client, sds reply)
 {
     slist_append(client->replies, reply);
 }
 
-static inline bool client_has_replies(client_t *client)
+static inline bool cdb_client_has_replies(cdb_client *client)
 {
     return slist_size(client->replies);
 }
 
-static inline int client_send_replies(client_t *client)
+static inline int cdb_client_send_replies(cdb_client *client)
 {
     int bytes_sent = 0;
     int replies_sent = 0;
-    while(client_has_replies(client)) {
+    while(cdb_client_has_replies(client)) {
         sds reply = slist_head(client->replies);
         size_t replylen = sdslen(reply);
 
@@ -106,7 +106,7 @@ static inline int client_send_replies(client_t *client)
     return replies_sent;
 }
 
-static inline client_t *client_find(int fd)
+static inline cdb_client *cdb_client_find(int fd)
 {
     khint_t key = kh_get(fd_to_client, client_mapping, (khint_t)fd);
     bool is_found = key != kh_end(client_mapping);
@@ -115,7 +115,7 @@ static inline client_t *client_find(int fd)
     return kh_value(client_mapping, key);
 }
 
-static inline void client_destroy(client_t *client)
+static inline void cdb_client_destroy(cdb_client *client)
 {
     slist_for_each(node, client->replies)
         sdsfree(slist_data(node));
@@ -124,7 +124,7 @@ static inline void client_destroy(client_t *client)
     free(client);
 }
 
-static inline void client_register(client_t *client, struct sockaddr_storage *their_addr)
+static inline void cdb_client_register(cdb_client *client, struct sockaddr_storage *their_addr)
 {
     socket_non_blocking(client->fd);
 
@@ -137,100 +137,100 @@ static inline void client_register(client_t *client, struct sockaddr_storage *th
     kh_value(client_mapping, key) = client;
 }
 
-static inline void client_unregister(int fd)
+static inline void cdb_client_unregister(int fd)
 {
     close(fd);
 
     khint_t key = kh_get(fd_to_client, client_mapping, (khint_t)fd);
     assert(key != kh_end(client_mapping));
-    client_t *client = kh_value(client_mapping, key);
+    cdb_client *client = kh_value(client_mapping, key);
     kh_del(fd_to_client, client_mapping, key);
 
-    client_destroy(client);
+    cdb_client_destroy(client);
 }
 
 
-static inline void client_sendcounter(client_t *client, counter_t counter)
+static inline void cdb_client_sendcounter(cdb_client *client, counter_t counter)
 {
     sds msg = sdsempty();
     msg = sdscatprintf(msg, "%zu\n", counter);
-    client_add_reply(client, msg);
+    cdb_client_add_reply(client, msg);
 }
 
-static inline void client_sendstrcnt(client_t *client, char *str, counter_t counter)
+static inline void cdb_client_sendstrcnt(cdb_client *client, char *str, counter_t counter)
 {
     sds msg = sdsempty();
     msg = sdscatprintf(msg, "%s %lu\n", str, counter);
-    client_add_reply(client, msg);
+    cdb_client_add_reply(client, msg);
 }
 
-static inline void client_sendsize(client_t *client, size_t size)
+static inline void cdb_client_sendsize(cdb_client *client, size_t size)
 {
     sds msg = sdsempty();
     msg = sdscatprintf(msg, "%zu\n", size);
-    client_add_reply(client, msg);
+    cdb_client_add_reply(client, msg);
 }
 
-static inline void client_sendstr(client_t *client, char *str)
+static inline void cdb_client_sendstr(cdb_client *client, char *str)
 {
     sds msg = sdsempty();
     msg = sdscatprintf(msg, "%s\n", str);
-    client_add_reply(client, msg);
+    cdb_client_add_reply(client, msg);
 }
 
-static inline void client_sendstrstrset(client_t *client, htable_t *map)
+static inline void cdb_client_sendstrstrset(cdb_client *client, htable_t *map)
 {
-    client_sendsize(client, htable_size(map));
+    cdb_client_sendsize(client, htable_size(map));
 
     htable_for_each(item, map) {
         char *key = htable_key(item);
-        client_sendstr(client, key);
+        cdb_client_sendstr(client, key);
 
         htable_t *set = htable_value(item);
-        client_sendsize(client, htable_size(set));
+        cdb_client_sendsize(client, htable_size(set));
 
         htable_for_each(set_item, set) {
             char *set_key = htable_key(set_item);
-            client_sendstr(client, set_key);
+            cdb_client_sendstr(client, set_key);
         }
     }
 }
 
-static inline void client_sendstrlist(client_t *client, char **list, size_t list_size)
+static inline void cdb_client_sendstrlist(cdb_client *client, char **list, size_t list_size)
 {
-    client_sendsize(client, list_size);
+    cdb_client_sendsize(client, list_size);
     for (size_t i = 0; i < list_size; i++ )
-        client_sendstr(client, list[i]);
+        cdb_client_sendstr(client, list[i]);
 }
 
-static inline void client_sendstrcntmap(client_t *client, htable_t *map)
+static inline void cdb_client_sendstrcntmap(cdb_client *client, htable_t *map)
 {
-    client_sendsize(client, htable_size(map));
+    cdb_client_sendsize(client, htable_size(map));
 
     htable_for_each(item, map) {
         char *key = htable_key(item);
         counter_t *count = htable_value(item);
-        client_sendstrcnt(client, key, *count);
+        cdb_client_sendstrcnt(client, key, *count);
     }
 }
 
-static inline void client_sendstrstrcntmap(client_t *client, htable_t *map)
+static inline void cdb_client_sendstrstrcntmap(cdb_client *client, htable_t *map)
 {
-    client_sendsize(client, htable_size(map));
+    cdb_client_sendsize(client, htable_size(map));
 
     htable_for_each(item, map) {
         char *key = htable_key(item);
-        client_sendstr(client, key);
+        cdb_client_sendstr(client, key);
 
         htable_t *inner_map = htable_value(item);
-        client_sendstrcntmap(client, inner_map);
+        cdb_client_sendstrcntmap(client, inner_map);
     }
 }
 
-static inline void client_sendcode(client_t *client, cmd_reply code) {
+static inline void cdb_client_sendcode(cdb_client *client, cmd_reply code) {
     sds msg = sdsempty();
     msg = sdscatprintf(msg, "%d\n", code);
-    client_add_reply(client, msg);
+    cdb_client_add_reply(client, msg);
 }
 
-#endif //CLIENT_H
+#endif //CDB_CLIENT_H

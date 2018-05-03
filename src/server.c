@@ -20,7 +20,7 @@
 #include "cubedb.h"
 #include "cube.h"
 #include "network.h"
-#include "client.h"
+#include "cdb_client.h"
 #include "htable.h"
 #include "slist.h"
 #include "cdb_config.h"
@@ -41,7 +41,7 @@ enum cmd_result {
     CMD_QUIT,                   /* Disconnect immediately*/
 };
 
-typedef cmd_result cmd_function(client_t *client, sds *argv, int argc);
+typedef cmd_result cmd_function(cdb_client *client, sds *argv, int argc);
 
 typedef struct cubedb_cmd cubedb_cmd;
 struct cubedb_cmd {
@@ -62,20 +62,20 @@ static inline sds parse_nullable_arg(sds arg)
         return arg;
 }
 
-static cmd_result cmd_quit(client_t *client, sds *argv, int argc)
+static cmd_result cmd_quit(cdb_client *client, sds *argv, int argc)
 {
     (void) argv; (void) argc; (void) client;
     return CMD_QUIT;
 }
 
-static cmd_result cmd_ping(client_t *client, sds *argv, int argc)
+static cmd_result cmd_ping(cdb_client *client, sds *argv, int argc)
 {
     (void) argv; (void) argc;
-    client_sendstr(client, "PONG");
+    cdb_client_sendstr(client, "PONG");
     return CMD_DONE;
 }
 
-static cmd_result cmd_cubes(client_t *client, sds *argv, int argc)
+static cmd_result cmd_cubes(cdb_client *client, sds *argv, int argc)
 {
     (void) argv; (void) argc;
 
@@ -83,29 +83,29 @@ static cmd_result cmd_cubes(client_t *client, sds *argv, int argc)
     char **cube_names = cubedb_get_cube_names(cubedb, &cube_count);
     defer { free(cube_names); }
 
-    client_sendstrlist(client, cube_names, cube_count);
+    cdb_client_sendstrlist(client, cube_names, cube_count);
 
     return CMD_DONE;
 }
 
-static cmd_result cmd_add_cube(client_t *client, sds *argv, int argc)
+static cmd_result cmd_add_cube(cdb_client *client, sds *argv, int argc)
 {
     (void) argc; (void) client;
 
     sds cube_name = argv[1];
     if (cubedb_find_cube(cubedb, cube_name)) {
-        client_sendcode(client, REPLY_ERR_OBJ_EXISTS);
+        cdb_client_sendcode(client, REPLY_ERR_OBJ_EXISTS);
         return CMD_DONE;
     }
 
     cube_t *cube = cube_create();
     cubedb_add_cube(cubedb, cube_name, cube);
-    client_sendcode(client, REPLY_OK);
+    cdb_client_sendcode(client, REPLY_OK);
 
     return CMD_DONE;
 }
 
-static cmd_result cmd_del_cube(client_t *client, sds *argv, int argc)
+static cmd_result cmd_del_cube(cdb_client *client, sds *argv, int argc)
 {
     (void) argc; (void) client;
 
@@ -113,23 +113,23 @@ static cmd_result cmd_del_cube(client_t *client, sds *argv, int argc)
 
     cube_t *cube = cubedb_find_cube(cubedb, cube_name);
     if (!cube) {
-        client_sendcode(client, REPLY_ERR_OBJ_NOT_FOUND);
+        cdb_client_sendcode(client, REPLY_ERR_OBJ_NOT_FOUND);
         return CMD_DONE;
     }
 
     cubedb_del_cube(cubedb, cube_name);
-    client_sendcode(client, REPLY_OK);
+    cdb_client_sendcode(client, REPLY_OK);
 
     return CMD_DONE;
 }
 
-static cmd_result cmd_part(client_t *client, sds *argv, int argc)
+static cmd_result cmd_part(cdb_client *client, sds *argv, int argc)
 {
     sds cube_name = argv[1];
 
     cube_t *cube = cubedb_find_cube(cubedb, cube_name);
     if (!cube) {
-        client_sendcode(client, REPLY_ERR_OBJ_NOT_FOUND);
+        cdb_client_sendcode(client, REPLY_ERR_OBJ_NOT_FOUND);
         return CMD_DONE;
     }
 
@@ -141,11 +141,11 @@ static cmd_result cmd_part(client_t *client, sds *argv, int argc)
     } else if (3 == argc) {
         sds partition = parse_nullable_arg(argv[2]);
         if (!partition) {
-            client_sendcode(client, REPLY_ERR_WRONG_ARG);
+            cdb_client_sendcode(client, REPLY_ERR_WRONG_ARG);
             return CMD_DONE;
         }
         if (!cube_has_partition(cube, partition)) {
-            client_sendcode(client, REPLY_ERR_OBJ_NOT_FOUND);
+            cdb_client_sendcode(client, REPLY_ERR_OBJ_NOT_FOUND);
             return CMD_DONE;
         }
         column_to_value_set = cube_get_columns_to_value_set(cube, partition, partition);
@@ -154,11 +154,11 @@ static cmd_result cmd_part(client_t *client, sds *argv, int argc)
     }
     defer { htable_destroy(column_to_value_set); }
 
-    client_sendstrstrset(client, column_to_value_set);
+    cdb_client_sendstrstrset(client, column_to_value_set);
     return CMD_DONE;
 }
 
-static cmd_result cmd_del_cube_partition(client_t *client, sds *argv, int argc)
+static cmd_result cmd_del_cube_partition(cdb_client *client, sds *argv, int argc)
 {
     (void) client;
 
@@ -166,7 +166,7 @@ static cmd_result cmd_del_cube_partition(client_t *client, sds *argv, int argc)
 
     cube_t *cube = cubedb_find_cube(cubedb, cube_name);
     if (!cube) {
-        client_sendcode(client, REPLY_ERR_OBJ_NOT_FOUND);
+        cdb_client_sendcode(client, REPLY_ERR_OBJ_NOT_FOUND);
         return CMD_DONE;
     }
 
@@ -177,7 +177,7 @@ static cmd_result cmd_del_cube_partition(client_t *client, sds *argv, int argc)
     } else if (3 == argc) {
         sds partition_name = argv[2];
         if (!cube_has_partition(cube, partition_name)) {
-            client_sendcode(client, REPLY_ERR_OBJ_NOT_FOUND);
+            cdb_client_sendcode(client, REPLY_ERR_OBJ_NOT_FOUND);
             return CMD_DONE;
         }
         cube_delete_partition_from_to(cube, partition_name, partition_name);
@@ -185,30 +185,30 @@ static cmd_result cmd_del_cube_partition(client_t *client, sds *argv, int argc)
         assert(false);
     }
 
-    client_sendcode(client, REPLY_OK);
+    cdb_client_sendcode(client, REPLY_OK);
     return CMD_DONE;
 }
 
-static cmd_result cmd_cube(client_t *client, sds *argv, int argc)
+static cmd_result cmd_cube(cdb_client *client, sds *argv, int argc)
 {
     (void) argc;
 
     sds cube_name = argv[1];
     cube_t *cube = cubedb_find_cube(cubedb, cube_name);
     if (!cube) {
-        client_sendcode(client, REPLY_ERR_OBJ_NOT_FOUND);
+        cdb_client_sendcode(client, REPLY_ERR_OBJ_NOT_FOUND);
         return CMD_DONE;
     }
 
     size_t partition_count = 0;
     char **partition_names = cube_get_partition_names(cube, &partition_count);
 
-    client_sendstrlist(client, partition_names, partition_count);
+    cdb_client_sendstrlist(client, partition_names, partition_count);
 
     return CMD_DONE;
 }
 
-static cmd_result cmd_insert(client_t *client, sds *argv, int argc)
+static cmd_result cmd_insert(cdb_client *client, sds *argv, int argc)
 {
     (void) argc; (void) client;
 
@@ -226,7 +226,7 @@ static cmd_result cmd_insert(client_t *client, sds *argv, int argc)
     sds counter_str = argv[4];
     counter_t counter = strtoul(counter_str, NULL, 0);
     if (ULONG_MAX == counter) {
-        client_sendcode(client, REPLY_ERR_WRONG_ARG);
+        cdb_client_sendcode(client, REPLY_ERR_WRONG_ARG);
         return CMD_DONE;
     }
 
@@ -251,7 +251,7 @@ static cmd_result cmd_insert(client_t *client, sds *argv, int argc)
         defer { sdsfreesplitres(pair_tokens, pair_tokens_len); }
 
         if (2 != pair_tokens_len) {
-            client_sendcode(client, REPLY_ERR_WRONG_ARG);
+            cdb_client_sendcode(client, REPLY_ERR_WRONG_ARG);
             return CMD_DONE;
         }
 
@@ -259,7 +259,7 @@ static cmd_result cmd_insert(client_t *client, sds *argv, int argc)
         sds value = pair_tokens[1];
 
         if (insert_row_has_column(row, column)){
-            client_sendcode(client, REPLY_ERR_WRONG_ARG);
+            cdb_client_sendcode(client, REPLY_ERR_WRONG_ARG);
             return CMD_DONE;
         }
 
@@ -267,20 +267,20 @@ static cmd_result cmd_insert(client_t *client, sds *argv, int argc)
     }
 
     if (!cube_insert_row(cube, row)) {
-        client_sendcode(client, REPLY_ERR_ACTION_FAILED);
+        cdb_client_sendcode(client, REPLY_ERR_ACTION_FAILED);
         return CMD_DONE;
     }
 
-    client_sendcode(client, REPLY_OK);
+    cdb_client_sendcode(client, REPLY_OK);
     return CMD_DONE;
 }
 
-static cmd_result cmd_count(client_t *client, sds *argv, int argc)
+static cmd_result cmd_count(cdb_client *client, sds *argv, int argc)
 {
     sds cube_name = argv[1];
     cube_t *cube = cubedb_find_cube(cubedb, cube_name);
     if (!cube) {
-        client_sendcode(client, REPLY_ERR_OBJ_NOT_FOUND);
+        cdb_client_sendcode(client, REPLY_ERR_OBJ_NOT_FOUND);
         return CMD_DONE;
     }
 
@@ -298,7 +298,7 @@ static cmd_result cmd_count(client_t *client, sds *argv, int argc)
         int res = 0;
         filter = filter_parse_from_args(argv[4], &res);
         if (res != 0) {
-            client_sendcode(client, REPLY_ERR_WRONG_ARG);
+            cdb_client_sendcode(client, REPLY_ERR_WRONG_ARG);
             return CMD_DONE;
         }
     }
@@ -312,23 +312,23 @@ static cmd_result cmd_count(client_t *client, sds *argv, int argc)
     if (!group_column) {
         counter_t *count = result;
         defer { free(count); }
-        client_sendcounter(client, *count);
+        cdb_client_sendcounter(client, *count);
     } else {
         htable_t *value_to_count = result;
         defer { htable_destroy(value_to_count); }
 
-        client_sendstrcntmap(client, value_to_count);
+        cdb_client_sendstrcntmap(client, value_to_count);
     }
 
     return CMD_DONE;
 }
 
-static cmd_result cmd_pcount(client_t *client, sds *argv, int argc)
+static cmd_result cmd_pcount(cdb_client *client, sds *argv, int argc)
 {
     sds cube_name = argv[1];
     cube_t *cube = cubedb_find_cube(cubedb, cube_name);
     if (!cube) {
-        client_sendcode(client, REPLY_ERR_OBJ_NOT_FOUND);
+        cdb_client_sendcode(client, REPLY_ERR_OBJ_NOT_FOUND);
         return CMD_DONE;
     }
 
@@ -346,7 +346,7 @@ static cmd_result cmd_pcount(client_t *client, sds *argv, int argc)
         int res = 0;
         filter = filter_parse_from_args(argv[4], &res);
         if (res != 0) {
-            client_sendcode(client, REPLY_ERR_WRONG_ARG);
+            cdb_client_sendcode(client, REPLY_ERR_WRONG_ARG);
             return CMD_DONE;
         }
     }
@@ -360,16 +360,16 @@ static cmd_result cmd_pcount(client_t *client, sds *argv, int argc)
 
     if (!group_column) {
         /* Just a per-partition counter if there was not group_column specified */
-        client_sendstrcntmap(client, partition_to_result);
+        cdb_client_sendstrcntmap(client, partition_to_result);
     } else {
         /* For grouped results dump an htable of values to counters for every partition */
-        client_sendstrstrcntmap(client, partition_to_result);
+        cdb_client_sendstrstrcntmap(client, partition_to_result);
     }
 
     return CMD_DONE;
 }
 
-static cmd_result cmd_help(client_t *client, sds *argv, int argc)
+static cmd_result cmd_help(cdb_client *client, sds *argv, int argc)
 {
     (void) argc; (void) argv;
 
@@ -377,10 +377,10 @@ static cmd_result cmd_help(client_t *client, sds *argv, int argc)
     while (NULL != cmd_table[table_size].name)
         table_size++;
 
-    client_sendsize(client, table_size);
+    cdb_client_sendsize(client, table_size);
 
     for (size_t i = 0; i < table_size; i++)
-        client_sendstr(client, cmd_table[i].description);
+        cdb_client_sendstr(client, cmd_table[i].description);
 
     return CMD_DONE;
 }
@@ -450,13 +450,13 @@ bool is_correct_cmd_arg(const char *arg)
     return '\0' == *arg;
 }
 
-cmd_result process_cmd(client_t *client, sds query)
+cmd_result process_cmd(cdb_client *client, sds query)
 {
     /* Split the query into cmd + arguments */
     int argc = 0;
     sds *argv = sdssplitargs(query ,&argc);
     if (!argv){
-        client_sendcode(client, REPLY_ERR_WRONG_ARG);
+        cdb_client_sendcode(client, REPLY_ERR_WRONG_ARG);
         return CMD_DONE;
     }
 
@@ -468,18 +468,18 @@ cmd_result process_cmd(client_t *client, sds query)
 
     for (int i = 0; i < argc; i++)
         if (!is_correct_cmd_arg(argv[i])) {
-            client_sendcode(client, REPLY_ERR_MALFORMED_ARG);
+            cdb_client_sendcode(client, REPLY_ERR_MALFORMED_ARG);
             return CMD_DONE;
         }
 
     cubedb_cmd *cmd = find_cmd(command);
     if (!cmd) {
-        client_sendcode(client, REPLY_ERR_NOT_FOUND);
+        cdb_client_sendcode(client, REPLY_ERR_NOT_FOUND);
         return CMD_DONE;
     }
 
     if (cmd->min_arity > argc - 1 || cmd->max_arity < argc - 1) {
-        client_sendcode(client, REPLY_ERR_WRONG_ARG_NUM);
+        cdb_client_sendcode(client, REPLY_ERR_WRONG_ARG_NUM);
         return CMD_DONE;
     }
 
@@ -488,7 +488,7 @@ cmd_result process_cmd(client_t *client, sds query)
 
 /* TCP server */
 
-int read_from_client(client_t *client)
+int read_from_client(cdb_client *client)
 {
     char receive_buffer[RECEIVE_BUFSIZE] = {0};
     int receive_size = 0;
@@ -549,7 +549,7 @@ int main(int argc, char **argv)
     /* Global state init */
     cubedb = cubedb_create();
     config = cdb_config_create(argc, argv);
-    client_mapping_init();
+    cdb_client_mapping_init();
 
     /* The server, using select only for now */
     int listener_fd;
@@ -616,8 +616,8 @@ int main(int argc, char **argv)
                     if (new_fd > fdmax)
                         fdmax = new_fd;
 
-                    client_t *client = client_create(new_fd);
-                    client_register(client, &their_addr);
+                    cdb_client *client = cdb_client_create(new_fd);
+                    cdb_client_register(client, &their_addr);
 
                     log_info("Connection accepted from %s", client->addrstr);
                     continue;
@@ -625,7 +625,7 @@ int main(int argc, char **argv)
 
                 /* New data from the client */
 
-                client_t *client = client_find(this_fd);
+                cdb_client *client = cdb_client_find(this_fd);
                 assert(client);
                 int res = read_from_client(client);
                 if (res <= 0) {
@@ -635,7 +635,7 @@ int main(int argc, char **argv)
                         log_warn("Connection error with %s", client->addrstr);
                     FD_CLR(client->fd, &master);
                     FD_CLR(client->fd, &write_fds);
-                    client_unregister(client->fd);
+                    cdb_client_unregister(client->fd);
                 } else {
                     /* Otherwise just go on with reading more data */
                 }
@@ -644,16 +644,16 @@ int main(int argc, char **argv)
             /* Handle write events */
 
             if (FD_ISSET(this_fd, &write_fds)) {
-                client_t *client = client_find(this_fd);
+                cdb_client *client = cdb_client_find(this_fd);
                 assert(client);
-                if (!client_has_replies(client))
+                if (!cdb_client_has_replies(client))
                     continue;
 
-                int replies_sent = client_send_replies(client);
+                int replies_sent = cdb_client_send_replies(client);
                 if (replies_sent < 0) {
                     log_warn("Connection error with %s", client->addrstr);
                     FD_CLR(client->fd, &master);
-                    client_unregister(client->fd);
+                    cdb_client_unregister(client->fd);
                 }
             }
 
