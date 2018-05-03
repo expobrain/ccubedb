@@ -89,7 +89,7 @@ static void mapping_cleanup(void *mapping)
     column_mapping_destroy(mapping);
 }
 
-void partition_init(cdb_partition *partition)
+void cdb_partition_init(cdb_partition *partition)
 {
     *partition = (typeof(*partition)){
         .columns = NULL,
@@ -101,14 +101,14 @@ void partition_init(cdb_partition *partition)
     };
 }
 
-cdb_partition *partition_create()
+cdb_partition *cdb_partition_create()
 {
     cdb_partition *partition = cdb_malloc(sizeof(*partition));
-    partition_init(partition);
+    cdb_partition_init(partition);
     return partition;
 }
 
-void partition_destroy(cdb_partition *partition)
+void cdb_partition_destroy(cdb_partition *partition)
 {
     htable_destroy(partition->column_name_to_mapping);
 
@@ -128,7 +128,7 @@ void partition_destroy(cdb_partition *partition)
     free(partition);
 }
 
-static column_mapping_t *partition_add_column_mapping(cdb_partition *partition, sds column_name)
+static column_mapping_t *cdb_partition_add_column_mapping(cdb_partition *partition, sds column_name)
 {
     column_mapping_t *column_mapping =
         column_mapping_create(htable_size(partition->column_name_to_mapping));
@@ -136,10 +136,10 @@ static column_mapping_t *partition_add_column_mapping(cdb_partition *partition, 
     return column_mapping;
 }
 
-static void partition_add_column(cdb_partition *partition, sds column_name)
+static void cdb_partition_add_column(cdb_partition *partition, sds column_name)
 {
     column_mapping_t *mapping =
-        partition_add_column_mapping(partition, column_name);
+        cdb_partition_add_column_mapping(partition, column_name);
     partition->column_num++;
     partition->columns = cdb_realloc(partition->columns,
                                      sizeof(partition->columns[0]) * partition->column_num);
@@ -200,7 +200,7 @@ static value_id_t *convert_insert_row(cdb_partition *partition, cdb_insert_row *
 
         column_mapping_t *column_mapping = htable_get(partition->column_name_to_mapping, column_name);
         if (!column_mapping) {
-            partition_add_column(partition, column_name);
+            cdb_partition_add_column(partition, column_name);
             column_mapping = htable_get(partition->column_name_to_mapping, column_name);
             assert(column_mapping);
         }
@@ -267,7 +267,7 @@ static inline bool is_row_matching_filter(cdb_partition *partition, size_t row_i
     return true;
 }
 
-counter_t partition_count_filter(cdb_partition *partition, cdb_filter *filter)
+counter_t cdb_partition_count_filter(cdb_partition *partition, cdb_filter *filter)
 {
     counter_t total_count = 0;
 
@@ -303,7 +303,7 @@ static char *get_column_value_id_value(column_mapping_t *column_mapping, const v
     return value;
 }
 
-htable_t *partition_count_filter_grouped(cdb_partition *partition, cdb_filter *filter, char *group_by_column)
+htable_t *cdb_partition_count_filter_grouped(cdb_partition *partition, cdb_filter *filter, char *group_by_column)
 {
     htable_t *group_value_to_count = htable_create(partition->column_num * 2, free);
 
@@ -353,14 +353,14 @@ htable_t *partition_count_filter_grouped(cdb_partition *partition, cdb_filter *f
 }
 
 
-static size_t partition_increase_row_count(cdb_partition *partition, size_t target_row, counter_t count)
+static size_t cdb_partition_increase_row_count(cdb_partition *partition, size_t target_row, counter_t count)
 {
     partition->counters[target_row] += count;
     return partition->counters[target_row];
 }
 
 
-static size_t partition_append_row(cdb_partition *partition, value_id_t *values)
+static size_t cdb_partition_append_row(cdb_partition *partition, value_id_t *values)
 {
     const size_t new_row_num = partition->row_num + 1;
 
@@ -400,7 +400,7 @@ static inline bool value_array_equal(const value_id_t *left_value_array, const v
     return 0 == memcmp(left_value_array, right_value_array, array_size);
 }
 
-static inline bool partition_can_insert_row(const cdb_partition *partition, const cdb_insert_row *row)
+static inline bool cdb_partition_can_insert_row(const cdb_partition *partition, const cdb_insert_row *row)
 {
     /* Go through rows inserted and check that all columns can accept new values */
     htable_for_each(node, row->column_to_value) {
@@ -424,10 +424,10 @@ static inline bool partition_can_insert_row(const cdb_partition *partition, cons
     return true;
 }
 
-bool partition_insert_row(cdb_partition *partition, cdb_insert_row *row)
+bool cdb_partition_insert_row(cdb_partition *partition, cdb_insert_row *row)
 {
     /* Make sure the row can be added at all */
-    if (!partition_can_insert_row(partition, row))
+    if (!cdb_partition_can_insert_row(partition, row))
         return false;
 
     /* Get the ids instead of string values (array size + values in the array) */
@@ -442,7 +442,7 @@ bool partition_insert_row(cdb_partition *partition, cdb_insert_row *row)
         /* Row not found? append the row, register it's values in the mapping */
         int ret;
         key = kh_put(value_to_row, partition->value_to_row, values_to_insert, &ret);
-        target_row = partition_append_row(partition, values_to_insert + 1);
+        target_row = cdb_partition_append_row(partition, values_to_insert + 1);
         kh_value(partition->value_to_row, key) = target_row;
     } else {
         /* Found the row? This is where we increase the counter */
@@ -450,11 +450,11 @@ bool partition_insert_row(cdb_partition *partition, cdb_insert_row *row)
         free(values_to_insert);
     }
 
-    partition_increase_row_count(partition, target_row, row->count);
+    cdb_partition_increase_row_count(partition, target_row, row->count);
     return true;
 }
 
-void partition_extend_column_value_set(cdb_partition *partition, htable_t *column_to_value_set)
+void cdb_partition_extend_column_value_set(cdb_partition *partition, htable_t *column_to_value_set)
 {
     htable_for_each(item, partition->column_name_to_mapping) {
         char *column_name = htable_key(item);
