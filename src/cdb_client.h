@@ -9,7 +9,7 @@
 #include "sds.h"
 #include "slist.h"
 #include "khash.h"
-#include "network.h"
+#include "cdb_network.h"
 
 typedef struct cdb_client cdb_client;
 struct cdb_client {

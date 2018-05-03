@@ -3,7 +3,7 @@
 
 #include "sds.h"
 #include "slist.h"
-#include "defs.h"
+#include "cdb_defs.h"
 
 typedef struct filter_t filter_t;
 struct filter_t {

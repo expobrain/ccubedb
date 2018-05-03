@@ -1,18 +1,6 @@
-#ifndef NETWORK_H
-#define NETWORK_H
+#include "cdb_network.h"
 
-#include <arpa/inet.h>
-#include <assert.h>
-#include <netdb.h>
-#include <unistd.h>
-#include <fcntl.h>
-
-#include "htable.h"
-#include "defs.h"
-#include "sds.h"
-#include "cdb_config.h"
-
-static inline void *get_in_addr(struct sockaddr *sa)
+void *get_in_addr(struct sockaddr *sa)
 {
     if (sa->sa_family == AF_INET)
         return &(((struct sockaddr_in*)sa)->sin_addr);
@@ -20,7 +8,7 @@ static inline void *get_in_addr(struct sockaddr *sa)
         return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
-static inline struct addrinfo *find_bindable_addr(cdb_config *config)
+struct addrinfo *find_bindable_addr(cdb_config *config)
 {
     struct addrinfo *servinfo = NULL;
 
@@ -41,7 +29,7 @@ static inline struct addrinfo *find_bindable_addr(cdb_config *config)
     return servinfo;
 }
 
-static inline int bind_addr(struct addrinfo *servinfo)
+int bind_addr(struct addrinfo *servinfo)
 {
     int sockfd;
 
@@ -77,7 +65,7 @@ static inline int bind_addr(struct addrinfo *servinfo)
     return sockfd;
 }
 
-static inline int socket_non_blocking(int fd)
+int socket_non_blocking(int fd)
 {
 
     int flags = fcntl(fd, F_GETFL, 0);
@@ -95,5 +83,3 @@ static inline int socket_non_blocking(int fd)
 
     return 0;
 }
-
-#endif //NETWORK_H

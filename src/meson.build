@@ -8,6 +8,7 @@ sources = files([
   'sds.c',
   'cdb_config.c',
   'cdb_client.c',
+  'cdb_network.c',
 ])
 
-executable('cubedb', ['server.c'] + sources)
+executable('cubedb', ['cdb_server.c'] + sources)

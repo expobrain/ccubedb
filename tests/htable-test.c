@@ -2,7 +2,7 @@
 
 #include "minunit.h"
 #include "htable.h"
-#include "defs.h"
+#include "cdb_defs.h"
 
 int tests_run = 0;
 

@@ -9,7 +9,7 @@
 #include "htable.h"
 #include "cdb_alloc.h"
 #include "khash.h"
-#include "defs.h"
+#include "cdb_defs.h"
 
 static value_id_t unknown_value_id = VALUE_ID_FILTER_UNSPECIFIED;
 

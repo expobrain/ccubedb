@@ -1,5 +1,5 @@
-#ifndef DEFS_H
-#define DEFS_H
+#ifndef CDB_DEFS_H
+#define CDB_DEFS_H
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -55,4 +55,4 @@ static inline void column_value_pair_destroy(column_value_pair *pair)
     free(pair);
 }
 
-#endif //DEFS_H
+#endif //CDB_DEFS_H

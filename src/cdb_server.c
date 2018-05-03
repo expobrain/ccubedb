@@ -16,10 +16,10 @@
 #include <time.h>
 
 #include "sds.h"
-#include "defs.h"
+#include "cdb_defs.h"
 #include "cubedb.h"
 #include "cube.h"
-#include "network.h"
+#include "cdb_network.h"
 #include "cdb_client.h"
 #include "htable.h"
 #include "slist.h"

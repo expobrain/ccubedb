@@ -2,7 +2,7 @@
 #define PARTITION_H
 
 #include "sds.h"
-#include "defs.h"
+#include "cdb_defs.h"
 #include "insert_row.h"
 #include "filter.h"
 

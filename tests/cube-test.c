@@ -5,7 +5,7 @@
 #include "cube.h"
 #include "cdb_config.h"
 #include "partition.h"
-#include "defs.h"
+#include "cdb_defs.h"
 #include "htable.h"
 
 int tests_run = 0;

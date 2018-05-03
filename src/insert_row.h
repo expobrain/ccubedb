@@ -3,7 +3,7 @@
 
 #include "sds.h"
 #include "htable.h"
-#include "defs.h"
+#include "cdb_defs.h"
 
 typedef struct insert_row_t insert_row_t;
 struct insert_row_t {
