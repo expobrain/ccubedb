@@ -2,7 +2,7 @@ sources = files([
   'cdb_cubedb.c',
   'cdb_cube.c',
   'cdb_filter.c',
-  'insert_row.c',
+  'cdb_insert_row.c',
   'cdb_partition.c',
   'cdb_log.c',
   'cdb_config.c',

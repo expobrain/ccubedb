@@ -233,8 +233,8 @@ static cmd_result cmd_insert(cdb_client *client, sds *argv, int argc)
         return CMD_DONE;
     }
 
-    insert_row_t *row = insert_row_create(partition_name, counter);
-    defer { insert_row_destroy(row); }
+    cdb_insert_row *row = cdb_insert_row_create(partition_name, counter);
+    defer { cdb_insert_row_destroy(row); }
 
     /* Parse the value list and inititialize the row to be inserted */
     sds column_to_value_list = argv[3];
@@ -261,12 +261,12 @@ static cmd_result cmd_insert(cdb_client *client, sds *argv, int argc)
         sds column = pair_tokens[0];
         sds value = pair_tokens[1];
 
-        if (insert_row_has_column(row, column)){
+        if (cdb_insert_row_has_column(row, column)){
             cdb_client_sendcode(client, REPLY_ERR_WRONG_ARG);
             return CMD_DONE;
         }
 
-        insert_row_add_column_value(row, column, value);
+        cdb_insert_row_add_column_value(row, column, value);
     }
 
     if (!cdb_cube_insert_row(cube, row)) {

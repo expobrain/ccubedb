@@ -52,11 +52,11 @@ static inline cdb_partition *cdb_cube_add_partition(cdb_cube *cube, sds partitio
     return new_partition;
 }
 
-bool cdb_cube_insert_row(cdb_cube *cube, insert_row_t *row)
+bool cdb_cube_insert_row(cdb_cube *cube, cdb_insert_row *row)
 {
-    cdb_partition *partition = cdb_cube_get_partition(cube, insert_row_name(row));
+    cdb_partition *partition = cdb_cube_get_partition(cube, cdb_insert_row_name(row));
     if (!partition)
-        partition = cdb_cube_add_partition(cube, insert_row_name(row));
+        partition = cdb_cube_add_partition(cube, cdb_insert_row_name(row));
     return partition_insert_row(partition, row);
 }
 

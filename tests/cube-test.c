@@ -32,15 +32,15 @@ static char *test_multiple_inserts()
         {
             /* screen_name=214&gender=1&brand=2&country_id=65&platform=3&app_version=5.39.0 2*/
 
-            insert_row_t *row = insert_row_create("2018-02-02_21", 2);
-            defer { insert_row_destroy(row); }
+            cdb_insert_row *row = cdb_insert_row_create("2018-02-02_21", 2);
+            defer { cdb_insert_row_destroy(row); }
 
-            insert_row_add_column_value(row, "screen_name", "214");
-            insert_row_add_column_value(row, "gender", "1");
-            insert_row_add_column_value(row, "brand", "2");
-            insert_row_add_column_value(row, "country_id", "65");
-            insert_row_add_column_value(row, "platform", "3");
-            insert_row_add_column_value(row, "app_version", "5.39.0");
+            cdb_insert_row_add_column_value(row, "screen_name", "214");
+            cdb_insert_row_add_column_value(row, "gender", "1");
+            cdb_insert_row_add_column_value(row, "brand", "2");
+            cdb_insert_row_add_column_value(row, "country_id", "65");
+            cdb_insert_row_add_column_value(row, "platform", "3");
+            cdb_insert_row_add_column_value(row, "app_version", "5.39.0");
 
             cdb_cube_insert_row(cube, row);
         }
@@ -48,15 +48,15 @@ static char *test_multiple_inserts()
         {
             /* screen_name=217&gender=1&brand=2&country_id=48&platform=3&app_version=5.39.0 3*/
 
-            insert_row_t *row = insert_row_create("2018-02-02_21", 3);
-            defer { insert_row_destroy(row); }
+            cdb_insert_row *row = cdb_insert_row_create("2018-02-02_21", 3);
+            defer { cdb_insert_row_destroy(row); }
 
-            insert_row_add_column_value(row, "screen_name", "217");
-            insert_row_add_column_value(row, "gender", "1");
-            insert_row_add_column_value(row, "brand", "2");
-            insert_row_add_column_value(row, "country_id", "48");
-            insert_row_add_column_value(row, "platform", "3");
-            insert_row_add_column_value(row, "app_version", "5.39.0");
+            cdb_insert_row_add_column_value(row, "screen_name", "217");
+            cdb_insert_row_add_column_value(row, "gender", "1");
+            cdb_insert_row_add_column_value(row, "brand", "2");
+            cdb_insert_row_add_column_value(row, "country_id", "48");
+            cdb_insert_row_add_column_value(row, "platform", "3");
+            cdb_insert_row_add_column_value(row, "app_version", "5.39.0");
 
             cdb_cube_insert_row(cube, row);
         }
@@ -64,15 +64,15 @@ static char *test_multiple_inserts()
         {
             /* screen_name=8&gender=0&brand=2&country_id=66&platform=3&app_version=5.45.0 1 */
 
-            insert_row_t *row = insert_row_create("2018-02-02_21", 1);
-            defer { insert_row_destroy(row); }
+            cdb_insert_row *row = cdb_insert_row_create("2018-02-02_21", 1);
+            defer { cdb_insert_row_destroy(row); }
 
-            insert_row_add_column_value(row, "screen_name", "8");
-            insert_row_add_column_value(row, "gender", "0");
-            insert_row_add_column_value(row, "brand", "2");
-            insert_row_add_column_value(row, "country_id", "66");
-            insert_row_add_column_value(row, "platform", "3");
-            insert_row_add_column_value(row, "app_version", "5.45.0");
+            cdb_insert_row_add_column_value(row, "screen_name", "8");
+            cdb_insert_row_add_column_value(row, "gender", "0");
+            cdb_insert_row_add_column_value(row, "brand", "2");
+            cdb_insert_row_add_column_value(row, "country_id", "66");
+            cdb_insert_row_add_column_value(row, "platform", "3");
+            cdb_insert_row_add_column_value(row, "app_version", "5.45.0");
 
             cdb_cube_insert_row(cube, row);
         }
@@ -80,15 +80,15 @@ static char *test_multiple_inserts()
         {
             /* screen_name=123&gender=2&brand=2&country_id=64&platform=2&app_version=6.212.0 1030 */
 
-            insert_row_t *row = insert_row_create("2018-02-02_21", 1030);
-            defer { insert_row_destroy(row); }
+            cdb_insert_row *row = cdb_insert_row_create("2018-02-02_21", 1030);
+            defer { cdb_insert_row_destroy(row); }
 
-            insert_row_add_column_value(row, "screen_name", "123");
-            insert_row_add_column_value(row, "gender", "2");
-            insert_row_add_column_value(row, "brand", "2");
-            insert_row_add_column_value(row, "country_id", "64");
-            insert_row_add_column_value(row, "platform", "2");
-            insert_row_add_column_value(row, "app_version", "6.212.0");
+            cdb_insert_row_add_column_value(row, "screen_name", "123");
+            cdb_insert_row_add_column_value(row, "gender", "2");
+            cdb_insert_row_add_column_value(row, "brand", "2");
+            cdb_insert_row_add_column_value(row, "country_id", "64");
+            cdb_insert_row_add_column_value(row, "platform", "2");
+            cdb_insert_row_add_column_value(row, "app_version", "6.212.0");
 
             cdb_cube_insert_row(cube, row);
         }
@@ -102,9 +102,9 @@ static char *test_count_from_to_single_row()
     cdb_cube *cube = cdb_cube_create();
     defer { cdb_cube_destroy(cube); }
 
-    insert_row_t *row = insert_row_create("part1001", 3);
+    cdb_insert_row *row = cdb_insert_row_create("part1001", 3);
     cdb_cube_insert_row(cube, row);
-    defer { insert_row_destroy(row); }
+    defer { cdb_insert_row_destroy(row); }
 
     {
         counter_t *count = cdb_cube_count_from_to(cube,"part0000","part1000", NULL, NULL);
@@ -126,10 +126,10 @@ static char *test_count_from_to_single_row_with_field()
     cdb_cube *cube = cdb_cube_create();
     defer { cdb_cube_destroy(cube); }
 
-    insert_row_t *row = insert_row_create("part1001", 3);
-    defer { insert_row_destroy(row); }
+    cdb_insert_row *row = cdb_insert_row_create("part1001", 3);
+    defer { cdb_insert_row_destroy(row); }
 
-    insert_row_add_column_value(row, "test name", "test value") ;
+    cdb_insert_row_add_column_value(row, "test name", "test value") ;
 
     cdb_cube_insert_row(cube, row);
 
@@ -164,10 +164,10 @@ static char *test_count_from_to_filter_empty()
     cdb_filter *frow = cdb_filter_create();
     defer { cdb_filter_destroy(frow); }
 
-    insert_row_t *irow = insert_row_create("part1000", 3);
-    defer { insert_row_destroy(irow); }
+    cdb_insert_row *irow = cdb_insert_row_create("part1000", 3);
+    defer { cdb_insert_row_destroy(irow); }
 
-    insert_row_add_column_value(irow, "test name", "test value");
+    cdb_insert_row_add_column_value(irow, "test name", "test value");
 
     {
         counter_t *count = cdb_cube_count_from_to(cube, "part0000", "part1001", frow, NULL);
@@ -209,9 +209,9 @@ static char *test_count_from_to_filter_with_field()
     cdb_filter_add_column_value(wrong_column_frow, "other column name", "test value");
     defer { cdb_filter_destroy(wrong_column_frow); }
 
-    insert_row_t *irow = insert_row_create("part1000", 3);
-    insert_row_add_column_value(irow, "column name", "test value") ;
-    defer { insert_row_destroy(irow); }
+    cdb_insert_row *irow = cdb_insert_row_create("part1000", 3);
+    cdb_insert_row_add_column_value(irow, "column name", "test value") ;
+    defer { cdb_insert_row_destroy(irow); }
 
     {
         counter_t *count = cdb_cube_count_from_to(cube, "part0000", "part1001", correct_frow, NULL);
@@ -280,23 +280,23 @@ static char *test_count_from_to_filter_grouped()
     defer { cdb_cube_destroy(cube); }
 
     {
-        insert_row_t *irow1 = insert_row_create("part1000", 1);
-        defer { insert_row_destroy(irow1); }
-        insert_row_add_column_value(irow1, "column", "test value1") ;
+        cdb_insert_row *irow1 = cdb_insert_row_create("part1000", 1);
+        defer { cdb_insert_row_destroy(irow1); }
+        cdb_insert_row_add_column_value(irow1, "column", "test value1") ;
         cdb_cube_insert_row(cube, irow1);
     }
 
     {
-        insert_row_t *irow2 = insert_row_create("part1001", 2);
-        defer { insert_row_destroy(irow2); }
-        insert_row_add_column_value(irow2, "column", "test value1") ;
+        cdb_insert_row *irow2 = cdb_insert_row_create("part1001", 2);
+        defer { cdb_insert_row_destroy(irow2); }
+        cdb_insert_row_add_column_value(irow2, "column", "test value1") ;
         cdb_cube_insert_row(cube, irow2);
     }
 
     {
-        insert_row_t *irow3 = insert_row_create("part1001", 4);
-        defer { insert_row_destroy(irow3); }
-        insert_row_add_column_value(irow3, "column", "test value2") ;
+        cdb_insert_row *irow3 = cdb_insert_row_create("part1001", 4);
+        defer { cdb_insert_row_destroy(irow3); }
+        cdb_insert_row_add_column_value(irow3, "column", "test value2") ;
         cdb_cube_insert_row(cube, irow3);
     }
 
@@ -321,9 +321,9 @@ static char *test_pcount_from_to_single_row()
     defer { cdb_cube_destroy(cube); }
 
     {
-        insert_row_t *row = insert_row_create("part1001", 3);
+        cdb_insert_row *row = cdb_insert_row_create("part1001", 3);
         cdb_cube_insert_row(cube, row);
-        defer { insert_row_destroy(row); }
+        defer { cdb_insert_row_destroy(row); }
     }
 
     htable_t *partition_to_count = cdb_cube_pcount_from_to(cube,"part1001","part1002", NULL, NULL);
@@ -343,15 +343,15 @@ static char *test_pcount_from_to_multiple_rows()
     defer { cdb_cube_destroy(cube); }
 
     {
-        insert_row_t *row1 = insert_row_create("part1001", 3);
+        cdb_insert_row *row1 = cdb_insert_row_create("part1001", 3);
         cdb_cube_insert_row(cube, row1);
-        defer { insert_row_destroy(row1); }
+        defer { cdb_insert_row_destroy(row1); }
     }
 
     {
-        insert_row_t *row2 = insert_row_create("part1002", 2);
+        cdb_insert_row *row2 = cdb_insert_row_create("part1002", 2);
         cdb_cube_insert_row(cube, row2);
-        defer { insert_row_destroy(row2); }
+        defer { cdb_insert_row_destroy(row2); }
     }
 
     htable_t *partition_to_count = cdb_cube_pcount_from_to(cube,"part1001","part1002", NULL, NULL);
@@ -379,9 +379,9 @@ static char *test_pcount_from_to_filter_single_row()
     defer { cdb_cube_destroy(cube); }
 
     {
-        insert_row_t *irow = insert_row_create("part1001", 3);
-        insert_row_add_column_value(irow, "column", "test value") ;
-        defer { insert_row_destroy(irow); }
+        cdb_insert_row *irow = cdb_insert_row_create("part1001", 3);
+        cdb_insert_row_add_column_value(irow, "column", "test value") ;
+        defer { cdb_insert_row_destroy(irow); }
         cdb_cube_insert_row(cube, irow);
     }
 
@@ -422,24 +422,24 @@ static char *test_pcount_from_to_grouped()
     defer { cdb_cube_destroy(cube); }
 
     {
-        insert_row_t *irow1 = insert_row_create("part1001", 3);
-        insert_row_add_column_value(irow1, "column", "test value") ;
-        defer { insert_row_destroy(irow1); }
+        cdb_insert_row *irow1 = cdb_insert_row_create("part1001", 3);
+        cdb_insert_row_add_column_value(irow1, "column", "test value") ;
+        defer { cdb_insert_row_destroy(irow1); }
         cdb_cube_insert_row(cube, irow1);
 
     }
 
     {
-        insert_row_t *irow2 = insert_row_create("part1001", 2);
-        insert_row_add_column_value(irow2, "column", "test value2") ;
-        defer { insert_row_destroy(irow2); }
+        cdb_insert_row *irow2 = cdb_insert_row_create("part1001", 2);
+        cdb_insert_row_add_column_value(irow2, "column", "test value2") ;
+        defer { cdb_insert_row_destroy(irow2); }
         cdb_cube_insert_row(cube, irow2);
     }
 
     {
-        insert_row_t *irow3 = insert_row_create("part1001", 1);
-        insert_row_add_column_value(irow3, "column", "test value3") ;
-        defer { insert_row_destroy(irow3); }
+        cdb_insert_row *irow3 = cdb_insert_row_create("part1001", 1);
+        cdb_insert_row_add_column_value(irow3, "column", "test value3") ;
+        defer { cdb_insert_row_destroy(irow3); }
         cdb_cube_insert_row(cube, irow3);
     }
 
@@ -471,17 +471,17 @@ static char *test_pcount_from_to_filter_grouped()
     defer { cdb_cube_destroy(cube); }
 
     {
-        insert_row_t *irow1 = insert_row_create("part1001", 3);
-        insert_row_add_column_value(irow1, "column", "test value") ;
-        defer { insert_row_destroy(irow1); }
+        cdb_insert_row *irow1 = cdb_insert_row_create("part1001", 3);
+        cdb_insert_row_add_column_value(irow1, "column", "test value") ;
+        defer { cdb_insert_row_destroy(irow1); }
 
-        insert_row_t *irow2 = insert_row_create("part1001", 2);
-        insert_row_add_column_value(irow2, "column", "test value2") ;
-        defer { insert_row_destroy(irow2); }
+        cdb_insert_row *irow2 = cdb_insert_row_create("part1001", 2);
+        cdb_insert_row_add_column_value(irow2, "column", "test value2") ;
+        defer { cdb_insert_row_destroy(irow2); }
 
-        insert_row_t *irow3 = insert_row_create("part1001", 1);
-        insert_row_add_column_value(irow3, "column", "test value3") ;
-        defer { insert_row_destroy(irow3); }
+        cdb_insert_row *irow3 = cdb_insert_row_create("part1001", 1);
+        cdb_insert_row_add_column_value(irow3, "column", "test value3") ;
+        defer { cdb_insert_row_destroy(irow3); }
 
         cdb_cube_insert_row(cube, irow1);
         cdb_cube_insert_row(cube, irow2);
@@ -528,37 +528,37 @@ static char *test_get_columns_to_value_set()
 
     /* Insert a few row in different partitions */
     {
-        insert_row_t *irow = insert_row_create("part1001", 3);
-        insert_row_add_column_value(irow, "column", "test value") ;
-        defer { insert_row_destroy(irow); }
+        cdb_insert_row *irow = cdb_insert_row_create("part1001", 3);
+        cdb_insert_row_add_column_value(irow, "column", "test value") ;
+        defer { cdb_insert_row_destroy(irow); }
         cdb_cube_insert_row(cube, irow);
     }
 
     {
-        insert_row_t *irow = insert_row_create("part1002", 2);
-        insert_row_add_column_value(irow, "column", "test value") ;
-        defer { insert_row_destroy(irow); }
+        cdb_insert_row *irow = cdb_insert_row_create("part1002", 2);
+        cdb_insert_row_add_column_value(irow, "column", "test value") ;
+        defer { cdb_insert_row_destroy(irow); }
         cdb_cube_insert_row(cube, irow);
     }
 
     {
-        insert_row_t *irow = insert_row_create("part1003", 2);
-        insert_row_add_column_value(irow, "column", "test value2") ;
-        defer { insert_row_destroy(irow); }
+        cdb_insert_row *irow = cdb_insert_row_create("part1003", 2);
+        cdb_insert_row_add_column_value(irow, "column", "test value2") ;
+        defer { cdb_insert_row_destroy(irow); }
         cdb_cube_insert_row(cube, irow);
     }
 
     {
-        insert_row_t *irow = insert_row_create("part1003", 2);
-        insert_row_add_column_value(irow, "column", "test value3") ;
-        defer { insert_row_destroy(irow); }
+        cdb_insert_row *irow = cdb_insert_row_create("part1003", 2);
+        cdb_insert_row_add_column_value(irow, "column", "test value3") ;
+        defer { cdb_insert_row_destroy(irow); }
         cdb_cube_insert_row(cube, irow);
     }
 
     {
-        insert_row_t *irow = insert_row_create("part1003", 2);
-        insert_row_add_column_value(irow, "column2", "test value3") ;
-        defer { insert_row_destroy(irow); }
+        cdb_insert_row *irow = cdb_insert_row_create("part1003", 2);
+        cdb_insert_row_add_column_value(irow, "column2", "test value3") ;
+        defer { cdb_insert_row_destroy(irow); }
         cdb_cube_insert_row(cube, irow);
     }
 
@@ -608,17 +608,17 @@ static char *test_max_value()
         sds msg = sdscatprintf(sdsempty(), "%zu", i);
         defer { sdsfree(msg); }
 
-        insert_row_t *irow = insert_row_create("part", 1);
-        insert_row_add_column_value(irow, "column", msg) ;
-        defer { insert_row_destroy(irow); }
+        cdb_insert_row *irow = cdb_insert_row_create("part", 1);
+        cdb_insert_row_add_column_value(irow, "column", msg) ;
+        defer { cdb_insert_row_destroy(irow); }
         mu_assert("failed to insert a row", cdb_cube_insert_row(cube, irow));
     }
 
     /* The last insertion should fail */
     {
-        insert_row_t *irow = insert_row_create("part", 1);
-        insert_row_add_column_value(irow, "column", "one last value") ;
-        defer { insert_row_destroy(irow); }
+        cdb_insert_row *irow = cdb_insert_row_create("part", 1);
+        cdb_insert_row_add_column_value(irow, "column", "one last value") ;
+        defer { cdb_insert_row_destroy(irow); }
         mu_assert("should not be able to insert a row", !cdb_cube_insert_row(cube, irow));
     }
 

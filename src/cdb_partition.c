@@ -191,7 +191,7 @@ err:
 }
 
 
-static value_id_t *convert_insert_row(cdb_partition *partition, insert_row_t *insert_row)
+static value_id_t *convert_insert_row(cdb_partition *partition, cdb_insert_row *insert_row)
 {
     /* Make sure all the columns and values are present in the partition mappings */
     htable_for_each(node, insert_row->column_to_value) {
@@ -400,7 +400,7 @@ static inline bool value_array_equal(const value_id_t *left_value_array, const v
     return 0 == memcmp(left_value_array, right_value_array, array_size);
 }
 
-static inline bool partition_can_insert_row(const cdb_partition *partition, const insert_row_t *row)
+static inline bool partition_can_insert_row(const cdb_partition *partition, const cdb_insert_row *row)
 {
     /* Go through rows inserted and check that all columns can accept new values */
     htable_for_each(node, row->column_to_value) {
@@ -424,7 +424,7 @@ static inline bool partition_can_insert_row(const cdb_partition *partition, cons
     return true;
 }
 
-bool partition_insert_row(cdb_partition *partition, insert_row_t *row)
+bool partition_insert_row(cdb_partition *partition, cdb_insert_row *row)
 {
     /* Make sure the row can be added at all */
     if (!partition_can_insert_row(partition, row))

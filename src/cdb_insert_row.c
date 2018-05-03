@@ -1,13 +1,13 @@
 #include <string.h>
 
 #include "sds.h"
-#include "insert_row.h"
+#include "cdb_insert_row.h"
 #include "cdb_alloc.h"
 
-insert_row_t *insert_row_create(const char *partition_name, counter_t count)
+cdb_insert_row *cdb_insert_row_create(const char *partition_name, counter_t count)
 {
-    insert_row_t *row = cdb_malloc(sizeof(insert_row_t));
-    insert_row_init(row,partition_name,count);
+    cdb_insert_row *row = cdb_malloc(sizeof(cdb_insert_row));
+    cdb_insert_row_init(row,partition_name,count);
     return row;
 }
 
@@ -16,7 +16,7 @@ static void value_cleanup(void *sdsstr)
     sdsfree(sdsstr);
 }
 
-void insert_row_init(insert_row_t *row, const char *partition_name, counter_t count)
+void cdb_insert_row_init(cdb_insert_row *row, const char *partition_name, counter_t count)
 {
     *row = (typeof(*row)) {
         .partition_name = sdsnew(partition_name),
@@ -25,24 +25,24 @@ void insert_row_init(insert_row_t *row, const char *partition_name, counter_t co
     };
 }
 
-void insert_row_destroy(insert_row_t *row)
+void cdb_insert_row_destroy(cdb_insert_row *row)
 {
     sdsfree(row->partition_name);
     htable_destroy(row->column_to_value);
     free(row);
 }
 
-bool insert_row_has_column(insert_row_t *row, char *column_name)
+bool cdb_insert_row_has_column(cdb_insert_row *row, char *column_name)
 {
     return htable_has(row->column_to_value, column_name);
 }
 
-void insert_row_add_column_value(insert_row_t *row, char *column_name, char *column_value)
+void cdb_insert_row_add_column_value(cdb_insert_row *row, char *column_name, char *column_value)
 {
     htable_put(row->column_to_value, column_name, sdsnew(column_value));
 }
 
-sds insert_row_name(insert_row_t *row)
+sds cdb_insert_row_name(cdb_insert_row *row)
 {
     return row->partition_name;
 }
