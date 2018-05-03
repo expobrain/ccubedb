@@ -1,5 +1,5 @@
 
-test_includes = include_directories('../')
+test_includes = include_directories('../src/')
 
 test_lib = static_library('cubedb', sources)
 

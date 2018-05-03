@@ -340,13 +340,13 @@
 
    - [X] visualising data using the CLI client
 
-* TODO [2/3] Migrate to meson
+* DONE [3/3] Migrate to meson
 
   - [X] mesonify sds
 
   - [X] mesonify the build
 
-  - [ ] mesonify tests
+  - [X] mesonify tests
 
 * TODO [0/2] Extract a generic server for reuse
 
