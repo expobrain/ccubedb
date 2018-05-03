@@ -7,7 +7,9 @@ sources = [
   'insert_row.c',
   'log.c',
   'partition.c',
-  'sds.c'
+  'sds.c',
 ]
 
 executable('cubedb', ['server.c'] + sources)
+
+subdir('tests')
