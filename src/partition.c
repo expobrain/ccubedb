@@ -3,7 +3,7 @@
 #include <assert.h>
 #include <stdbool.h>
 
-#include "log.h"
+#include "cdb_log.h"
 #include "partition.h"
 #include "slist.h"
 #include "htable.h"

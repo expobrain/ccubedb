@@ -1,5 +1,5 @@
-#ifndef LOG_H
-#define LOG_H
+#ifndef CDB_LOG_H
+#define CDB_LOG_H
 
 #include <stdarg.h>
 
@@ -15,4 +15,4 @@
 
 void cdb_log(int level, const char *fmt, ...);
 
-#endif //LOG_H
+#endif //CDB_LOG_H

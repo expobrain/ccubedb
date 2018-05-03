@@ -4,7 +4,7 @@
 #include <time.h>
 #include <assert.h>
 
-#include "log.h"
+#include "cdb_log.h"
 #include "cdb_config.h"
 
 #define LOG_MAX_LEN 1024

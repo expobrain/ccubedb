@@ -7,7 +7,7 @@
 #include <string.h>
 
 #include "cdb_alloc.h"
-#include "log.h"
+#include "cdb_log.h"
 
 #define DEFAULT_PORT "1985"
 #define DEFAULT_CONNECTION_NUM 64

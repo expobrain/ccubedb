@@ -25,7 +25,7 @@
 #include "slist.h"
 #include "cdb_config.h"
 #include "cdb_alloc.h"
-#include "log.h"
+#include "cdb_log.h"
 
 /* The database itself, to be init-ed in main */
 static cubedb_t *cubedb;
