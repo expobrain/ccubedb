@@ -1,8 +1,8 @@
 #ifndef MINUNIT_H
 #define MINUNIT_H
 
-#include "config.h"
-config_t *config = NULL;
+#include "cdb_config.h"
+cdb_config *config = NULL;
 
 #define mu_to_string_helper(linum) #linum
 #define mu_to_string(linum) mu_to_string_helper(linum)

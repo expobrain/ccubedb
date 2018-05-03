@@ -23,7 +23,7 @@
 #include "client.h"
 #include "htable.h"
 #include "slist.h"
-#include "config.h"
+#include "cdb_config.h"
 #include "cdb_alloc.h"
 #include "log.h"
 
@@ -31,7 +31,7 @@
 static cubedb_t *cubedb;
 
 /* Server configuration itself, to be init-ed in main */
-config_t *config;
+cdb_config *config;
 
 /* Cubedb commands and the command table */
 
@@ -548,7 +548,7 @@ int main(int argc, char **argv)
 {
     /* Global state init */
     cubedb = cubedb_create();
-    config = config_create(argc, argv);
+    config = cdb_config_create(argc, argv);
     client_mapping_init();
 
     /* The server, using select only for now */

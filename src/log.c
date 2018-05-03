@@ -5,11 +5,11 @@
 #include <assert.h>
 
 #include "log.h"
-#include "config.h"
+#include "cdb_config.h"
 
 #define LOG_MAX_LEN 1024
 
-extern config_t *config;
+extern cdb_config *config;
 
 static char *level_to_string[] = {
     [LOG_DEBUG] = "DEBUG",

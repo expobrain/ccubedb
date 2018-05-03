@@ -3,7 +3,7 @@
 
 #include "minunit.h"
 #include "cube.h"
-#include "config.h"
+#include "cdb_config.h"
 #include "partition.h"
 #include "defs.h"
 #include "htable.h"
@@ -651,7 +651,7 @@ static char *all_tests()
 int main(int argc, char **argv)
 {
     /* Do not log anything */
-    config = config_create(argc, argv);
+    config = cdb_config_create(argc, argv);
     config->log_level = -1;
 
     char *result = all_tests();

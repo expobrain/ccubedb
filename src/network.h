@@ -10,7 +10,7 @@
 #include "htable.h"
 #include "defs.h"
 #include "sds.h"
-#include "config.h"
+#include "cdb_config.h"
 
 static inline void *get_in_addr(struct sockaddr *sa)
 {
@@ -20,7 +20,7 @@ static inline void *get_in_addr(struct sockaddr *sa)
         return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
-static inline struct addrinfo *find_bindable_addr(config_t *config)
+static inline struct addrinfo *find_bindable_addr(cdb_config *config)
 {
     struct addrinfo *servinfo = NULL;
 

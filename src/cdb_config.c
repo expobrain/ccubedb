@@ -1,30 +1,9 @@
-#ifndef CONFIG_H
-#define CONFIG_H
+#include "cdb_config.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <string.h>
-
-#include "cdb_alloc.h"
-#include "log.h"
-
-#define DEFAULT_PORT "1985"
-#define DEFAULT_CONNECTION_NUM 64
-#define DEFAULT_LOG_LEVEL LOG_DEBUG
-
-typedef struct config_t config_t;
-struct config_t {
-    char *port;
-    int connections;
-    int log_level;
-    char *log_path;
-};
-
-static inline config_t *config_create(int argc, char **argv)
+cdb_config *cdb_config_create(int argc, char **argv)
 {
     /* TODO: also, read from a config file first, read the args next */
-    config_t *config = cdb_malloc(sizeof(*config));
+    cdb_config *config = cdb_malloc(sizeof(*config));
     *config = (typeof(*config)) {
         .port = DEFAULT_PORT,
         .connections = DEFAULT_CONNECTION_NUM,
@@ -84,5 +63,3 @@ static inline config_t *config_create(int argc, char **argv)
     }
     return config;
 }
-
-#endif //CONFIG_H
