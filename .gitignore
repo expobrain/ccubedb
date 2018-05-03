@@ -36,3 +36,5 @@ cube-test
 slist-test
 htable-test
 cubedb
+build
+release
