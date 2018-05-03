@@ -17,7 +17,7 @@
 
 #include "sds.h"
 #include "cdb_defs.h"
-#include "cubedb.h"
+#include "cdb_cubedb.h"
 #include "cdb_cube.h"
 #include "cdb_network.h"
 #include "cdb_client.h"
@@ -28,7 +28,7 @@
 #include "cdb_log.h"
 
 /* The database itself, to be init-ed in main */
-static cubedb_t *cubedb;
+static cdb_cubedb *cubedb;
 
 /* Server configuration itself, to be init-ed in main */
 cdb_config *config;
@@ -83,7 +83,7 @@ static cmd_result cmd_cubes(cdb_client *client, sds *argv, int argc)
     (void) argv; (void) argc;
 
     size_t cube_count = 0;
-    char **cube_names = cubedb_get_cube_names(cubedb, &cube_count);
+    char **cube_names = cdb_cubedb_get_cube_names(cubedb, &cube_count);
     defer { free(cube_names); }
 
     cdb_client_sendstrlist(client, cube_names, cube_count);
@@ -96,13 +96,13 @@ static cmd_result cmd_add_cube(cdb_client *client, sds *argv, int argc)
     (void) argc; (void) client;
 
     sds cube_name = argv[1];
-    if (cubedb_find_cube(cubedb, cube_name)) {
+    if (cdb_cubedb_find_cube(cubedb, cube_name)) {
         cdb_client_sendcode(client, REPLY_ERR_OBJ_EXISTS);
         return CMD_DONE;
     }
 
     cdb_cube *cube = cdb_cube_create();
-    cubedb_add_cube(cubedb, cube_name, cube);
+    cdb_cubedb_add_cube(cubedb, cube_name, cube);
     cdb_client_sendcode(client, REPLY_OK);
 
     return CMD_DONE;
@@ -114,13 +114,13 @@ static cmd_result cmd_del_cube(cdb_client *client, sds *argv, int argc)
 
     sds cube_name = argv[1];
 
-    cdb_cube *cube = cubedb_find_cube(cubedb, cube_name);
+    cdb_cube *cube = cdb_cubedb_find_cube(cubedb, cube_name);
     if (!cube) {
         cdb_client_sendcode(client, REPLY_ERR_OBJ_NOT_FOUND);
         return CMD_DONE;
     }
 
-    cubedb_del_cube(cubedb, cube_name);
+    cdb_cubedb_del_cube(cubedb, cube_name);
     cdb_client_sendcode(client, REPLY_OK);
 
     return CMD_DONE;
@@ -130,7 +130,7 @@ static cmd_result cmd_part(cdb_client *client, sds *argv, int argc)
 {
     sds cube_name = argv[1];
 
-    cdb_cube *cube = cubedb_find_cube(cubedb, cube_name);
+    cdb_cube *cube = cdb_cubedb_find_cube(cubedb, cube_name);
     if (!cube) {
         cdb_client_sendcode(client, REPLY_ERR_OBJ_NOT_FOUND);
         return CMD_DONE;
@@ -167,7 +167,7 @@ static cmd_result cmd_del_cube_partition(cdb_client *client, sds *argv, int argc
 
     sds cube_name = argv[1];
 
-    cdb_cube *cube = cubedb_find_cube(cubedb, cube_name);
+    cdb_cube *cube = cdb_cubedb_find_cube(cubedb, cube_name);
     if (!cube) {
         cdb_client_sendcode(client, REPLY_ERR_OBJ_NOT_FOUND);
         return CMD_DONE;
@@ -197,7 +197,7 @@ static cmd_result cmd_cube(cdb_client *client, sds *argv, int argc)
     (void) argc;
 
     sds cube_name = argv[1];
-    cdb_cube *cube = cubedb_find_cube(cubedb, cube_name);
+    cdb_cube *cube = cdb_cubedb_find_cube(cubedb, cube_name);
     if (!cube) {
         cdb_client_sendcode(client, REPLY_ERR_OBJ_NOT_FOUND);
         return CMD_DONE;
@@ -216,10 +216,10 @@ static cmd_result cmd_insert(cdb_client *client, sds *argv, int argc)
     (void) argc; (void) client;
 
     sds cube_name = argv[1];
-    cdb_cube *cube = cubedb_find_cube(cubedb, cube_name);
+    cdb_cube *cube = cdb_cubedb_find_cube(cubedb, cube_name);
     if (!cube) {
         cube = cdb_cube_create();
-        cubedb_add_cube(cubedb, cube_name, cube);
+        cdb_cubedb_add_cube(cubedb, cube_name, cube);
     }
 
     /* No need to parse anything in partition_name */
@@ -281,7 +281,7 @@ static cmd_result cmd_insert(cdb_client *client, sds *argv, int argc)
 static cmd_result cmd_count(cdb_client *client, sds *argv, int argc)
 {
     sds cube_name = argv[1];
-    cdb_cube *cube = cubedb_find_cube(cubedb, cube_name);
+    cdb_cube *cube = cdb_cubedb_find_cube(cubedb, cube_name);
     if (!cube) {
         cdb_client_sendcode(client, REPLY_ERR_OBJ_NOT_FOUND);
         return CMD_DONE;
@@ -329,7 +329,7 @@ static cmd_result cmd_count(cdb_client *client, sds *argv, int argc)
 static cmd_result cmd_pcount(cdb_client *client, sds *argv, int argc)
 {
     sds cube_name = argv[1];
-    cdb_cube *cube = cubedb_find_cube(cubedb, cube_name);
+    cdb_cube *cube = cdb_cubedb_find_cube(cubedb, cube_name);
     if (!cube) {
         cdb_client_sendcode(client, REPLY_ERR_OBJ_NOT_FOUND);
         return CMD_DONE;
@@ -550,7 +550,7 @@ int read_from_client(cdb_client *client)
 int main(int argc, char **argv)
 {
     /* Global state init */
-    cubedb = cubedb_create();
+    cubedb = cdb_cubedb_create();
     config = cdb_config_create(argc, argv);
     cdb_client_mapping_init();
 

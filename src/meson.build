@@ -1,5 +1,5 @@
 sources = files([
-  'cubedb.c',
+  'cdb_cubedb.c',
   'cdb_cube.c',
   'filter.c',
   'insert_row.c',
