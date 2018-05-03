@@ -161,8 +161,8 @@ static char *test_count_from_to_filter_empty()
     cdb_cube *cube = cdb_cube_create();
     defer { cdb_cube_destroy(cube); }
 
-    filter_t *frow = filter_create();
-    defer { filter_destroy(frow); }
+    cdb_filter *frow = cdb_filter_create();
+    defer { cdb_filter_destroy(frow); }
 
     insert_row_t *irow = insert_row_create("part1000", 3);
     defer { insert_row_destroy(irow); }
@@ -197,17 +197,17 @@ static char *test_count_from_to_filter_with_field()
     cdb_cube *cube = cdb_cube_create();
     defer { cdb_cube_destroy(cube); }
 
-    filter_t *correct_frow = filter_create();
-    filter_add_column_value(correct_frow, "column name", "test value");
-    defer { filter_destroy(correct_frow); }
+    cdb_filter *correct_frow = cdb_filter_create();
+    cdb_filter_add_column_value(correct_frow, "column name", "test value");
+    defer { cdb_filter_destroy(correct_frow); }
 
-    filter_t *wrong_value_frow = filter_create();
-    filter_add_column_value(wrong_value_frow, "column name", "other test value");
-    defer { filter_destroy(wrong_value_frow); }
+    cdb_filter *wrong_value_frow = cdb_filter_create();
+    cdb_filter_add_column_value(wrong_value_frow, "column name", "other test value");
+    defer { cdb_filter_destroy(wrong_value_frow); }
 
-    filter_t *wrong_column_frow = filter_create();
-    filter_add_column_value(wrong_column_frow, "other column name", "test value");
-    defer { filter_destroy(wrong_column_frow); }
+    cdb_filter *wrong_column_frow = cdb_filter_create();
+    cdb_filter_add_column_value(wrong_column_frow, "other column name", "test value");
+    defer { cdb_filter_destroy(wrong_column_frow); }
 
     insert_row_t *irow = insert_row_create("part1000", 3);
     insert_row_add_column_value(irow, "column name", "test value") ;
@@ -386,9 +386,9 @@ static char *test_pcount_from_to_filter_single_row()
     }
 
     {
-        filter_t *correct_frow = filter_create();
-        filter_add_column_value(correct_frow, "column", "test value");
-        defer { filter_destroy(correct_frow); }
+        cdb_filter *correct_frow = cdb_filter_create();
+        cdb_filter_add_column_value(correct_frow, "column", "test value");
+        defer { cdb_filter_destroy(correct_frow); }
 
         htable_t *correct_partition_to_count = cdb_cube_pcount_from_to(cube,"part1001","part1002", correct_frow, NULL);
         defer { htable_destroy(correct_partition_to_count); }
@@ -400,9 +400,9 @@ static char *test_pcount_from_to_filter_single_row()
     }
 
     {
-        filter_t *wrong_value_frow = filter_create();
-        filter_add_column_value(wrong_value_frow, "column", "wrong value");
-        defer { filter_destroy(wrong_value_frow); }
+        cdb_filter *wrong_value_frow = cdb_filter_create();
+        cdb_filter_add_column_value(wrong_value_frow, "column", "wrong value");
+        defer { cdb_filter_destroy(wrong_value_frow); }
 
         htable_t *wrong_partition_to_count = cdb_cube_pcount_from_to(cube,"part1001","part1002", wrong_value_frow, NULL);
         defer { htable_destroy(wrong_partition_to_count); }
@@ -488,10 +488,10 @@ static char *test_pcount_from_to_filter_grouped()
         cdb_cube_insert_row(cube, irow3);
     }
 
-    filter_t *frow = filter_create();
-    filter_add_column_value(frow, "column", "test value2");
-    filter_add_column_value(frow, "column", "test value3");
-    defer { filter_destroy(frow); }
+    cdb_filter *frow = cdb_filter_create();
+    cdb_filter_add_column_value(frow, "column", "test value2");
+    cdb_filter_add_column_value(frow, "column", "test value3");
+    defer { cdb_filter_destroy(frow); }
 
     htable_t *partition_to_value_to_count = cdb_cube_pcount_from_to(cube, "part1001", "part1001", frow, "column");
     defer { htable_destroy(partition_to_value_to_count); }

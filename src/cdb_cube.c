@@ -65,7 +65,7 @@ static void group_value_to_count_cleanup(void *value_to_count)
     htable_destroy(value_to_count);
 }
 
-htable_t *cdb_cube_pcount_from_to(cdb_cube *cube, char *from, char *to, filter_t *filter, char *group_by_column)
+htable_t *cdb_cube_pcount_from_to(cdb_cube *cube, char *from, char *to, cdb_filter *filter, char *group_by_column)
 {
     size_t result_size = htable_size(cube->name_to_partition) * 2;
 
@@ -129,7 +129,7 @@ htable_t *cdb_cube_get_columns_to_value_set(cdb_cube *cube, char *from, char *to
     return column_to_value_set;
 }
 
-void *cdb_cube_count_from_to(cdb_cube *cube, char *from, char *to, filter_t *filter, char *group_by_column)
+void *cdb_cube_count_from_to(cdb_cube *cube, char *from, char *to, cdb_filter *filter, char *group_by_column)
 {
     bool partition_filter(void *key) {
         sds partition_name = key;

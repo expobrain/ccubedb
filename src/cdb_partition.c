@@ -152,7 +152,7 @@ static void partition_add_column(cdb_partition *partition, sds column_name)
         column[r] = VALUE_ID_UNKNOWN;
 }
 
-static slist_t **convert_filter(cdb_partition *partition, filter_t *filter)
+static slist_t **convert_filter(cdb_partition *partition, cdb_filter *filter)
 {
     /* Initialize the row to search for */
     slist_t **values_to_look_for = cdb_malloc(sizeof(&values_to_look_for[0]) * partition->column_num);
@@ -267,7 +267,7 @@ static inline bool is_row_matching_filter(cdb_partition *partition, size_t row_i
     return true;
 }
 
-counter_t partition_count_filter(cdb_partition *partition, filter_t *filter)
+counter_t partition_count_filter(cdb_partition *partition, cdb_filter *filter)
 {
     counter_t total_count = 0;
 
@@ -303,7 +303,7 @@ static char *get_column_value_id_value(column_mapping_t *column_mapping, const v
     return value;
 }
 
-htable_t *partition_count_filter_grouped(cdb_partition *partition, filter_t *filter, char *group_by_column)
+htable_t *partition_count_filter_grouped(cdb_partition *partition, cdb_filter *filter, char *group_by_column)
 {
     htable_t *group_value_to_count = htable_create(partition->column_num * 2, free);
 

@@ -1,24 +1,24 @@
 #include <string.h>
 
-#include "filter.h"
+#include "cdb_filter.h"
 #include "cdb_alloc.h"
 #include "sds.h"
 
 
-filter_t *filter_create()
+cdb_filter *cdb_filter_create()
 {
-    filter_t *row = cdb_malloc(sizeof(*row));
-    filter_init(row);
+    cdb_filter *row = cdb_malloc(sizeof(*row));
+    cdb_filter_init(row);
     return row;
 }
 
-filter_t *filter_parse_from_args(sds column_to_value_list, int *res)
+cdb_filter *cdb_filter_parse_from_args(sds column_to_value_list, int *res)
 {
     *res = 0;
     if (0 == strcmp("null", column_to_value_list))
         return NULL;
 
-    filter_t *filter = filter_create();
+    cdb_filter *filter = cdb_filter_create();
 
     int cv_pair_num = 0;
     sds *cv_pair = sdssplitlen(column_to_value_list,
@@ -43,19 +43,19 @@ filter_t *filter_parse_from_args(sds column_to_value_list, int *res)
         sds column = pair_tokens[0];
         sds value = pair_tokens[1];
 
-        filter_add_column_value(filter, column, value);
+        cdb_filter_add_column_value(filter, column, value);
     }
     return filter;
 }
 
-void filter_init(filter_t *row)
+void cdb_filter_init(cdb_filter *row)
 {
     *row = (typeof(*row)) {
         .column_to_value_list = slist_create()
     };
 }
 
-void filter_destroy(filter_t *row)
+void cdb_filter_destroy(cdb_filter *row)
 {
     slist_for_each(node, row->column_to_value_list) {
         column_value_pair *pair = slist_data(node);
@@ -65,7 +65,7 @@ void filter_destroy(filter_t *row)
     free(row);
 }
 
-void filter_add_column_value(filter_t *row, const char *column_name, const char *column_value)
+void cdb_filter_add_column_value(cdb_filter *row, const char *column_name, const char *column_value)
 {
     column_value_pair *pair =
         column_value_pair_create(column_name, column_value);

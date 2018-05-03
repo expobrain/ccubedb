@@ -295,11 +295,11 @@ static cmd_result cmd_count(cdb_client *client, sds *argv, int argc)
     if (argc >= 4)
         to_partition = parse_nullable_arg(argv[3]);
 
-    filter_t *filter = NULL;
-    defer { if (filter) filter_destroy(filter); }
+    cdb_filter *filter = NULL;
+    defer { if (filter) cdb_filter_destroy(filter); }
     if (argc >= 5) {
         int res = 0;
-        filter = filter_parse_from_args(argv[4], &res);
+        filter = cdb_filter_parse_from_args(argv[4], &res);
         if (res != 0) {
             cdb_client_sendcode(client, REPLY_ERR_WRONG_ARG);
             return CMD_DONE;
@@ -343,11 +343,11 @@ static cmd_result cmd_pcount(cdb_client *client, sds *argv, int argc)
     if (argc >= 4)
         to_partition = parse_nullable_arg(argv[3]);
 
-    filter_t *filter = NULL;
-    defer { if (filter) filter_destroy(filter); }
+    cdb_filter *filter = NULL;
+    defer { if (filter) cdb_filter_destroy(filter); }
     if (argc >= 5) {
         int res = 0;
-        filter = filter_parse_from_args(argv[4], &res);
+        filter = cdb_filter_parse_from_args(argv[4], &res);
         if (res != 0) {
             cdb_client_sendcode(client, REPLY_ERR_WRONG_ARG);
             return CMD_DONE;
