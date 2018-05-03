@@ -1,6 +1,6 @@
 project('ccubedb', 'c', version : '0.1.0', license : 'GPLv3')
 
-sources = [
+sources = files([
   'cubedb.c',
   'cube.c',
   'filter.c',
@@ -8,7 +8,7 @@ sources = [
   'log.c',
   'partition.c',
   'sds.c',
-]
+])
 
 executable('cubedb', ['server.c'] + sources)
 

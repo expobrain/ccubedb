@@ -1,15 +1,7 @@
 
 test_includes = include_directories('../')
-test_sources = [
-  '../cubedb.c',
-  '../cube.c',
-  '../filter.c',
-  '../insert_row.c',
-  '../log.c',
-  '../partition.c',
-  '../sds.c',
-]
-test_lib = static_library('cubedb', test_sources)
+
+test_lib = static_library('cubedb', sources)
 
 test_e = executable(
   'slist-test', 'slist-test.c', link_with : test_lib, include_directories : test_includes
