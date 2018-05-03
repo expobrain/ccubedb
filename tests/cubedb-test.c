@@ -12,10 +12,10 @@ char *test_find_cube()
     cubedb_t *cubedb = cubedb_create();
     defer { cubedb_destroy(cubedb); }
 
-    cube_t *test_cube = cubedb_find_cube(cubedb,"test cube");
+    cdb_cube *test_cube = cubedb_find_cube(cubedb,"test cube");
     mu_assert("Found a cube that should not exist", test_cube == NULL);
 
-    cube_t *cube = cube_create();
+    cdb_cube *cube = cdb_cube_create();
 
     cubedb_add_cube(cubedb,"test cube", cube);
     test_cube = cubedb_find_cube(cubedb,"test cube");
@@ -32,38 +32,38 @@ char *test_add_delete_cube()
     cubedb_t *cubedb = cubedb_create();
 
     {
-        cube_t *test_cube = cubedb_find_cube(cubedb,"cube1");
+        cdb_cube *test_cube = cubedb_find_cube(cubedb,"cube1");
         mu_assert("Found a cube that should not exist", test_cube == NULL);
     }
 
     {
-        cube_t *test_cube = cubedb_find_cube(cubedb,"cube2");
+        cdb_cube *test_cube = cubedb_find_cube(cubedb,"cube2");
         mu_assert("Found a cube that should not exist", test_cube == NULL);
     }
 
     {
-        cube_t *test_cube = cubedb_find_cube(cubedb,"cube3");
+        cdb_cube *test_cube = cubedb_find_cube(cubedb,"cube3");
         mu_assert("Found a cube that should not exist", test_cube == NULL);
     }
 
     {
-        cube_t *cube = cube_create();
+        cdb_cube *cube = cdb_cube_create();
         cubedb_add_cube(cubedb,"cube1",cube);
-        cube_t *test_cube = cubedb_find_cube(cubedb,"cube1");
+        cdb_cube *test_cube = cubedb_find_cube(cubedb,"cube1");
         mu_assert("Couldn't find a cube", cube == test_cube);
     }
 
     {
-        cube_t *cube = cube_create();
+        cdb_cube *cube = cdb_cube_create();
         cubedb_add_cube(cubedb,"cube2",cube);
-        cube_t *test_cube = cubedb_find_cube(cubedb,"cube2");
+        cdb_cube *test_cube = cubedb_find_cube(cubedb,"cube2");
         mu_assert("Couldn't find a cube", cube == test_cube);
     }
 
     {
-        cube_t *cube = cube_create();
+        cdb_cube *cube = cdb_cube_create();
         cubedb_add_cube(cubedb,"cube3",cube);
-        cube_t *test_cube = cubedb_find_cube(cubedb,"cube3");
+        cdb_cube *test_cube = cubedb_find_cube(cubedb,"cube3");
         mu_assert("Couldn't find a cube", cube == test_cube);
     }
 

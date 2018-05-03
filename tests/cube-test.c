@@ -2,7 +2,7 @@
 #include <stdlib.h>
 
 #include "minunit.h"
-#include "cube.h"
+#include "cdb_cube.h"
 #include "cdb_config.h"
 #include "partition.h"
 #include "cdb_defs.h"
@@ -12,10 +12,10 @@ int tests_run = 0;
 
 static char *test_empty()
 {
-    cube_t *cube = cube_create();
-    defer { cube_destroy(cube); }
+    cdb_cube *cube = cdb_cube_create();
+    defer { cdb_cube_destroy(cube); }
 
-    counter_t *count = cube_count_from_to(cube,"part0","part9999", NULL, NULL);
+    counter_t *count = cdb_cube_count_from_to(cube,"part0","part9999", NULL, NULL);
     defer { free(count); }
 
     mu_assert("There is nothing in the cube and count != 0", 0 == *count);
@@ -24,8 +24,8 @@ static char *test_empty()
 
 static char *test_multiple_inserts()
 {
-    cube_t *cube = cube_create();
-    defer { cube_destroy(cube); }
+    cdb_cube *cube = cdb_cube_create();
+    defer { cdb_cube_destroy(cube); }
 
     /* Do a lot if comlicated inserts */
     for (size_t i = 0; i < 100; i++) {
@@ -42,7 +42,7 @@ static char *test_multiple_inserts()
             insert_row_add_column_value(row, "platform", "3");
             insert_row_add_column_value(row, "app_version", "5.39.0");
 
-            cube_insert_row(cube, row);
+            cdb_cube_insert_row(cube, row);
         }
 
         {
@@ -58,7 +58,7 @@ static char *test_multiple_inserts()
             insert_row_add_column_value(row, "platform", "3");
             insert_row_add_column_value(row, "app_version", "5.39.0");
 
-            cube_insert_row(cube, row);
+            cdb_cube_insert_row(cube, row);
         }
 
         {
@@ -74,7 +74,7 @@ static char *test_multiple_inserts()
             insert_row_add_column_value(row, "platform", "3");
             insert_row_add_column_value(row, "app_version", "5.45.0");
 
-            cube_insert_row(cube, row);
+            cdb_cube_insert_row(cube, row);
         }
 
         {
@@ -90,7 +90,7 @@ static char *test_multiple_inserts()
             insert_row_add_column_value(row, "platform", "2");
             insert_row_add_column_value(row, "app_version", "6.212.0");
 
-            cube_insert_row(cube, row);
+            cdb_cube_insert_row(cube, row);
         }
     }
 
@@ -99,21 +99,21 @@ static char *test_multiple_inserts()
 
 static char *test_count_from_to_single_row()
 {
-    cube_t *cube = cube_create();
-    defer { cube_destroy(cube); }
+    cdb_cube *cube = cdb_cube_create();
+    defer { cdb_cube_destroy(cube); }
 
     insert_row_t *row = insert_row_create("part1001", 3);
-    cube_insert_row(cube, row);
+    cdb_cube_insert_row(cube, row);
     defer { insert_row_destroy(row); }
 
     {
-        counter_t *count = cube_count_from_to(cube,"part0000","part1000", NULL, NULL);
+        counter_t *count = cdb_cube_count_from_to(cube,"part0000","part1000", NULL, NULL);
         defer { free(count); }
         mu_assert("Counted a row not from the specified interval", 0 == *count);
     }
 
     {
-        counter_t *count = cube_count_from_to(cube,"part0000","part1001", NULL, NULL);
+        counter_t *count = cdb_cube_count_from_to(cube,"part0000","part1001", NULL, NULL);
         defer { free(count); }
         mu_assert("Couldn't find the row!", 3 == *count);
     }
@@ -123,32 +123,32 @@ static char *test_count_from_to_single_row()
 
 static char *test_count_from_to_single_row_with_field()
 {
-    cube_t *cube = cube_create();
-    defer { cube_destroy(cube); }
+    cdb_cube *cube = cdb_cube_create();
+    defer { cdb_cube_destroy(cube); }
 
     insert_row_t *row = insert_row_create("part1001", 3);
     defer { insert_row_destroy(row); }
 
     insert_row_add_column_value(row, "test name", "test value") ;
 
-    cube_insert_row(cube, row);
+    cdb_cube_insert_row(cube, row);
 
     {
-        counter_t *count = cube_count_from_to(cube,"part0000","part1000", NULL, NULL);
+        counter_t *count = cdb_cube_count_from_to(cube,"part0000","part1000", NULL, NULL);
         defer { free(count);  }
         mu_assert("Counted a row not from the specified interval", 0 == *count);
     }
 
     {
-        counter_t *count = cube_count_from_to(cube,"part0000","part1001", NULL, NULL);
+        counter_t *count = cdb_cube_count_from_to(cube,"part0000","part1001", NULL, NULL);
         defer { free(count);  }
         mu_assert("Couldn't find the row", 3 == *count);
     }
 
-    cube_insert_row(cube, row);
+    cdb_cube_insert_row(cube, row);
 
     {
-        counter_t *count = cube_count_from_to(cube,"part0000","part1001", NULL, NULL);
+        counter_t *count = cdb_cube_count_from_to(cube,"part0000","part1001", NULL, NULL);
         defer { free(count);  }
         mu_assert("Failed to increment a counter", 6 == *count);
 
@@ -158,8 +158,8 @@ static char *test_count_from_to_single_row_with_field()
 
 static char *test_count_from_to_filter_empty()
 {
-    cube_t *cube = cube_create();
-    defer { cube_destroy(cube); }
+    cdb_cube *cube = cdb_cube_create();
+    defer { cdb_cube_destroy(cube); }
 
     filter_t *frow = filter_create();
     defer { filter_destroy(frow); }
@@ -170,21 +170,21 @@ static char *test_count_from_to_filter_empty()
     insert_row_add_column_value(irow, "test name", "test value");
 
     {
-        counter_t *count = cube_count_from_to(cube, "part0000", "part1001", frow, NULL);
+        counter_t *count = cdb_cube_count_from_to(cube, "part0000", "part1001", frow, NULL);
         defer { free(count);  }
         mu_assert("Empty cube with an empty filter", 0 == *count);
     }
 
-    cube_insert_row(cube, irow);
+    cdb_cube_insert_row(cube, irow);
     {
-        counter_t *count = cube_count_from_to(cube, "part0000", "part1001", frow, NULL);
+        counter_t *count = cdb_cube_count_from_to(cube, "part0000", "part1001", frow, NULL);
         defer { free(count);  }
         mu_assert("Couldn't find the row", 3 == *count);
     }
 
-    cube_insert_row(cube, irow);
+    cdb_cube_insert_row(cube, irow);
     {
-        counter_t *count = cube_count_from_to(cube, "part0000", "part1001", frow, NULL);
+        counter_t *count = cdb_cube_count_from_to(cube, "part0000", "part1001", frow, NULL);
         defer { free(count);  }
         mu_assert("Failed to increment a counter", 6 == *count);
     }
@@ -194,8 +194,8 @@ static char *test_count_from_to_filter_empty()
 
 static char *test_count_from_to_filter_with_field()
 {
-    cube_t *cube = cube_create();
-    defer { cube_destroy(cube); }
+    cdb_cube *cube = cdb_cube_create();
+    defer { cdb_cube_destroy(cube); }
 
     filter_t *correct_frow = filter_create();
     filter_add_column_value(correct_frow, "column name", "test value");
@@ -214,59 +214,59 @@ static char *test_count_from_to_filter_with_field()
     defer { insert_row_destroy(irow); }
 
     {
-        counter_t *count = cube_count_from_to(cube, "part0000", "part1001", correct_frow, NULL);
+        counter_t *count = cdb_cube_count_from_to(cube, "part0000", "part1001", correct_frow, NULL);
         defer { free(count); }
         mu_assert("Empty cube with an empty filter", 0 == *count);
     }
 
     {
-        counter_t *count = cube_count_from_to(cube, "part0000", "part1001", wrong_value_frow, NULL);
+        counter_t *count = cdb_cube_count_from_to(cube, "part0000", "part1001", wrong_value_frow, NULL);
         defer { free(count); }
         mu_assert("Empty cube with an empty filter", 0 == *count);
     }
 
     {
-        counter_t *count = cube_count_from_to(cube, "part0000", "part1001", wrong_column_frow, NULL);
+        counter_t *count = cdb_cube_count_from_to(cube, "part0000", "part1001", wrong_column_frow, NULL);
         defer { free(count); }
         mu_assert("Empty cube with an empty filter", 0 == *count);
     }
 
-    cube_insert_row(cube, irow);
+    cdb_cube_insert_row(cube, irow);
 
     {
-        counter_t *count = cube_count_from_to(cube, "part0000", "part1001", correct_frow, NULL);
+        counter_t *count = cdb_cube_count_from_to(cube, "part0000", "part1001", correct_frow, NULL);
         defer { free(count); }
         mu_assert("Couldn't find the row", 3 == *count);
     }
 
     {
-        counter_t *count = cube_count_from_to(cube, "part0000", "part1001", wrong_value_frow, NULL);
+        counter_t *count = cdb_cube_count_from_to(cube, "part0000", "part1001", wrong_value_frow, NULL);
         defer { free(count); }
         mu_assert("The value should not match", 0 == *count);
     }
 
     {
-        counter_t *count = cube_count_from_to(cube, "part0000", "part1001", wrong_column_frow, NULL);
+        counter_t *count = cdb_cube_count_from_to(cube, "part0000", "part1001", wrong_column_frow, NULL);
         defer { free(count); }
         mu_assert("The column should not match", 0 == *count);
     }
 
-    cube_insert_row(cube, irow);
+    cdb_cube_insert_row(cube, irow);
 
     {
-        counter_t *count = cube_count_from_to(cube, "part0000", "part1001", correct_frow, NULL);
+        counter_t *count = cdb_cube_count_from_to(cube, "part0000", "part1001", correct_frow, NULL);
         defer { free(count); }
         mu_assert("Failed to increment a counter", 6 == *count);
     }
 
     {
-        counter_t *count = cube_count_from_to(cube, "part0000", "part1001", wrong_value_frow, NULL);
+        counter_t *count = cdb_cube_count_from_to(cube, "part0000", "part1001", wrong_value_frow, NULL);
         defer { free(count); }
         mu_assert("The value should not match", 0 == *count);
     }
 
     {
-        counter_t *count = cube_count_from_to(cube, "part0000", "part1001", wrong_column_frow, NULL);
+        counter_t *count = cdb_cube_count_from_to(cube, "part0000", "part1001", wrong_column_frow, NULL);
         defer { free(count); }
         mu_assert("The column should not match", 0 == *count);
     }
@@ -276,31 +276,31 @@ static char *test_count_from_to_filter_with_field()
 
 static char *test_count_from_to_filter_grouped()
 {
-    cube_t *cube = cube_create();
-    defer { cube_destroy(cube); }
+    cdb_cube *cube = cdb_cube_create();
+    defer { cdb_cube_destroy(cube); }
 
     {
         insert_row_t *irow1 = insert_row_create("part1000", 1);
         defer { insert_row_destroy(irow1); }
         insert_row_add_column_value(irow1, "column", "test value1") ;
-        cube_insert_row(cube, irow1);
+        cdb_cube_insert_row(cube, irow1);
     }
 
     {
         insert_row_t *irow2 = insert_row_create("part1001", 2);
         defer { insert_row_destroy(irow2); }
         insert_row_add_column_value(irow2, "column", "test value1") ;
-        cube_insert_row(cube, irow2);
+        cdb_cube_insert_row(cube, irow2);
     }
 
     {
         insert_row_t *irow3 = insert_row_create("part1001", 4);
         defer { insert_row_destroy(irow3); }
         insert_row_add_column_value(irow3, "column", "test value2") ;
-        cube_insert_row(cube, irow3);
+        cdb_cube_insert_row(cube, irow3);
     }
 
-    htable_t *value_to_count = cube_count_from_to(cube, "part0000", "part1001", NULL, "column");
+    htable_t *value_to_count = cdb_cube_count_from_to(cube, "part0000", "part1001", NULL, "column");
     defer { htable_destroy(value_to_count); }
 
     mu_assert("wrong value number", 2 == htable_size(value_to_count));
@@ -317,16 +317,16 @@ static char *test_count_from_to_filter_grouped()
 
 static char *test_pcount_from_to_single_row()
 {
-    cube_t *cube = cube_create();
-    defer { cube_destroy(cube); }
+    cdb_cube *cube = cdb_cube_create();
+    defer { cdb_cube_destroy(cube); }
 
     {
         insert_row_t *row = insert_row_create("part1001", 3);
-        cube_insert_row(cube, row);
+        cdb_cube_insert_row(cube, row);
         defer { insert_row_destroy(row); }
     }
 
-    htable_t *partition_to_count = cube_pcount_from_to(cube,"part1001","part1002", NULL, NULL);
+    htable_t *partition_to_count = cdb_cube_pcount_from_to(cube,"part1001","part1002", NULL, NULL);
     defer { htable_destroy(partition_to_count); }
     mu_assert("Wrong partition num", 1 == htable_size(partition_to_count));
 
@@ -339,22 +339,22 @@ static char *test_pcount_from_to_single_row()
 
 static char *test_pcount_from_to_multiple_rows()
 {
-    cube_t *cube = cube_create();
-    defer { cube_destroy(cube); }
+    cdb_cube *cube = cdb_cube_create();
+    defer { cdb_cube_destroy(cube); }
 
     {
         insert_row_t *row1 = insert_row_create("part1001", 3);
-        cube_insert_row(cube, row1);
+        cdb_cube_insert_row(cube, row1);
         defer { insert_row_destroy(row1); }
     }
 
     {
         insert_row_t *row2 = insert_row_create("part1002", 2);
-        cube_insert_row(cube, row2);
+        cdb_cube_insert_row(cube, row2);
         defer { insert_row_destroy(row2); }
     }
 
-    htable_t *partition_to_count = cube_pcount_from_to(cube,"part1001","part1002", NULL, NULL);
+    htable_t *partition_to_count = cdb_cube_pcount_from_to(cube,"part1001","part1002", NULL, NULL);
     defer { htable_destroy(partition_to_count); }
     mu_assert("Wrong partition num", 2 == htable_size(partition_to_count));
 
@@ -375,14 +375,14 @@ static char *test_pcount_from_to_multiple_rows()
 
 static char *test_pcount_from_to_filter_single_row()
 {
-    cube_t *cube = cube_create();
-    defer { cube_destroy(cube); }
+    cdb_cube *cube = cdb_cube_create();
+    defer { cdb_cube_destroy(cube); }
 
     {
         insert_row_t *irow = insert_row_create("part1001", 3);
         insert_row_add_column_value(irow, "column", "test value") ;
         defer { insert_row_destroy(irow); }
-        cube_insert_row(cube, irow);
+        cdb_cube_insert_row(cube, irow);
     }
 
     {
@@ -390,7 +390,7 @@ static char *test_pcount_from_to_filter_single_row()
         filter_add_column_value(correct_frow, "column", "test value");
         defer { filter_destroy(correct_frow); }
 
-        htable_t *correct_partition_to_count = cube_pcount_from_to(cube,"part1001","part1002", correct_frow, NULL);
+        htable_t *correct_partition_to_count = cdb_cube_pcount_from_to(cube,"part1001","part1002", correct_frow, NULL);
         defer { htable_destroy(correct_partition_to_count); }
         mu_assert("Wrong partition num", 1 == htable_size(correct_partition_to_count));
 
@@ -404,7 +404,7 @@ static char *test_pcount_from_to_filter_single_row()
         filter_add_column_value(wrong_value_frow, "column", "wrong value");
         defer { filter_destroy(wrong_value_frow); }
 
-        htable_t *wrong_partition_to_count = cube_pcount_from_to(cube,"part1001","part1002", wrong_value_frow, NULL);
+        htable_t *wrong_partition_to_count = cdb_cube_pcount_from_to(cube,"part1001","part1002", wrong_value_frow, NULL);
         defer { htable_destroy(wrong_partition_to_count); }
         mu_assert("Wrong partition num", 1 == htable_size(wrong_partition_to_count));
 
@@ -418,14 +418,14 @@ static char *test_pcount_from_to_filter_single_row()
 
 static char *test_pcount_from_to_grouped()
 {
-    cube_t *cube = cube_create();
-    defer { cube_destroy(cube); }
+    cdb_cube *cube = cdb_cube_create();
+    defer { cdb_cube_destroy(cube); }
 
     {
         insert_row_t *irow1 = insert_row_create("part1001", 3);
         insert_row_add_column_value(irow1, "column", "test value") ;
         defer { insert_row_destroy(irow1); }
-        cube_insert_row(cube, irow1);
+        cdb_cube_insert_row(cube, irow1);
 
     }
 
@@ -433,17 +433,17 @@ static char *test_pcount_from_to_grouped()
         insert_row_t *irow2 = insert_row_create("part1001", 2);
         insert_row_add_column_value(irow2, "column", "test value2") ;
         defer { insert_row_destroy(irow2); }
-        cube_insert_row(cube, irow2);
+        cdb_cube_insert_row(cube, irow2);
     }
 
     {
         insert_row_t *irow3 = insert_row_create("part1001", 1);
         insert_row_add_column_value(irow3, "column", "test value3") ;
         defer { insert_row_destroy(irow3); }
-        cube_insert_row(cube, irow3);
+        cdb_cube_insert_row(cube, irow3);
     }
 
-    htable_t *partition_to_value_to_count = cube_pcount_from_to(cube, "part1001", "part1001", NULL, "column");
+    htable_t *partition_to_value_to_count = cdb_cube_pcount_from_to(cube, "part1001", "part1001", NULL, "column");
     htable_t *value_to_count = htable_get(partition_to_value_to_count, "part1001");
     defer { htable_destroy(partition_to_value_to_count); }
 
@@ -467,8 +467,8 @@ static char *test_pcount_from_to_grouped()
 
 static char *test_pcount_from_to_filter_grouped()
 {
-    cube_t *cube = cube_create();
-    defer { cube_destroy(cube); }
+    cdb_cube *cube = cdb_cube_create();
+    defer { cdb_cube_destroy(cube); }
 
     {
         insert_row_t *irow1 = insert_row_create("part1001", 3);
@@ -483,9 +483,9 @@ static char *test_pcount_from_to_filter_grouped()
         insert_row_add_column_value(irow3, "column", "test value3") ;
         defer { insert_row_destroy(irow3); }
 
-        cube_insert_row(cube, irow1);
-        cube_insert_row(cube, irow2);
-        cube_insert_row(cube, irow3);
+        cdb_cube_insert_row(cube, irow1);
+        cdb_cube_insert_row(cube, irow2);
+        cdb_cube_insert_row(cube, irow3);
     }
 
     filter_t *frow = filter_create();
@@ -493,7 +493,7 @@ static char *test_pcount_from_to_filter_grouped()
     filter_add_column_value(frow, "column", "test value3");
     defer { filter_destroy(frow); }
 
-    htable_t *partition_to_value_to_count = cube_pcount_from_to(cube, "part1001", "part1001", frow, "column");
+    htable_t *partition_to_value_to_count = cdb_cube_pcount_from_to(cube, "part1001", "part1001", frow, "column");
     defer { htable_destroy(partition_to_value_to_count); }
 
     htable_t *value_to_count = htable_get(partition_to_value_to_count, "part1001");
@@ -515,13 +515,13 @@ static char *test_pcount_from_to_filter_grouped()
 
 static char *test_get_columns_to_value_set()
 {
-    cube_t *cube = cube_create();
-    defer { cube_destroy(cube); }
+    cdb_cube *cube = cdb_cube_create();
+    defer { cdb_cube_destroy(cube); }
 
     /* Nothing in the cube yet */
 
     {
-        htable_t *columns_to_value_set = cube_get_columns_to_value_set(cube, NULL, NULL);
+        htable_t *columns_to_value_set = cdb_cube_get_columns_to_value_set(cube, NULL, NULL);
         defer { htable_destroy(columns_to_value_set); }
         mu_assert("no columns should be there yet", 0 == htable_size(columns_to_value_set));
     }
@@ -531,41 +531,41 @@ static char *test_get_columns_to_value_set()
         insert_row_t *irow = insert_row_create("part1001", 3);
         insert_row_add_column_value(irow, "column", "test value") ;
         defer { insert_row_destroy(irow); }
-        cube_insert_row(cube, irow);
+        cdb_cube_insert_row(cube, irow);
     }
 
     {
         insert_row_t *irow = insert_row_create("part1002", 2);
         insert_row_add_column_value(irow, "column", "test value") ;
         defer { insert_row_destroy(irow); }
-        cube_insert_row(cube, irow);
+        cdb_cube_insert_row(cube, irow);
     }
 
     {
         insert_row_t *irow = insert_row_create("part1003", 2);
         insert_row_add_column_value(irow, "column", "test value2") ;
         defer { insert_row_destroy(irow); }
-        cube_insert_row(cube, irow);
+        cdb_cube_insert_row(cube, irow);
     }
 
     {
         insert_row_t *irow = insert_row_create("part1003", 2);
         insert_row_add_column_value(irow, "column", "test value3") ;
         defer { insert_row_destroy(irow); }
-        cube_insert_row(cube, irow);
+        cdb_cube_insert_row(cube, irow);
     }
 
     {
         insert_row_t *irow = insert_row_create("part1003", 2);
         insert_row_add_column_value(irow, "column2", "test value3") ;
         defer { insert_row_destroy(irow); }
-        cube_insert_row(cube, irow);
+        cdb_cube_insert_row(cube, irow);
     }
 
     /* Check without a partition filter */
 
     {
-        htable_t *columns_to_value_set = cube_get_columns_to_value_set(cube, NULL, NULL);
+        htable_t *columns_to_value_set = cdb_cube_get_columns_to_value_set(cube, NULL, NULL);
         defer { htable_destroy(columns_to_value_set); }
         mu_assert("wrong column number", 2 == htable_size(columns_to_value_set));
         mu_assert("column not present", htable_has(columns_to_value_set, "column"));
@@ -585,7 +585,7 @@ static char *test_get_columns_to_value_set()
     /* Check with a partition filter */
 
     {
-        htable_t *columns_to_value_set = cube_get_columns_to_value_set(cube, "part1001", "part1002");
+        htable_t *columns_to_value_set = cdb_cube_get_columns_to_value_set(cube, "part1001", "part1002");
         defer { htable_destroy(columns_to_value_set); }
         mu_assert("wrong column number", 1 == htable_size(columns_to_value_set));
         mu_assert("column not present", htable_has(columns_to_value_set, "column"));
@@ -600,8 +600,8 @@ static char *test_get_columns_to_value_set()
 
 static char *test_max_value()
 {
-    cube_t *cube = cube_create();
-    defer { cube_destroy(cube); }
+    cdb_cube *cube = cdb_cube_create();
+    defer { cdb_cube_destroy(cube); }
 
     /* Insert A LOT of values, but below the limit */
     for (size_t i = 0; i <= VALUE_ID_MAX; ++i) {
@@ -611,7 +611,7 @@ static char *test_max_value()
         insert_row_t *irow = insert_row_create("part", 1);
         insert_row_add_column_value(irow, "column", msg) ;
         defer { insert_row_destroy(irow); }
-        mu_assert("failed to insert a row", cube_insert_row(cube, irow));
+        mu_assert("failed to insert a row", cdb_cube_insert_row(cube, irow));
     }
 
     /* The last insertion should fail */
@@ -619,7 +619,7 @@ static char *test_max_value()
         insert_row_t *irow = insert_row_create("part", 1);
         insert_row_add_column_value(irow, "column", "one last value") ;
         defer { insert_row_destroy(irow); }
-        mu_assert("should not be able to insert a row", !cube_insert_row(cube, irow));
+        mu_assert("should not be able to insert a row", !cdb_cube_insert_row(cube, irow));
     }
 
     return 0;

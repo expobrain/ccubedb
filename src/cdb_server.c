@@ -18,7 +18,7 @@
 #include "sds.h"
 #include "cdb_defs.h"
 #include "cubedb.h"
-#include "cube.h"
+#include "cdb_cube.h"
 #include "cdb_network.h"
 #include "cdb_client.h"
 #include "htable.h"
@@ -101,7 +101,7 @@ static cmd_result cmd_add_cube(cdb_client *client, sds *argv, int argc)
         return CMD_DONE;
     }
 
-    cube_t *cube = cube_create();
+    cdb_cube *cube = cdb_cube_create();
     cubedb_add_cube(cubedb, cube_name, cube);
     cdb_client_sendcode(client, REPLY_OK);
 
@@ -114,7 +114,7 @@ static cmd_result cmd_del_cube(cdb_client *client, sds *argv, int argc)
 
     sds cube_name = argv[1];
 
-    cube_t *cube = cubedb_find_cube(cubedb, cube_name);
+    cdb_cube *cube = cubedb_find_cube(cubedb, cube_name);
     if (!cube) {
         cdb_client_sendcode(client, REPLY_ERR_OBJ_NOT_FOUND);
         return CMD_DONE;
@@ -130,7 +130,7 @@ static cmd_result cmd_part(cdb_client *client, sds *argv, int argc)
 {
     sds cube_name = argv[1];
 
-    cube_t *cube = cubedb_find_cube(cubedb, cube_name);
+    cdb_cube *cube = cubedb_find_cube(cubedb, cube_name);
     if (!cube) {
         cdb_client_sendcode(client, REPLY_ERR_OBJ_NOT_FOUND);
         return CMD_DONE;
@@ -140,20 +140,20 @@ static cmd_result cmd_part(cdb_client *client, sds *argv, int argc)
     if (4 == argc) {
         sds from_partition = parse_nullable_arg(argv[2]);
         sds to_partition = parse_nullable_arg(argv[3]);
-        column_to_value_set = cube_get_columns_to_value_set(cube, from_partition, to_partition);
+        column_to_value_set = cdb_cube_get_columns_to_value_set(cube, from_partition, to_partition);
     } else if (3 == argc) {
         sds partition = parse_nullable_arg(argv[2]);
         if (!partition) {
             cdb_client_sendcode(client, REPLY_ERR_WRONG_ARG);
             return CMD_DONE;
         }
-        if (!cube_has_partition(cube, partition)) {
+        if (!cdb_cube_has_partition(cube, partition)) {
             cdb_client_sendcode(client, REPLY_ERR_OBJ_NOT_FOUND);
             return CMD_DONE;
         }
-        column_to_value_set = cube_get_columns_to_value_set(cube, partition, partition);
+        column_to_value_set = cdb_cube_get_columns_to_value_set(cube, partition, partition);
     } else {
-        column_to_value_set = cube_get_columns_to_value_set(cube, NULL, NULL);
+        column_to_value_set = cdb_cube_get_columns_to_value_set(cube, NULL, NULL);
     }
     defer { htable_destroy(column_to_value_set); }
 
@@ -167,7 +167,7 @@ static cmd_result cmd_del_cube_partition(cdb_client *client, sds *argv, int argc
 
     sds cube_name = argv[1];
 
-    cube_t *cube = cubedb_find_cube(cubedb, cube_name);
+    cdb_cube *cube = cubedb_find_cube(cubedb, cube_name);
     if (!cube) {
         cdb_client_sendcode(client, REPLY_ERR_OBJ_NOT_FOUND);
         return CMD_DONE;
@@ -176,14 +176,14 @@ static cmd_result cmd_del_cube_partition(cdb_client *client, sds *argv, int argc
     if (4 == argc) {
         sds from_partition = parse_nullable_arg(argv[2]);
         sds to_partition = parse_nullable_arg(argv[3]);
-        cube_delete_partition_from_to(cube, from_partition, to_partition);
+        cdb_cube_delete_partition_from_to(cube, from_partition, to_partition);
     } else if (3 == argc) {
         sds partition_name = argv[2];
-        if (!cube_has_partition(cube, partition_name)) {
+        if (!cdb_cube_has_partition(cube, partition_name)) {
             cdb_client_sendcode(client, REPLY_ERR_OBJ_NOT_FOUND);
             return CMD_DONE;
         }
-        cube_delete_partition_from_to(cube, partition_name, partition_name);
+        cdb_cube_delete_partition_from_to(cube, partition_name, partition_name);
     } else {
         assert(false);
     }
@@ -197,14 +197,14 @@ static cmd_result cmd_cube(cdb_client *client, sds *argv, int argc)
     (void) argc;
 
     sds cube_name = argv[1];
-    cube_t *cube = cubedb_find_cube(cubedb, cube_name);
+    cdb_cube *cube = cubedb_find_cube(cubedb, cube_name);
     if (!cube) {
         cdb_client_sendcode(client, REPLY_ERR_OBJ_NOT_FOUND);
         return CMD_DONE;
     }
 
     size_t partition_count = 0;
-    char **partition_names = cube_get_partition_names(cube, &partition_count);
+    char **partition_names = cdb_cube_get_partition_names(cube, &partition_count);
 
     cdb_client_sendstrlist(client, partition_names, partition_count);
 
@@ -216,9 +216,9 @@ static cmd_result cmd_insert(cdb_client *client, sds *argv, int argc)
     (void) argc; (void) client;
 
     sds cube_name = argv[1];
-    cube_t *cube = cubedb_find_cube(cubedb, cube_name);
+    cdb_cube *cube = cubedb_find_cube(cubedb, cube_name);
     if (!cube) {
-        cube = cube_create();
+        cube = cdb_cube_create();
         cubedb_add_cube(cubedb, cube_name, cube);
     }
 
@@ -269,7 +269,7 @@ static cmd_result cmd_insert(cdb_client *client, sds *argv, int argc)
         insert_row_add_column_value(row, column, value);
     }
 
-    if (!cube_insert_row(cube, row)) {
+    if (!cdb_cube_insert_row(cube, row)) {
         cdb_client_sendcode(client, REPLY_ERR_ACTION_FAILED);
         return CMD_DONE;
     }
@@ -281,7 +281,7 @@ static cmd_result cmd_insert(cdb_client *client, sds *argv, int argc)
 static cmd_result cmd_count(cdb_client *client, sds *argv, int argc)
 {
     sds cube_name = argv[1];
-    cube_t *cube = cubedb_find_cube(cubedb, cube_name);
+    cdb_cube *cube = cubedb_find_cube(cubedb, cube_name);
     if (!cube) {
         cdb_client_sendcode(client, REPLY_ERR_OBJ_NOT_FOUND);
         return CMD_DONE;
@@ -310,7 +310,7 @@ static cmd_result cmd_count(cdb_client *client, sds *argv, int argc)
     if (6 == argc)
         group_column = parse_nullable_arg(argv[5]);
 
-    void *result = cube_count_from_to(cube, from_partition, to_partition, filter, group_column);
+    void *result = cdb_cube_count_from_to(cube, from_partition, to_partition, filter, group_column);
 
     if (!group_column) {
         counter_t *count = result;
@@ -329,7 +329,7 @@ static cmd_result cmd_count(cdb_client *client, sds *argv, int argc)
 static cmd_result cmd_pcount(cdb_client *client, sds *argv, int argc)
 {
     sds cube_name = argv[1];
-    cube_t *cube = cubedb_find_cube(cubedb, cube_name);
+    cdb_cube *cube = cubedb_find_cube(cubedb, cube_name);
     if (!cube) {
         cdb_client_sendcode(client, REPLY_ERR_OBJ_NOT_FOUND);
         return CMD_DONE;
@@ -358,7 +358,7 @@ static cmd_result cmd_pcount(cdb_client *client, sds *argv, int argc)
     if (6 == argc)
         group_column = parse_nullable_arg(argv[5]);
 
-    htable_t *partition_to_result = cube_pcount_from_to(cube, from_partition, to_partition, filter, group_column);
+    htable_t *partition_to_result = cdb_cube_pcount_from_to(cube, from_partition, to_partition, filter, group_column);
     defer { htable_destroy(partition_to_result); }
 
     if (!group_column) {

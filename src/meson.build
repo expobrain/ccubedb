@@ -1,6 +1,6 @@
 sources = files([
   'cubedb.c',
-  'cube.c',
+  'cdb_cube.c',
   'filter.c',
   'insert_row.c',
   'partition.c',

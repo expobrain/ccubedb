@@ -4,20 +4,20 @@
 #include <stdbool.h>
 
 #include "sds.h"
-#include "cube.h"
+#include "cdb_cube.h"
 #include "partition.h"
 #include "slist.h"
 #include "htable.h"
 #include "cdb_alloc.h"
 
-struct cube_t {
+struct cdb_cube {
     htable_t *name_to_partition;
 };
 
-cube_t *cube_create(void)
+cdb_cube *cdb_cube_create(void)
 {
-    cube_t *cube = cdb_malloc(sizeof(cube_t));
-    cube_init(cube);
+    cdb_cube *cube = cdb_malloc(sizeof(cdb_cube));
+    cdb_cube_init(cube);
     return cube;
 }
 
@@ -25,25 +25,25 @@ static void partition_cleanup(void *partition) {
     partition_destroy(partition);
 }
 
-void cube_init(cube_t *cube)
+void cdb_cube_init(cdb_cube *cube)
 {
     *cube = (typeof(*cube)) {
         .name_to_partition = htable_create(1024, partition_cleanup),
     };
 }
 
-void cube_destroy(cube_t *cube)
+void cdb_cube_destroy(cdb_cube *cube)
 {
     htable_destroy(cube->name_to_partition);
     free(cube);
 }
 
-static inline partition_t *cube_get_partition(cube_t *cube, sds partition_name)
+static inline partition_t *cdb_cube_get_partition(cdb_cube *cube, sds partition_name)
 {
     return htable_get(cube->name_to_partition, partition_name);
 }
 
-static inline partition_t *cube_add_partition(cube_t *cube, sds partition_name)
+static inline partition_t *cdb_cube_add_partition(cdb_cube *cube, sds partition_name)
 {
     if (htable_has(cube->name_to_partition, partition_name))
         return NULL;
@@ -52,11 +52,11 @@ static inline partition_t *cube_add_partition(cube_t *cube, sds partition_name)
     return new_partition;
 }
 
-bool cube_insert_row(cube_t *cube, insert_row_t *row)
+bool cdb_cube_insert_row(cdb_cube *cube, insert_row_t *row)
 {
-    partition_t *partition = cube_get_partition(cube, insert_row_name(row));
+    partition_t *partition = cdb_cube_get_partition(cube, insert_row_name(row));
     if (!partition)
-        partition = cube_add_partition(cube, insert_row_name(row));
+        partition = cdb_cube_add_partition(cube, insert_row_name(row));
     return partition_insert_row(partition, row);
 }
 
@@ -65,7 +65,7 @@ static void group_value_to_count_cleanup(void *value_to_count)
     htable_destroy(value_to_count);
 }
 
-htable_t *cube_pcount_from_to(cube_t *cube, char *from, char *to, filter_t *filter, char *group_by_column)
+htable_t *cdb_cube_pcount_from_to(cdb_cube *cube, char *from, char *to, filter_t *filter, char *group_by_column)
 {
     size_t result_size = htable_size(cube->name_to_partition) * 2;
 
@@ -108,7 +108,7 @@ static void value_set_cleanup(void *value_set)
     htable_destroy(value_set);
 }
 
-htable_t *cube_get_columns_to_value_set(cube_t *cube, char *from, char *to)
+htable_t *cdb_cube_get_columns_to_value_set(cdb_cube *cube, char *from, char *to)
 {
     bool partition_filter(void *key) {
         sds partition_name = key;
@@ -129,7 +129,7 @@ htable_t *cube_get_columns_to_value_set(cube_t *cube, char *from, char *to)
     return column_to_value_set;
 }
 
-void *cube_count_from_to(cube_t *cube, char *from, char *to, filter_t *filter, char *group_by_column)
+void *cdb_cube_count_from_to(cdb_cube *cube, char *from, char *to, filter_t *filter, char *group_by_column)
 {
     bool partition_filter(void *key) {
         sds partition_name = key;
@@ -172,7 +172,7 @@ void *cube_count_from_to(cube_t *cube, char *from, char *to, filter_t *filter, c
     }
 }
 
-char **cube_get_partition_names(cube_t *cube, size_t *partition_count)
+char **cdb_cube_get_partition_names(cdb_cube *cube, size_t *partition_count)
 {
     char **partition_names = cdb_malloc(sizeof(partition_names[0]) * htable_size(cube->name_to_partition));
     size_t i = 0;
@@ -184,12 +184,12 @@ char **cube_get_partition_names(cube_t *cube, size_t *partition_count)
     return partition_names;
 }
 
-bool cube_has_partition(cube_t *cube, sds partition_name)
+bool cdb_cube_has_partition(cdb_cube *cube, sds partition_name)
 {
     return NULL != htable_get(cube->name_to_partition, partition_name);
 }
 
-bool cube_delete_partition_from_to(cube_t *cube, char *from, char *to)
+bool cdb_cube_delete_partition_from_to(cdb_cube *cube, char *from, char *to)
 {
     bool deleted = false;
 
