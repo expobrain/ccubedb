@@ -340,15 +340,13 @@
 
    - [X] visualising data using the CLI client
 
-* TODO [0/4] Migrate to meson
+* TODO [2/3] Migrate to meson
 
-  - [ ] mesonify the build
+  - [X] mesonify sds
+
+  - [X] mesonify the build
 
   - [ ] mesonify tests
-
-  - [ ] mesonify sds
-
-  - [ ] prefixes for files?
 
 * TODO [0/2] Extract a generic server for reuse
 
@@ -357,6 +355,7 @@
   - [ ] try to work with it as a separate meson subdir
 
 * TODO [0/6] Full launch
+** TODO prefixes for everything
 ** TODO data retention (delpart works here?)
 ** TODO dumping and reloading
 
