@@ -342,13 +342,15 @@
 
 * TODO [0/6] Full launch
 ** TODO data retention (delpart works here?)
-** TODO check for leaking memory
 ** TODO dumping and reloading
 
   - [ ] walk cubes and dump into files
 
   - [ ] dump path should be preconfigured on start
-
+** TODO _FORTIFY_SOURCE=2 for debug builds
+** TODO check for leaking memory
+** TODO bitmaps for filtering
+** TODO variable width columns
 ** TODO cached responses
 ** TODO column number increase should use precooked columns
 ** TODO row number increase should preallocate things

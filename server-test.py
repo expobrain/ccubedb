@@ -268,14 +268,13 @@ class CubeDBTest(CubeDBTestBase):
             assert line in cubes
 
     def test_insert(self):
-        # Insert without a cube - fail
-        self.sendline("INSERT cube p1 a=1 1")
-        reply = self.readline()
-        assert reply != REPLY_OK
-        assert reply.startswith("-")
+        # Insert without a cube - should create the cube
+        self.sendwithok("INSERT cube p1 a=1 1")
 
-        # Add a cube and repeat with a wrong arg
-        self.sendwithok("ADDCUBE cube")
+        # Try adding one more cube - should fail
+        self.sendwitherr("ADDCUBE cube")
+
+        # Now, wrong args
         self.sendline("INSERT cube p1 a 1")
         reply = self.readline()
         assert reply != REPLY_OK
