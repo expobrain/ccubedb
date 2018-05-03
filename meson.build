@@ -1,4 +1,9 @@
-project('ccubedb', 'c', version : '0.1.0', license : 'GPLv3')
+project(
+  'ccubedb', 'c',
+  version : '0.1.0',
+  license : 'GPLv3',
+  default_options : ['c_std=gnu11']
+)
 
 sources = files([
   'cubedb.c',
