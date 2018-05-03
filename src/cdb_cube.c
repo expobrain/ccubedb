@@ -5,7 +5,7 @@
 
 #include "sds.h"
 #include "cdb_cube.h"
-#include "partition.h"
+#include "cdb_partition.h"
 #include "slist.h"
 #include "htable.h"
 #include "cdb_alloc.h"
@@ -38,23 +38,23 @@ void cdb_cube_destroy(cdb_cube *cube)
     free(cube);
 }
 
-static inline partition_t *cdb_cube_get_partition(cdb_cube *cube, sds partition_name)
+static inline cdb_partition *cdb_cube_get_partition(cdb_cube *cube, sds partition_name)
 {
     return htable_get(cube->name_to_partition, partition_name);
 }
 
-static inline partition_t *cdb_cube_add_partition(cdb_cube *cube, sds partition_name)
+static inline cdb_partition *cdb_cube_add_partition(cdb_cube *cube, sds partition_name)
 {
     if (htable_has(cube->name_to_partition, partition_name))
         return NULL;
-    partition_t *new_partition = partition_create(partition_name);
+    cdb_partition *new_partition = partition_create(partition_name);
     htable_put(cube->name_to_partition, partition_name, new_partition);
     return new_partition;
 }
 
 bool cdb_cube_insert_row(cdb_cube *cube, insert_row_t *row)
 {
-    partition_t *partition = cdb_cube_get_partition(cube, insert_row_name(row));
+    cdb_partition *partition = cdb_cube_get_partition(cube, insert_row_name(row));
     if (!partition)
         partition = cdb_cube_add_partition(cube, insert_row_name(row));
     return partition_insert_row(partition, row);
@@ -77,30 +77,30 @@ htable_t *cdb_cube_pcount_from_to(cdb_cube *cube, char *from, char *to, filter_t
         return is_within_range;
     }
 
-    htable_t *partition_to_results = NULL;
+    htable_t *cdb_partitiono_results = NULL;
     if (!group_by_column) {
         /* Just counting? the htable with contain the counter */
-        partition_to_results = htable_create(result_size, free);
+        cdb_partitiono_results = htable_create(result_size, free);
         htable_for_each_filter(item, cube->name_to_partition, partition_filter) {
             sds partition_name = htable_key(item);
-            partition_t *partition = htable_value(item);
+            cdb_partition *partition = htable_value(item);
 
             counter_t *count = cdb_malloc(sizeof(*count));
             *count = partition_count_filter(partition, filter);
-            htable_put(partition_to_results, partition_name, count);
+            htable_put(cdb_partitiono_results, partition_name, count);
         }
     } else {
         /* Grouped counting? the htable with contain value to count mapping */
-        partition_to_results = htable_create(result_size, group_value_to_count_cleanup);
+        cdb_partitiono_results = htable_create(result_size, group_value_to_count_cleanup);
         htable_for_each_filter(item, cube->name_to_partition, partition_filter) {
             sds partition_name = htable_key(item);
-            partition_t *partition = htable_value(item);
+            cdb_partition *partition = htable_value(item);
 
             htable_t *group_value_to_count = partition_count_filter_grouped(partition, filter, group_by_column);
-            htable_put(partition_to_results, partition_name, group_value_to_count);
+            htable_put(cdb_partitiono_results, partition_name, group_value_to_count);
         }
     }
-    return partition_to_results;
+    return cdb_partitiono_results;
 }
 
 static void value_set_cleanup(void *value_set)
@@ -122,7 +122,7 @@ htable_t *cdb_cube_get_columns_to_value_set(cdb_cube *cube, char *from, char *to
     htable_t *column_to_value_set = htable_create(htable_size(cube->name_to_partition) * 2, value_set_cleanup);
 
     htable_for_each_filter(item, cube->name_to_partition, partition_filter) {
-        partition_t *partition = htable_value(item);
+        cdb_partition *partition = htable_value(item);
         partition_extend_column_value_set(partition, column_to_value_set);
     }
 
@@ -143,7 +143,7 @@ void *cdb_cube_count_from_to(cdb_cube *cube, char *from, char *to, filter_t *fil
         /* No grouping? Just return the counter. */
         counter_t *count = cdb_calloc(sizeof(*count));
         htable_for_each_filter(item, cube->name_to_partition, partition_filter) {
-            partition_t *partition = htable_value(item);
+            cdb_partition *partition = htable_value(item);
             *count += partition_count_filter(partition, filter);
         }
         return count;
@@ -151,7 +151,7 @@ void *cdb_cube_count_from_to(cdb_cube *cube, char *from, char *to, filter_t *fil
         /* Grouping? Get value tables for each partition, merge them and return the result . */
         htable_t *value_to_count = htable_create(1024, free);
         htable_for_each_filter(item, cube->name_to_partition, partition_filter) {
-            partition_t *partition = htable_value(item);
+            cdb_partition *partition = htable_value(item);
             htable_t *partition_value_to_count = partition_count_filter_grouped(partition, filter, group_by_column);
             defer { htable_destroy(partition_value_to_count); }
 

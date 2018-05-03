@@ -4,7 +4,7 @@
 #include "minunit.h"
 #include "cdb_cube.h"
 #include "cdb_config.h"
-#include "partition.h"
+#include "cdb_partition.h"
 #include "cdb_defs.h"
 #include "htable.h"
 

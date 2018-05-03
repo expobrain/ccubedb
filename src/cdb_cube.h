@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 #include "sds.h"
-#include "partition.h"
+#include "cdb_partition.h"
 #include "insert_row.h"
 #include "filter.h"
 #include "htable.h"
