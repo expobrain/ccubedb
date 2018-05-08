@@ -111,7 +111,6 @@ static int load_cube_file(const char *dump_file, cdb_cubedb *cdb)
     defer { fclose(fp); }
 
     while(fgets(query_buf, MAX_QUERY_SIZE, fp) != NULL) {
-        log_verb("Executing \"%s\"", query_buf);
         if (parse_and_insert(query_buf, cdb))
             log_warn("Failed to execute \"%s\" ", query_buf);
     }
@@ -151,7 +150,6 @@ int cdb_load_dump(const char *dump_dir, cdb_cubedb *cdb)
 
     slist_for_each(node, cube_file_list) {
         char *dump_file_path = slist_data(node);
-        log_info("Loading %s", dump_file_path);
         if (load_cube_file(dump_file_path, cdb)) {
             log_warn("Failed to load a dump: %s", dump_file_path);
             exit(EXIT_FAILURE);
