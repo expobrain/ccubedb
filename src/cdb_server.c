@@ -1,6 +1,9 @@
+#define _GNU_SOURCE
+#include <ftw.h>
+
+#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <ctype.h>
 #include <errno.h>
 #include <string.h>
@@ -547,12 +550,60 @@ int read_from_client(cdb_client *client)
     return receive_size;
 }
 
+static bool ends_with(const char *string, const char *suffix)
+{
+    if( ! string || ! suffix )
+        return false;
+    size_t string_len = strlen(string);
+    size_t suffix_len = strlen(suffix);
+    return strcmp(string + string_len - suffix_len, suffix) == 0;
+}
+
+static int cdb_load_dump(const char *dump_path)
+{
+    slist_t *cube_file_list = slist_create();
+    defer{
+        slist_for_each(node, cube_file_list) {
+            char *file_path = slist_data(node);
+            free(file_path);
+        }
+        slist_destroy(cube_file_list);
+    }
+
+    int find_cubes(const char *fpath, const struct stat *sb,
+                   int typeflag, struct FTW *ftwbuf) {
+        (void)sb; (void) ftwbuf;
+        if (typeflag != FTW_F)
+            return 0;
+
+        if (!ends_with(fpath, ".cdb"))
+            return 0;
+
+        slist_append(cube_file_list, strdup(fpath));
+        return 0;
+    }
+
+    if (0 != nftw(dump_path, find_cubes, 200, 0)) {
+        perror("nftw");
+        exit(EXIT_FAILURE);
+    }
+
+    return slist_size(cube_file_list);
+}
+
 int main(int argc, char **argv)
 {
     /* Global state init */
     cubedb = cdb_cubedb_create();
     config = cdb_config_create(argc, argv);
     cdb_client_mapping_init();
+
+    /* Check if a dump is available */
+    if (config->dump_path) {
+        log_info("Loading dumped cubes from %s", config->dump_path);
+        int files_loaded = cdb_load_dump(config->dump_path);
+        log_info("%d dumps loaded", files_loaded);
+    }
 
     /* The server, using select only for now */
     int listener_fd;

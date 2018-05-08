@@ -58,6 +58,13 @@ cdb_config *cdb_config_create(int argc, char **argv)
                 fprintf(stderr, "log level is not a valid number\n");
                 exit(EXIT_FAILURE);
             }
+        } else if (0 == strcmp(argv[i], "--dump-path")) {
+            i++;
+            if (argc == i) {
+                fprintf(stderr,"arg error: dump path not supplied\n");
+                exit(EXIT_FAILURE);
+            }
+            config->dump_path = argv[i];
         } else {
             fprintf(stderr, "unknown argument: %s", argv[i]);
             exit(EXIT_FAILURE);
