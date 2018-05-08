@@ -47,6 +47,7 @@ static int parse_and_insert(const char *query, cdb_cubedb *cdb)
 
     /* Prepare a row for insertion */
     sds partition_name = argv[2];
+
     sds counter_str = argv[4];
     counter_t counter = strtoul(counter_str, NULL, 0);
     if (ULONG_MAX == counter)
@@ -55,34 +56,9 @@ static int parse_and_insert(const char *query, cdb_cubedb *cdb)
     cdb_insert_row *row = cdb_insert_row_create(partition_name, counter);
     defer { cdb_insert_row_destroy(row); }
 
-    /* Parse column/value pairs */
     sds column_to_value_list = argv[3];
-    int cv_pair_num = 0;
-    sds *cv_pair = sdssplitlen(column_to_value_list,
-                               sdslen(column_to_value_list),
-                               "&", 1,
-                               &cv_pair_num);
-    defer { sdsfreesplitres(cv_pair, cv_pair_num); }
-
-    for (size_t i = 0; i < (size_t)cv_pair_num; i++ ) {
-        sds pair = cv_pair[i];
-        if (!pair) continue;
-
-        int pair_tokens_len = 0;
-        sds *pair_tokens = sdssplitlen(pair, sdslen(pair), "=", 1, &pair_tokens_len);
-        defer { sdsfreesplitres(pair_tokens, pair_tokens_len); }
-
-        if (2 != pair_tokens_len)
-            return -1;
-
-        sds column = pair_tokens[0];
-        sds value = pair_tokens[1];
-
-        if (cdb_insert_row_has_column(row, column))
-            return -1;
-
-        cdb_insert_row_add_column_value(row, column, value);
-    }
+    if (!cdb_insert_row_parse_values(row, column_to_value_list))
+        return -1;
 
     /* Get or create the cube in question */
     sds cube_name = argv[1];

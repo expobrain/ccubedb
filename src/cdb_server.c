@@ -232,35 +232,9 @@ static cmd_result cmd_insert(cdb_client *client, sds *argv, int argc)
 
     /* Parse the value list and inititialize the row to be inserted */
     sds column_to_value_list = argv[3];
-    int cv_pair_num = 0;
-    sds *cv_pair = sdssplitlen(column_to_value_list,
-                               sdslen(column_to_value_list),
-                               "&", 1,
-                               &cv_pair_num);
-    defer { sdsfreesplitres(cv_pair, cv_pair_num); }
-
-    for (size_t i = 0; i < (size_t)cv_pair_num; i++ ) {
-        sds pair = cv_pair[i];
-        if (!pair) continue;
-
-        int pair_tokens_len = 0;
-        sds *pair_tokens = sdssplitlen(pair, sdslen(pair), "=", 1, &pair_tokens_len);
-        defer { sdsfreesplitres(pair_tokens, pair_tokens_len); }
-
-        if (2 != pair_tokens_len) {
-            cdb_client_sendcode(client, REPLY_ERR_WRONG_ARG);
-            return CMD_DONE;
-        }
-
-        sds column = pair_tokens[0];
-        sds value = pair_tokens[1];
-
-        if (cdb_insert_row_has_column(row, column)){
-            cdb_client_sendcode(client, REPLY_ERR_WRONG_ARG);
-            return CMD_DONE;
-        }
-
-        cdb_insert_row_add_column_value(row, column, value);
+    if (!cdb_insert_row_parse_values(row, column_to_value_list)) {
+        cdb_client_sendcode(client, REPLY_ERR_WRONG_ARG);
+        return CMD_DONE;
     }
 
     sds cube_name = argv[1];
