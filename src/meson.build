@@ -8,6 +8,7 @@ sources = files([
   'cdb_config.c',
   'cdb_client.c',
   'cdb_network.c',
+  'cdb_dump.c',
   'sds.c',
 ])
 
