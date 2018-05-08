@@ -30,6 +30,7 @@ enum cmd_reply {
     REPLY_ERR_OBJ_NOT_FOUND = -5, /* Command object not found */
     REPLY_ERR_OBJ_EXISTS = -6,    /* Command object already exists */
     REPLY_ERR_ACTION_FAILED = -7, /* Command execution aborted */
+    REPLY_ERR_QUERY_TOO_LONG = -8, /* Command query too long */
 };
 
 KHASH_MAP_INIT_INT(fd_to_client, cdb_client*);

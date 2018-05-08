@@ -19,7 +19,12 @@ static bool ends_with(const char *string, const char *suffix)
     return strcmp(string + string_len - suffix_len, suffix) == 0;
 }
 
-int cdb_load_dump(const char *dump_path)
+static void load_cube_file(const char *dump_file)
+{
+
+}
+
+int cdb_load_dump(const char *dump_dir)
 {
     slist_t *cube_file_list = slist_create();
     defer {
@@ -43,10 +48,13 @@ int cdb_load_dump(const char *dump_path)
         return 0;
     }
 
-    if (0 != nftw(dump_path, find_cubes, 200, 0)) {
+    if (0 != nftw(dump_dir, find_cubes, 200, 0)) {
         perror("nftw");
         exit(EXIT_FAILURE);
     }
+
+    slist_for_each(node, cube_file_list)
+        load_cube_file(slist_data(node));
 
     return slist_size(cube_file_list);
 }

@@ -456,6 +456,12 @@ bool is_correct_cmd_arg(const char *arg)
 
 cmd_result process_cmd(cdb_client *client, sds query)
 {
+    /* Check size */
+    if (sdslen(query) > MAX_QUERY_SIZE) {
+        cdb_client_sendcode(client, REPLY_ERR_QUERY_TOO_LONG);
+        return CMD_DONE;
+    }
+
     /* Split the query into cmd + arguments */
     int argc = 0;
     sds *argv = sdssplitargs(query ,&argc);
@@ -490,7 +496,7 @@ cmd_result process_cmd(cdb_client *client, sds query)
     return cmd->cmd(client, argv, argc);
 }
 
-/* TCP server */
+/* TCP server utilities */
 
 int read_from_client(cdb_client *client)
 {
