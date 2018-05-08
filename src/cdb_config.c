@@ -7,8 +7,11 @@ cdb_config *cdb_config_create(int argc, char **argv)
     *config = (typeof(*config)) {
         .port = DEFAULT_PORT,
         .connections = DEFAULT_CONNECTION_NUM,
+
         .log_level = DEFAULT_LOG_LEVEL,
-        .log_path = NULL
+        .log_path = NULL,
+
+        .dump_path = NULL
     };
 
     for (int i = 1; i < argc;) {

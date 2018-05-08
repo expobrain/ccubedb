@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from __future__ import unicode_literals, print_function
 
+import os
 import unittest
 import subprocess
 import shlex
@@ -15,14 +16,16 @@ REPLY_OK = "0\n"
 
 class CubeDBTestBase(unittest.TestCase):
 
-    EXECUTABLE = "cubedb"
-
     def setUp(self):
         global start_port
         start_port += 1
 
-        cmd = "./{cmd} --port {port} --log-level 0".format(
-            cmd=self.EXECUTABLE,
+        executable = os.getenv('CDB_EXECUTABLE')
+        if not executable:
+            raise Exception("CDB_EXECUTABLE env var should be set")
+
+        cmd = "{cmd} --port {port} --log-level 0".format(
+            cmd=executable,
             port=str(start_port)
         )
         self.process = subprocess.Popen(shlex.split(cmd))

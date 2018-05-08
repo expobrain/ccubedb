@@ -26,4 +26,4 @@ test('cube-test', test_e)
 test_e = find_program(
   'server-test.py'
 )
-test('functional-test', test_e)
+test('functional-test', test_e, env : ['CDB_EXECUTABLE=' + cdb_exec.full_path()])
