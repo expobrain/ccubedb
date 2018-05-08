@@ -11,4 +11,4 @@ sources = files([
   'sds.c',
 ])
 
-cdb_exec = executable('cubedb', ['cdb_server.c'] + sources)
+server_sources = files(['cdb_server.c']) + sources
