@@ -214,14 +214,7 @@ static cmd_result cmd_cube(cdb_client *client, sds *argv, int argc)
 
 static cmd_result cmd_insert(cdb_client *client, sds *argv, int argc)
 {
-    (void) argc; (void) client;
-
-    sds cube_name = argv[1];
-    cdb_cube *cube = cdb_cubedb_find_cube(cubedb, cube_name);
-    if (!cube) {
-        cube = cdb_cube_create();
-        cdb_cubedb_add_cube(cubedb, cube_name, cube);
-    }
+    (void) argc;
 
     /* No need to parse anything in partition_name */
     sds partition_name = argv[2];
@@ -268,6 +261,13 @@ static cmd_result cmd_insert(cdb_client *client, sds *argv, int argc)
         }
 
         cdb_insert_row_add_column_value(row, column, value);
+    }
+
+    sds cube_name = argv[1];
+    cdb_cube *cube = cdb_cubedb_find_cube(cubedb, cube_name);
+    if (!cube) {
+        cube = cdb_cube_create();
+        cdb_cubedb_add_cube(cubedb, cube_name, cube);
     }
 
     if (!cdb_cube_insert_row(cube, row)) {
@@ -564,7 +564,7 @@ int main(int argc, char **argv)
     /* Check if a dump is available */
     if (config->dump_path) {
         log_info("Loading dumped cubes from %s", config->dump_path);
-        int files_loaded = cdb_load_dump(config->dump_path);
+        int files_loaded = cdb_load_dump(config->dump_path, cubedb);
         log_info("%d dumps loaded", files_loaded);
     }
 

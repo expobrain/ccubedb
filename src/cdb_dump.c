@@ -4,11 +4,14 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 #include "cdb_dump.h"
 #include "cdb_defs.h"
 #include "cdb_alloc.h"
+#include "cdb_log.h"
 #include "slist.h"
+#include "sds.h"
 
 static bool ends_with(const char *string, const char *suffix)
 {
@@ -19,12 +22,104 @@ static bool ends_with(const char *string, const char *suffix)
     return strcmp(string + string_len - suffix_len, suffix) == 0;
 }
 
-static void load_cube_file(const char *dump_file)
+static int parse_and_insert(const char *query, cdb_cubedb *cdb)
 {
+    /* TODO: there's a lot of duplication between cmd_insert and parse_and_insert */
 
+    int argc = 0;
+    sds *argv = sdssplitargs(query ,&argc);
+    if (!argv)
+        return -1;
+    defer { sdsfreesplitres(argv, argc); }
+
+    /* Insert arity is always the same */
+    if (argc != 5)
+        return -1;
+
+    sds command = sdsdup(argv[0]);
+    defer { sdsfree(command); }
+
+    sdstoupper(command);
+
+    /* Only inserts are possible in dumps */
+    if (strcmp(command, "INSERT") != 0)
+        return -1;
+
+    /* Prepare a row for insertion */
+    sds partition_name = argv[2];
+    sds counter_str = argv[4];
+    counter_t counter = strtoul(counter_str, NULL, 0);
+    if (ULONG_MAX == counter)
+        return -1;
+
+    cdb_insert_row *row = cdb_insert_row_create(partition_name, counter);
+    defer { cdb_insert_row_destroy(row); }
+
+    /* Parse column/value pairs */
+    sds column_to_value_list = argv[3];
+    int cv_pair_num = 0;
+    sds *cv_pair = sdssplitlen(column_to_value_list,
+                               sdslen(column_to_value_list),
+                               "&", 1,
+                               &cv_pair_num);
+    defer { sdsfreesplitres(cv_pair, cv_pair_num); }
+
+    for (size_t i = 0; i < (size_t)cv_pair_num; i++ ) {
+        sds pair = cv_pair[i];
+        if (!pair) continue;
+
+        int pair_tokens_len = 0;
+        sds *pair_tokens = sdssplitlen(pair, sdslen(pair), "=", 1, &pair_tokens_len);
+        defer { sdsfreesplitres(pair_tokens, pair_tokens_len); }
+
+        if (2 != pair_tokens_len)
+            return -1;
+
+        sds column = pair_tokens[0];
+        sds value = pair_tokens[1];
+
+        if (cdb_insert_row_has_column(row, column))
+            return -1;
+
+        cdb_insert_row_add_column_value(row, column, value);
+    }
+
+    /* Get or create the cube in question */
+    sds cube_name = argv[1];
+
+    cdb_cube *cube = cdb_cubedb_find_cube(cdb, cube_name);
+    if (!cube) {
+        cube = cdb_cube_create();
+        cdb_cubedb_add_cube(cdb, cube_name, cube);
+    }
+
+    /* And insert the row */
+    if (!cdb_cube_insert_row(cube, row))
+        return -1;
+
+    return 0;
 }
 
-int cdb_load_dump(const char *dump_dir)
+static int load_cube_file(const char *dump_file, cdb_cubedb *cdb)
+{
+    char query_buf[MAX_QUERY_SIZE];
+    FILE * fp = fopen(dump_file, "r");
+    if (!fp) {
+        perror("fopen");
+        return -1;
+    }
+    defer { fclose(fp); }
+
+    while(fgets(query_buf, MAX_QUERY_SIZE, fp) != NULL) {
+        log_verb("Executing \"%s\"", query_buf);
+        if (parse_and_insert(query_buf, cdb))
+            log_warn("Failed to execute \"%s\" ", query_buf);
+    }
+
+    return 0;
+}
+
+int cdb_load_dump(const char *dump_dir, cdb_cubedb *cdb)
 {
     slist_t *cube_file_list = slist_create();
     defer {
@@ -38,6 +133,7 @@ int cdb_load_dump(const char *dump_dir)
     int find_cubes(const char *fpath, const struct stat *sb,
                    int typeflag, struct FTW *ftwbuf) {
         (void)sb; (void) ftwbuf;
+
         if (typeflag != FTW_F)
             return 0;
 
@@ -53,8 +149,14 @@ int cdb_load_dump(const char *dump_dir)
         exit(EXIT_FAILURE);
     }
 
-    slist_for_each(node, cube_file_list)
-        load_cube_file(slist_data(node));
+    slist_for_each(node, cube_file_list) {
+        char *dump_file_path = slist_data(node);
+        log_info("Loading %s", dump_file_path);
+        if (load_cube_file(dump_file_path, cdb)) {
+            log_warn("Failed to load a dump: %s", dump_file_path);
+            exit(EXIT_FAILURE);
+        }
+    }
 
     return slist_size(cube_file_list);
 }
