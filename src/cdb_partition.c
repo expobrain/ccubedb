@@ -18,12 +18,11 @@ static inline bool value_array_equal(const value_id_t *left_value_array, const v
 KHASH_INIT(value_to_row, value_id_t *, size_t, 1, value_array_hash, value_array_equal);
 KHASH_MAP_INIT_INT(id_to_value, char *);
 
-typedef struct column_mapping_t column_mapping_t;
-struct column_mapping_t {
+typedef struct column_mapping_t {
     column_id_t id;
     htable_t *value_to_id;
     khash_t(id_to_value) *id_to_value;
-};
+} column_mapping_t;
 
 struct cdb_partition {
     value_id_t **columns;
