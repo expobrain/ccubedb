@@ -11,9 +11,40 @@ static char *test_empty()
     return 0;
 }
 
+static char *test_for_each_simple()
+{
+    cdb_partition *partition = cdb_partition_create();
+    defer { cdb_partition_destroy(partition); }
+
+    {
+        cdb_insert_row *row = cdb_insert_row_create("2018-02-02_21", 1);
+        defer { cdb_insert_row_destroy(row); }
+
+        cdb_insert_row_add_column_value(row, "screen_name", "214");
+
+        cdb_partition_insert_row(partition, row);
+        cdb_partition_insert_row(partition, row);
+    }
+
+    uint64_t row_count = 0;
+    uint64_t value_count = 0;
+
+    void row_visitor(cdb_insert_row *row) {
+        row_count++;
+        value_count += row->count;
+    }
+
+    cdb_partition_for_each_row(partition, row_visitor);
+
+    mu_assert("Wrong row count", 1 == row_count);
+    mu_assert("Wrong value count", 2 == value_count);
+    return 0;
+}
+
 static char *all_tests()
 {
     mu_run_test(test_empty);
+    mu_run_test(test_for_each_simple);
     return 0;
 }
 

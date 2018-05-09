@@ -472,7 +472,14 @@ void cdb_partition_extend_column_value_set(cdb_partition *partition, htable_t *c
     }
 }
 
-void cdb_partition_for_each_row(sds partition_name, cdb_partition_row_visitor_function visitor)
+void cdb_partition_for_each_row(cdb_partition *partition, cdb_partition_row_visitor_function visitor)
 {
-    (void) visitor; (void) partition_name;
+    for (size_t row_i = 0; row_i < partition->row_num; row_i++ ) {
+        counter_t counter = partition->counters[row_i];
+        cdb_insert_row * row = cdb_insert_row_create(NULL, counter);
+
+        defer { cdb_insert_row_destroy(row); }
+
+        visitor(row);
+    }
 }

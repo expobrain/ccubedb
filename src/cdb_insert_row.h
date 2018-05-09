@@ -5,14 +5,13 @@
 #include "htable.h"
 #include "cdb_defs.h"
 
-typedef struct cdb_insert_row cdb_insert_row;
-struct cdb_insert_row {
+typedef struct cdb_insert_row {
     sds partition_name;
 
     htable_t *column_to_value;
 
     counter_t count;
-};
+} cdb_insert_row;
 
 cdb_insert_row *cdb_insert_row_create(const char *partition_name, counter_t count);
 
