@@ -474,9 +474,24 @@ void cdb_partition_extend_column_value_set(cdb_partition *partition, htable_t *c
 
 void cdb_partition_for_each_row(cdb_partition *partition, cdb_partition_row_visitor_function visitor)
 {
-    for (size_t row_i = 0; row_i < partition->row_num; row_i++ ) {
-        counter_t counter = partition->counters[row_i];
+    for (size_t row_index = 0; row_index < partition->row_num; row_index++ ) {
+        counter_t counter = partition->counters[row_index];
         cdb_insert_row * row = cdb_insert_row_create(NULL, counter);
+
+        htable_for_each(item, partition->column_name_to_mapping) {
+            char *column_name = htable_key(item);
+            column_mapping_t *column_mapping = htable_value(item);
+            column_id_t column_id = column_mapping->id;
+
+            value_id_t *column = partition->columns[column_id];
+            value_id_t column_row_value_id = column[row_index];
+
+            char *column_value = get_column_value_id_value(column_mapping, column_row_value_id);
+            /* This should always be there as we walk over existing rows */
+            assert(column_value);
+
+            cdb_insert_row_add_column_value(row, column_name, column_value);
+        }
 
         defer { cdb_insert_row_destroy(row); }
 
