@@ -134,3 +134,9 @@ int cdb_load_dump(const char *dump_dir, cdb_cubedb *cdb)
 
     return slist_size(cube_file_list);
 }
+
+int cdb_do_dump(const char *dump_dir, cdb_cubedb *cdb)
+{
+    (void) dump_dir; (void) cdb;
+    return 0;
+}
