@@ -135,25 +135,81 @@ int cdb_load_dump(const char *dump_dir, cdb_cubedb *cdb)
     return slist_size(cube_file_list);
 }
 
+typedef struct cdb_dump_state {
+    sds cube_name;
+    sds partition_name;
+    FILE *target_file;
+    int res;
+} cdb_dump_state;
+
+static void row_visitor(cdb_insert_row *row, void *state)
+{
+    cdb_dump_state * dump_state = state;
+
+    sds row_str = sdsempty();
+    defer {sdsfree(row_str); }
+
+    size_t column_value_pair_num = htable_size(row->column_to_value);
+    sds *column_value_pairs = calloc(column_value_pair_num, sizeof(sds));
+    defer {
+        for (size_t i = 0; i < column_value_pair_num; i++ )
+            sdsfree(column_value_pairs[i]);
+        free(column_value_pairs);
+    }
+
+    size_t pair_index = 0;
+    htable_for_each(item, row->column_to_value) {
+        char *column = htable_key(item);
+        char *value = htable_value(item);
+
+        column_value_pairs[pair_index] = sdscatprintf(sdsempty(), "%s=%s", column, value);
+        pair_index++;
+    }
+    sds joined_pairs = sdsjoinsds(column_value_pairs, column_value_pair_num, "&", 1);
+    defer { sdsfree(joined_pairs); }
+
+    row_str = sdscatprintf(
+        row_str, "INSERT %s %s %s %zu\n",
+        dump_state->cube_name, dump_state->partition_name, joined_pairs, row->count
+    );
+
+    if (!fwrite(row_str, sdslen(row_str), 1, dump_state->target_file))
+        log_warn("Dump fwrite fail occured");
+}
+
+static void partition_visitor(sds partition_name, cdb_partition * partition, void *state)
+{
+    cdb_dump_state * dump_state = state;
+
+    dump_state->partition_name = partition_name;
+
+    cdb_partition_for_each_row(partition, row_visitor, dump_state);
+}
+
 int cdb_do_dump(const char *dump_dir, cdb_cubedb *cdb)
 {
-    (void) dump_dir; (void) cdb;
-
     int res = 0;
+
+    cdb_dump_state * dump_state = calloc(1, sizeof(cdb_dump_state));
+    defer { free(dump_state); }
 
     void cube_visitor(sds cube_name, cdb_cube * cube)
     {
         sds cube_dump_path = sdsempty();
         cube_dump_path = sdscatprintf(cube_dump_path, "%s/%s.cdb", dump_dir, cube_name);
 
-        FILE * cube_file = fopen(cube_dump_path, "w");
-        if (!cube_file) {
+        FILE * dump_file = fopen(cube_dump_path, "w");
+        if (!dump_file) {
             perror("fopen");
             res = -1;
             return;
         }
-        defer { fclose(cube_file); }
+        defer { fclose(dump_file); }
 
+        dump_state->cube_name = cube_name;
+        dump_state->target_file = dump_file;
+
+        cdb_cube_for_each_partition(cube, partition_visitor, dump_state);
     }
 
     cdb_cubedb_for_each_cube(cdb, cube_visitor);

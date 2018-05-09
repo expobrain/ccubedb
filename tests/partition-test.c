@@ -31,8 +31,9 @@ static char *test_for_each_simple()
     bool column_found = false;
     bool column_value_found = false;
 
-    void row_visitor(cdb_insert_row *row)
+    void row_visitor(cdb_insert_row *row, void *state)
     {
+        (void) state;
         row_count++;
         value_count += row->count;
 
@@ -40,7 +41,7 @@ static char *test_for_each_simple()
         column_value_found = cdb_insert_row_has_column_value(row, "screen_name", "214");
     }
 
-    cdb_partition_for_each_row(partition, row_visitor);
+    cdb_partition_for_each_row(partition, row_visitor, NULL);
 
     mu_assert("No column found", column_found);
     mu_assert("No column value found", column_value_found);

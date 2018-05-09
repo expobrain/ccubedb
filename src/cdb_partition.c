@@ -472,11 +472,12 @@ void cdb_partition_extend_column_value_set(cdb_partition *partition, htable_t *c
     }
 }
 
-void cdb_partition_for_each_row(cdb_partition *partition, cdb_partition_row_visitor_function visitor)
+void cdb_partition_for_each_row(cdb_partition *partition, cdb_row_visitor_function visitor, void *visitor_state)
 {
     for (size_t row_index = 0; row_index < partition->row_num; row_index++ ) {
         counter_t counter = partition->counters[row_index];
         cdb_insert_row * row = cdb_insert_row_create(NULL, counter);
+        defer { cdb_insert_row_destroy(row); }
 
         htable_for_each(item, partition->column_name_to_mapping) {
             char *column_name = htable_key(item);
@@ -493,8 +494,6 @@ void cdb_partition_for_each_row(cdb_partition *partition, cdb_partition_row_visi
             cdb_insert_row_add_column_value(row, column_name, column_value);
         }
 
-        defer { cdb_insert_row_destroy(row); }
-
-        visitor(row);
+        visitor(row, visitor_state);
     }
 }

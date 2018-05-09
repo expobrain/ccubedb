@@ -650,9 +650,9 @@ static char *test_for_each_simple()
     bool part1_found = false;
     bool part2_found = false;
 
-    void partition_visitor(sds partition_name, cdb_partition * partition)
+    void partition_visitor(sds partition_name, cdb_partition * partition, void *visitor_state)
     {
-        (void) partition;
+        (void) partition; (void) visitor_state;
         partition_count++;
 
         if (0 == strcmp(partition_name, "part1"))
@@ -662,7 +662,7 @@ static char *test_for_each_simple()
             part2_found = true;
     }
 
-    cdb_cube_for_each_partition(cube, partition_visitor);
+    cdb_cube_for_each_partition(cube, partition_visitor, NULL);
 
     mu_assert("Wrong partition num", 2 == partition_count);
     mu_assert("part1 partition not found", part1_found);
