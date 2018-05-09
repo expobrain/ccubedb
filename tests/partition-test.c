@@ -28,16 +28,24 @@ static char *test_for_each_simple()
 
     uint64_t row_count = 0;
     uint64_t value_count = 0;
+    bool column_found = false;
+    bool column_value_found = false;
 
     void row_visitor(cdb_insert_row *row) {
         row_count++;
         value_count += row->count;
+
+        column_found = cdb_insert_row_has_column(row, "screen_name");
+        column_value_found = cdb_insert_row_has_column_value(row, "screen_name", "214");
     }
 
     cdb_partition_for_each_row(partition, row_visitor);
 
+    mu_assert("No column found", column_found);
+    mu_assert("No column value found", column_value_found);
     mu_assert("Wrong row count", 1 == row_count);
     mu_assert("Wrong value count", 2 == value_count);
+
     return 0;
 }
 

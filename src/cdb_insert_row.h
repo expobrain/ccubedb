@@ -23,6 +23,8 @@ void cdb_insert_row_destroy(cdb_insert_row *row);
 
 bool cdb_insert_row_has_column(cdb_insert_row *row, char *column_name);
 
+bool cdb_insert_row_has_column_value(cdb_insert_row *row, char *column_name, char *column_value);
+
 void cdb_insert_row_add_column_value(cdb_insert_row *row, char *column_name, char *column_value);
 
 sds cdb_insert_row_name(cdb_insert_row *row);

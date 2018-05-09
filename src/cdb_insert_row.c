@@ -69,6 +69,12 @@ bool cdb_insert_row_has_column(cdb_insert_row *row, char *column_name)
     return htable_has(row->column_to_value, column_name);
 }
 
+bool cdb_insert_row_has_column_value(cdb_insert_row *row, char *column_name, char *column_value)
+{
+    char *value = htable_get(row->column_to_value, column_name);
+    return value != NULL && 0 == strcmp(value, column_value);
+}
+
 void cdb_insert_row_add_column_value(cdb_insert_row *row, char *column_name, char *column_value)
 {
     htable_put(row->column_to_value, column_name, sdsnew(column_value));
