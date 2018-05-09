@@ -3,25 +3,18 @@ test_includes = include_directories('../src/')
 
 test_lib = static_library('cubedb', sources)
 
-test_e = executable(
-  'slist-test', 'slist-test.c', link_with : test_lib, include_directories : test_includes
-)
-test('slist-test', test_e)
+unit_test_names = [
+  'slist-test',
+  'htable-test',
+  'cubedb-test',
+  'cube-test',
+  'partition-test',
+]
 
-test_e = executable(
-  'htable-test', 'htable-test.c', link_with : test_lib, include_directories : test_includes
-)
-test('htable-test', test_e)
-
-test_e = executable(
-  'cubedb-test', 'cubedb-test.c', link_with : test_lib, include_directories : test_includes
-)
-test('cubedb-test', test_e)
-
-test_e = executable(
-  'cube-test', 'cube-test.c', link_with : test_lib, include_directories : test_includes
-)
-test('cube-test', test_e)
+foreach test_name : unit_test_names
+  test_e = executable(test_name, test_name + '.c', link_with : test_lib, include_directories : test_includes)
+  test(test_name, test_e)
+endforeach
 
 test_e = find_program(
   'server-test.py'
