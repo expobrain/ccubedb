@@ -347,22 +347,23 @@
   - [X] mesonify the build
 
   - [X] mesonify tests
+* DONE dumping and reloading
+
+  - [X] walk cubes and dump into files
+
+  - [X] dump path should be preconfigured on start
 
 * TODO [0/2] Extract a generic server for reuse
 
   - [ ] extract
 
   - [ ] try to work with it as a separate meson subdir
-* TODO dumping and reloading
-
-  - [ ] walk cubes and dump into files
-
-  - [ ] dump path should be preconfigured on start
 
 * TODO data retention (delpart works here?)
 
 * TODO [1/14] Full launch
 ** DONE prefixes for everything
+** TODO compressed dumps
 ** TODO _FORTIFY_SOURCE=2 for debug builds
 ** TODO check for leaking memory
 ** TODO bitmaps for filtering
