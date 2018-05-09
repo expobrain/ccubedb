@@ -208,3 +208,13 @@ bool cdb_cube_delete_partition_from_to(cdb_cube *cube, char *from, char *to)
 
     return deleted;
 }
+
+void cdb_cube_for_each_partition(cdb_cube *cube, cdb_cube_partition_visitor_function visitor)
+{
+    htable_for_each(item, cube->name_to_partition) {
+        char *partition_name = htable_key(item);
+        cdb_partition * partition = htable_value(item);
+
+        visitor(partition_name, partition);
+    }
+}

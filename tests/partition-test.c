@@ -31,7 +31,8 @@ static char *test_for_each_simple()
     bool column_found = false;
     bool column_value_found = false;
 
-    void row_visitor(cdb_insert_row *row) {
+    void row_visitor(cdb_insert_row *row)
+    {
         row_count++;
         value_count += row->count;
 
