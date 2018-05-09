@@ -138,5 +138,25 @@ int cdb_load_dump(const char *dump_dir, cdb_cubedb *cdb)
 int cdb_do_dump(const char *dump_dir, cdb_cubedb *cdb)
 {
     (void) dump_dir; (void) cdb;
-    return 0;
+
+    int res = 0;
+
+    void cube_visitor(sds cube_name, cdb_cube * cube)
+    {
+        sds cube_dump_path = sdsempty();
+        cube_dump_path = sdscatprintf(cube_dump_path, "%s/%s.cdb", dump_dir, cube_name);
+
+        FILE * cube_file = fopen(cube_dump_path, "w");
+        if (!cube_file) {
+            perror("fopen");
+            res = -1;
+            return;
+        }
+        defer { fclose(cube_file); }
+
+    }
+
+    cdb_cubedb_for_each_cube(cdb, cube_visitor);
+
+    return res;
 }

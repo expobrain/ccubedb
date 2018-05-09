@@ -347,6 +347,22 @@ static cmd_result cmd_pcount(cdb_client *client, sds *argv, int argc)
     return CMD_DONE;
 }
 
+static cmd_result cmd_dump(cdb_client *client, sds *argv, int argc)
+{
+    (void) argv; (void) argc;
+
+    if (!config->dump_path) {
+        log_warn("Dump path not supplied upon start, aborting");
+        cdb_client_sendcode(client, REPLY_ERR_CONFIGURATION_ERR);
+        return CMD_DONE;
+    }
+
+    if (cdb_do_dump(config->dump_path, cubedb))
+        cdb_client_sendcode(client, REPLY_ERR_ACTION_FAILED);
+
+    return CMD_DONE;
+}
+
 static cmd_result cmd_help(cdb_client *client, sds *argv, int argc)
 {
     (void) argc; (void) argv;
@@ -403,6 +419,9 @@ static cubedb_cmd cmd_table[] = {
       "PCOUNT <cube> [<from> [<to> [<columnvalues> [<groupcolumn>]]]]: "
       "count the per-partition sum of row counts in a <cube> between <from>/<to> partitions, inclusive, "
       "with optional <columnvalues> (can be \"null\") and <groupcolumn>"},
+
+    { "DUMP", cmd_dump, 0, 0,
+      "DUMP: dump cube data into a preconfigured path"},
 
     { "HELP", cmd_help, 0, 0,
       "HELP: dump descriptions of all commands available"},
