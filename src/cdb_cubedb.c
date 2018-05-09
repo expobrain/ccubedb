@@ -71,17 +71,12 @@ char **cdb_cubedb_get_cube_names(cdb_cubedb *cubedb, size_t *cube_count)
     return cube_names;
 }
 
-void cdb_cubedb_for_each_cube_partition(cdb_cubedb *cubedb, cdb_cubedb_partition_visitor_function cube_partition_visitor)
+void cdb_cubedb_for_each_cube(cdb_cubedb *cubedb, cdb_cubedb_cube_visitor_function cube_visitor)
 {
     htable_for_each(item, cubedb->name_to_cube) {
         sds cube_name = htable_key(item);
         cdb_cube *cube = htable_value(item);
 
-        void partition_visitor(sds partition_name, cdb_partition * partition)
-        {
-            cube_partition_visitor(cube_name, partition_name, partition);
-        }
-
-        cdb_cube_for_each_partition(cube, partition_visitor);
+        cube_visitor(cube_name, cube);
     }
 }

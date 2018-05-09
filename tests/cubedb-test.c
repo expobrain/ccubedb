@@ -84,63 +84,27 @@ char *test_for_each_simple()
     cdb_cube *cube1 = cdb_cube_create();
     cdb_cubedb_add_cube(cubedb,"test cube1", cube1);
 
-    {
-        cdb_insert_row *irow = cdb_insert_row_create("part1", 1);
-        defer { cdb_insert_row_destroy(irow); }
-        cdb_insert_row_add_column_value(irow, "column1", "val1") ;
-        cdb_cube_insert_row(cube1, irow);
-    }
-
-    {
-        cdb_insert_row *irow = cdb_insert_row_create("part2", 1);
-        defer { cdb_insert_row_destroy(irow); }
-        cdb_insert_row_add_column_value(irow, "column1", "val1") ;
-        cdb_cube_insert_row(cube1, irow);
-
-    }
-
     cdb_cube *cube2 = cdb_cube_create();
     cdb_cubedb_add_cube(cubedb,"test cube2", cube2);
 
+    uint64_t cube_count = 0;
+    bool cube1_seen = false;
+    bool cube2_seen = false;
+
+    void cube_visitor(sds cube_name, cdb_cube * cube)
     {
-        cdb_insert_row *irow = cdb_insert_row_create("part3", 1);
-        defer { cdb_insert_row_destroy(irow); }
-        cdb_insert_row_add_column_value(irow, "column1", "val1") ;
-        cdb_cube_insert_row(cube2, irow);
+        (void) cube;
+        cube_count++;
+        if (0 == strcmp(cube_name, "cube1"))
+            cube1_seen = true;
+        if (0 == strcmp(cube_name, "cube2"))
+            cube2_seen = true;
     }
 
-    {
-        cdb_insert_row *irow = cdb_insert_row_create("part4", 1);
-        defer { cdb_insert_row_destroy(irow); }
-        cdb_insert_row_add_column_value(irow, "column1", "val1") ;
-        cdb_cube_insert_row(cube2, irow);
+    cdb_cubedb_for_each_cube(cubedb, cube_visitor);
 
-    }
-
-    uint64_t partition_count = 0;
-    bool cube1_part1 = false;
-    bool cube1_part2 = false;
-    bool cube2_part3 = false;
-    bool cube2_part4 = false;
-
-    void cube_visitor(sds cube_name, sds partition_name, cdb_partition * partition)
-    {
-        (void) partition;
-        partition_count++;
-        if (0 == strcmp(cube_name, "cube1") && 0 == strcmp(partition_name, "part1"))
-            cube1_part1 = true;
-        if (0 == strcmp(cube_name, "cube1") && 0 == strcmp(partition_name, "part2"))
-            cube1_part2 = true;
-        if (0 == strcmp(cube_name, "cube2") && 0 == strcmp(partition_name, "part3"))
-            cube2_part3 = true;
-        if (0 == strcmp(cube_name, "cube2") && 0 == strcmp(partition_name, "part4"))
-            cube2_part4 = true;
-    }
-
-    cdb_cubedb_for_each_cube_partition(cubedb, cube_visitor);
-
-    mu_assert("Wrong partition count", 4 == partition_count);
-    mu_assert("Cube partitions not found", !cube1_part1 || !cube1_part2 || !cube2_part3 || !cube2_part4);
+    mu_assert("Wrong cube count", 2 == cube_count);
+    mu_assert("Cube not found", !cube1_seen || !cube2_seen);
 
     return 0;
 }
