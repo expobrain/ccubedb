@@ -7,3 +7,5 @@ project(
 
 subdir('src')
 subdir('tests')
+
+cdb_exec = executable('cubedb', server_sources)

@@ -347,6 +347,13 @@
   - [X] mesonify the build
 
   - [X] mesonify tests
+* DONE [2/3] dumping and reloading
+
+  - [X] walk cubes and dump into files
+
+  - [X] dump path should be preconfigured on start
+
+  - [ ] functional dumping tests
 
 * TODO [0/2] Extract a generic server for reuse
 
@@ -354,14 +361,13 @@
 
   - [ ] try to work with it as a separate meson subdir
 
-* TODO [1/14] Full launch
+* TODO data retention (delpart works here?)
+
+* TODO [1/15] Full launch
 ** DONE prefixes for everything
-** TODO data retention (delpart works here?)
-** TODO dumping and reloading
-
-  - [ ] walk cubes and dump into files
-
-  - [ ] dump path should be preconfigured on start
+** TODO compressed dumps
+** TODO mt dump
+** TODO mt request/response
 ** TODO _FORTIFY_SOURCE=2 for debug builds
 ** TODO check for leaking memory
 ** TODO bitmaps for filtering
@@ -375,6 +381,7 @@
 
   - [ ] values_to_insert - come up with a generic vector or smth? or at least a quick struct should
     do?
+
 ** TODO client, C
 ** TODO client, (Node) JS
 ** TODO integration

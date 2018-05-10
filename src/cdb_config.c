@@ -7,8 +7,11 @@ cdb_config *cdb_config_create(int argc, char **argv)
     *config = (typeof(*config)) {
         .port = DEFAULT_PORT,
         .connections = DEFAULT_CONNECTION_NUM,
+
         .log_level = DEFAULT_LOG_LEVEL,
-        .log_path = NULL
+        .log_path = NULL,
+
+        .dump_path = NULL
     };
 
     for (int i = 1; i < argc;) {
@@ -55,6 +58,13 @@ cdb_config *cdb_config_create(int argc, char **argv)
                 fprintf(stderr, "log level is not a valid number\n");
                 exit(EXIT_FAILURE);
             }
+        } else if (0 == strcmp(argv[i], "--dump-path")) {
+            i++;
+            if (argc == i) {
+                fprintf(stderr,"arg error: dump path not supplied\n");
+                exit(EXIT_FAILURE);
+            }
+            config->dump_path = argv[i];
         } else {
             fprintf(stderr, "unknown argument: %s", argv[i]);
             exit(EXIT_FAILURE);

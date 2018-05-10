@@ -1,6 +1,6 @@
+#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <ctype.h>
 #include <errno.h>
 #include <string.h>
@@ -16,16 +16,17 @@
 #include <time.h>
 
 #include "sds.h"
+#include "htable.h"
+#include "slist.h"
 #include "cdb_defs.h"
 #include "cdb_cubedb.h"
 #include "cdb_cube.h"
 #include "cdb_network.h"
 #include "cdb_client.h"
-#include "htable.h"
-#include "slist.h"
 #include "cdb_config.h"
 #include "cdb_alloc.h"
 #include "cdb_log.h"
+#include "cdb_dump.h"
 
 /* The database itself, to be init-ed in main */
 static cdb_cubedb *cubedb;
@@ -213,14 +214,7 @@ static cmd_result cmd_cube(cdb_client *client, sds *argv, int argc)
 
 static cmd_result cmd_insert(cdb_client *client, sds *argv, int argc)
 {
-    (void) argc; (void) client;
-
-    sds cube_name = argv[1];
-    cdb_cube *cube = cdb_cubedb_find_cube(cubedb, cube_name);
-    if (!cube) {
-        cube = cdb_cube_create();
-        cdb_cubedb_add_cube(cubedb, cube_name, cube);
-    }
+    (void) argc;
 
     /* No need to parse anything in partition_name */
     sds partition_name = argv[2];
@@ -238,35 +232,16 @@ static cmd_result cmd_insert(cdb_client *client, sds *argv, int argc)
 
     /* Parse the value list and inititialize the row to be inserted */
     sds column_to_value_list = argv[3];
-    int cv_pair_num = 0;
-    sds *cv_pair = sdssplitlen(column_to_value_list,
-                               sdslen(column_to_value_list),
-                               "&", 1,
-                               &cv_pair_num);
-    defer { sdsfreesplitres(cv_pair, cv_pair_num); }
+    if (!cdb_insert_row_parse_values(row, column_to_value_list)) {
+        cdb_client_sendcode(client, REPLY_ERR_WRONG_ARG);
+        return CMD_DONE;
+    }
 
-    for (size_t i = 0; i < (size_t)cv_pair_num; i++ ) {
-        sds pair = cv_pair[i];
-        if (!pair) continue;
-
-        int pair_tokens_len = 0;
-        sds *pair_tokens = sdssplitlen(pair, sdslen(pair), "=", 1, &pair_tokens_len);
-        defer { sdsfreesplitres(pair_tokens, pair_tokens_len); }
-
-        if (2 != pair_tokens_len) {
-            cdb_client_sendcode(client, REPLY_ERR_WRONG_ARG);
-            return CMD_DONE;
-        }
-
-        sds column = pair_tokens[0];
-        sds value = pair_tokens[1];
-
-        if (cdb_insert_row_has_column(row, column)){
-            cdb_client_sendcode(client, REPLY_ERR_WRONG_ARG);
-            return CMD_DONE;
-        }
-
-        cdb_insert_row_add_column_value(row, column, value);
+    sds cube_name = argv[1];
+    cdb_cube *cube = cdb_cubedb_find_cube(cubedb, cube_name);
+    if (!cube) {
+        cube = cdb_cube_create();
+        cdb_cubedb_add_cube(cubedb, cube_name, cube);
     }
 
     if (!cdb_cube_insert_row(cube, row)) {
@@ -372,6 +347,24 @@ static cmd_result cmd_pcount(cdb_client *client, sds *argv, int argc)
     return CMD_DONE;
 }
 
+static cmd_result cmd_dump(cdb_client *client, sds *argv, int argc)
+{
+    (void) argv; (void) argc;
+
+    if (!config->dump_path) {
+        log_warn("Dump path not supplied upon start, aborting");
+        cdb_client_sendcode(client, REPLY_ERR_CONFIGURATION_ERR);
+        return CMD_DONE;
+    }
+
+    if (cdb_do_dump(config->dump_path, cubedb))
+        cdb_client_sendcode(client, REPLY_ERR_ACTION_FAILED);
+    else
+        cdb_client_sendcode(client, REPLY_OK);;
+
+    return CMD_DONE;
+}
+
 static cmd_result cmd_help(cdb_client *client, sds *argv, int argc)
 {
     (void) argc; (void) argv;
@@ -429,6 +422,9 @@ static cubedb_cmd cmd_table[] = {
       "count the per-partition sum of row counts in a <cube> between <from>/<to> partitions, inclusive, "
       "with optional <columnvalues> (can be \"null\") and <groupcolumn>"},
 
+    { "DUMP", cmd_dump, 0, 0,
+      "DUMP: dump cube data into a preconfigured path"},
+
     { "HELP", cmd_help, 0, 0,
       "HELP: dump descriptions of all commands available"},
 
@@ -455,6 +451,12 @@ bool is_correct_cmd_arg(const char *arg)
 
 cmd_result process_cmd(cdb_client *client, sds query)
 {
+    /* Check size */
+    if (sdslen(query) > MAX_QUERY_SIZE) {
+        cdb_client_sendcode(client, REPLY_ERR_QUERY_TOO_LONG);
+        return CMD_DONE;
+    }
+
     /* Split the query into cmd + arguments */
     int argc = 0;
     sds *argv = sdssplitargs(query ,&argc);
@@ -489,7 +491,7 @@ cmd_result process_cmd(cdb_client *client, sds query)
     return cmd->cmd(client, argv, argc);
 }
 
-/* TCP server */
+/* TCP server utilities */
 
 int read_from_client(cdb_client *client)
 {
@@ -554,15 +556,22 @@ int main(int argc, char **argv)
     config = cdb_config_create(argc, argv);
     cdb_client_mapping_init();
 
+    /* Check if a dump is available */
+    if (config->dump_path) {
+        log_info("Loading dumped cubes from %s", config->dump_path);
+        int files_loaded = cdb_load_dump(config->dump_path, cubedb);
+        log_info("%d dumps loaded", files_loaded);
+    }
+
     /* The server, using select only for now */
     int listener_fd;
     {
         /* Get a list of bindable network addresses */
-        struct addrinfo *servinfo = find_bindable_addr(config);
+        struct addrinfo *servinfo = cdb_find_bindable_addr(config);
         defer { freeaddrinfo(servinfo); }
 
         /* Bind the first bindable address */
-        listener_fd = bind_addr(servinfo);
+        listener_fd = cdb_bind_addr(servinfo);
 
         /* Accept things, finally */
         if (-1 == listen(listener_fd, config->connections)) {

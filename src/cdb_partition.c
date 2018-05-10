@@ -18,12 +18,11 @@ static inline bool value_array_equal(const value_id_t *left_value_array, const v
 KHASH_INIT(value_to_row, value_id_t *, size_t, 1, value_array_hash, value_array_equal);
 KHASH_MAP_INIT_INT(id_to_value, char *);
 
-typedef struct column_mapping_t column_mapping_t;
-struct column_mapping_t {
+typedef struct column_mapping_t {
     column_id_t id;
     htable_t *value_to_id;
     khash_t(id_to_value) *id_to_value;
-};
+} column_mapping_t;
 
 struct cdb_partition {
     value_id_t **columns;
@@ -470,5 +469,31 @@ void cdb_partition_extend_column_value_set(cdb_partition *partition, htable_t *c
             char *column_value = htable_key(value_item);
             htable_put(value_set, column_value, NULL);
         }
+    }
+}
+
+void cdb_partition_for_each_row(cdb_partition *partition, cdb_row_visitor_function visitor, void *visitor_state)
+{
+    for (size_t row_index = 0; row_index < partition->row_num; row_index++ ) {
+        counter_t counter = partition->counters[row_index];
+        cdb_insert_row * row = cdb_insert_row_create(NULL, counter);
+        defer { cdb_insert_row_destroy(row); }
+
+        htable_for_each(item, partition->column_name_to_mapping) {
+            char *column_name = htable_key(item);
+            column_mapping_t *column_mapping = htable_value(item);
+            column_id_t column_id = column_mapping->id;
+
+            value_id_t *column = partition->columns[column_id];
+            value_id_t column_row_value_id = column[row_index];
+
+            char *column_value = get_column_value_id_value(column_mapping, column_row_value_id);
+            /* This should always be there as we walk over existing rows */
+            assert(column_value);
+
+            cdb_insert_row_add_column_value(row, column_name, column_value);
+        }
+
+        visitor(row, visitor_state);
     }
 }

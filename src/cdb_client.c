@@ -91,10 +91,10 @@ void cdb_client_destroy(cdb_client *client)
 
 void cdb_client_register(cdb_client *client, struct sockaddr_storage *their_addr)
 {
-    socket_non_blocking(client->fd);
+    cdb_socket_non_blocking(client->fd);
 
     inet_ntop(their_addr->ss_family,
-              get_in_addr((struct sockaddr *)&their_addr),
+              cdb_get_in_addr((struct sockaddr *)&their_addr),
               client->addrstr, sizeof(client->addrstr));
 
     int ret;

@@ -13,13 +13,15 @@
 #define DEFAULT_CONNECTION_NUM 64
 #define DEFAULT_LOG_LEVEL LOG_DEBUG
 
-typedef struct cdb_config cdb_config;
-struct cdb_config {
+typedef struct cdb_config {
     char *port;
     int connections;
+
     int log_level;
     char *log_path;
-};
+
+    char *dump_path;
+} cdb_config;
 
 cdb_config *cdb_config_create(int argc, char **argv);
 

@@ -12,12 +12,12 @@
 #include "sds.h"
 #include "cdb_config.h"
 
-void *get_in_addr(struct sockaddr *sa);
+void *cdb_get_in_addr(struct sockaddr *sa);
 
-struct addrinfo *find_bindable_addr(cdb_config *config);
+struct addrinfo *cdb_find_bindable_addr(cdb_config *config);
 
-int bind_addr(struct addrinfo *servinfo);
+int cdb_bind_addr(struct addrinfo *servinfo);
 
-int socket_non_blocking(int fd);
+int cdb_socket_non_blocking(int fd);
 
 #endif //CDB_NETWORK_H

@@ -11,6 +11,8 @@
 
 typedef struct cdb_cube cdb_cube;
 
+typedef void cdb_cube_partition_visitor_function(sds partition_name, cdb_partition *partition, void *visitor_state);
+
 cdb_cube *cdb_cube_create(void);
 void cdb_cube_init(cdb_cube *cube);
 void cdb_cube_destroy(cdb_cube *cube);
@@ -22,5 +24,7 @@ bool cdb_cube_insert_row(cdb_cube *cube, cdb_insert_row *row);
 char **cdb_cube_get_partition_names(cdb_cube *cube, size_t *partition_count);
 bool cdb_cube_has_partition(cdb_cube *cube, sds partition_name);
 bool cdb_cube_delete_partition_from_to(cdb_cube *cube, char *from, char *to);
+
+void cdb_cube_for_each_partition(cdb_cube *cube, cdb_cube_partition_visitor_function visitor, void *visitor_state);
 
 #endif //CDB_CUBE_H

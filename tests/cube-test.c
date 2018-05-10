@@ -625,7 +625,53 @@ static char *test_max_value()
     return 0;
 }
 
-static char *all_tests()
+static char *test_for_each_simple()
+{
+    cdb_cube *cube = cdb_cube_create();
+    defer { cdb_cube_destroy(cube); }
+
+    /* A couple of rows split into two partitions */
+    {
+        cdb_insert_row *irow = cdb_insert_row_create("part1", 1);
+        defer { cdb_insert_row_destroy(irow); }
+        cdb_insert_row_add_column_value(irow, "column1", "val1") ;
+        cdb_cube_insert_row(cube, irow);
+    }
+
+    {
+        cdb_insert_row *irow = cdb_insert_row_create("part2", 1);
+        defer { cdb_insert_row_destroy(irow); }
+        cdb_insert_row_add_column_value(irow, "column2", "val2") ;
+        cdb_cube_insert_row(cube, irow);
+
+    }
+
+    uint64_t partition_count = 0;
+    bool part1_found = false;
+    bool part2_found = false;
+
+    void partition_visitor(sds partition_name, cdb_partition * partition, void *visitor_state)
+    {
+        (void) partition; (void) visitor_state;
+        partition_count++;
+
+        if (0 == strcmp(partition_name, "part1"))
+            part1_found = true;
+
+        if (0 == strcmp(partition_name, "part2"))
+            part2_found = true;
+    }
+
+    cdb_cube_for_each_partition(cube, partition_visitor, NULL);
+
+    mu_assert("Wrong partition num", 2 == partition_count);
+    mu_assert("part1 partition not found", part1_found);
+    mu_assert("part2 partition not found", part2_found);
+
+    return 0;
+}
+
+    static char *all_tests()
 {
     mu_run_test(test_empty);
 
@@ -645,6 +691,8 @@ static char *all_tests()
 
     mu_run_test(test_get_columns_to_value_set);
     mu_run_test(test_max_value);
+
+    mu_run_test(test_for_each_simple);
     return 0;
 }
 

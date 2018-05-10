@@ -26,6 +26,7 @@ typedef uint64_t counter_t;
 #define defer defer__(__COUNTER__)
 
 #define RECEIVE_BUFSIZE 512
+#define MAX_QUERY_SIZE 4096
 
 typedef struct column_value_pair column_value_pair;
 struct column_value_pair {

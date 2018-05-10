@@ -22,14 +22,16 @@ struct cdb_client {
 
 typedef enum cmd_reply cmd_reply;
 enum cmd_reply {
-    REPLY_OK = 0,                 /* All correct */
-    REPLY_ERR_NOT_FOUND = -1,     /* Command not found */
-    REPLY_ERR_WRONG_ARG = -2,     /* Command argument is wrong */
-    REPLY_ERR_WRONG_ARG_NUM = -3, /* Command argument number is wrong */
-    REPLY_ERR_MALFORMED_ARG = -4, /* Command argument contains non-graphic symbols*/
-    REPLY_ERR_OBJ_NOT_FOUND = -5, /* Command object not found */
-    REPLY_ERR_OBJ_EXISTS = -6,    /* Command object already exists */
-    REPLY_ERR_ACTION_FAILED = -7, /* Command execution aborted */
+    REPLY_OK = 0,                     /* All correct */
+    REPLY_ERR_NOT_FOUND = -1,         /* Command not found */
+    REPLY_ERR_WRONG_ARG = -2,         /* Command argument is wrong */
+    REPLY_ERR_WRONG_ARG_NUM = -3,     /* Command argument number is wrong */
+    REPLY_ERR_MALFORMED_ARG = -4,     /* Command argument contains non-graphic symbols*/
+    REPLY_ERR_OBJ_NOT_FOUND = -5,     /* Command object not found */
+    REPLY_ERR_OBJ_EXISTS = -6,        /* Command object already exists */
+    REPLY_ERR_ACTION_FAILED = -7,     /* Command execution aborted */
+    REPLY_ERR_QUERY_TOO_LONG = -8,    /* Command query too long */
+    REPLY_ERR_CONFIGURATION_ERR = -9, /* Command requires a different server configuration */
 };
 
 KHASH_MAP_INIT_INT(fd_to_client, cdb_client*);
