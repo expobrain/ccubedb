@@ -17,6 +17,12 @@ REPLY_OK = "0\n"
 class CubeDBTestBase(unittest.TestCase):
 
     def setUp(self):
+        self.start_server()
+
+    def tearDown(self):
+        self.kill_server()
+
+    def start_server(self):
         global start_port
         start_port += 1
 
@@ -43,6 +49,11 @@ class CubeDBTestBase(unittest.TestCase):
                 retries -= 1
 
         self.sock_file = self.sock.makefile()
+
+    def kill_server(self):
+        self.sock.close()
+        self.process.kill()
+        self.process.wait()
 
     def send(self, msg):
         self.sock.sendall(msg)
@@ -127,11 +138,6 @@ class CubeDBTestBase(unittest.TestCase):
             result[top_key] = _list
 
         return result
-
-    def tearDown(self):
-        self.sock.close()
-        self.process.kill()
-        self.process.wait()
 
 
 class CubeDBTest(CubeDBTestBase):
