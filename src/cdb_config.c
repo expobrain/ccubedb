@@ -6,7 +6,7 @@ cdb_config *cdb_config_create(int argc, char **argv)
     cdb_config *config = cdb_malloc(sizeof(*config));
     *config = (typeof(*config)) {
         .port = DEFAULT_PORT,
-        .connections = DEFAULT_CONNECTION_NUM,
+        .connection_num = DEFAULT_CONNECTION_NUM,
 
         .log_level = DEFAULT_LOG_LEVEL,
         .log_path = NULL,

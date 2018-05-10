@@ -8,7 +8,7 @@ void *cdb_get_in_addr(struct sockaddr *sa)
         return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
-struct addrinfo *cdb_find_bindable_addr(cdb_config *config)
+struct addrinfo *cdb_find_bindable_addr(const char *port)
 {
     struct addrinfo *servinfo = NULL;
 
@@ -20,7 +20,7 @@ struct addrinfo *cdb_find_bindable_addr(cdb_config *config)
     hints.ai_flags = AI_PASSIVE;
 
     /* Get the list */
-    int rv = getaddrinfo(NULL, config->port, &hints, &servinfo);
+    int rv = getaddrinfo(NULL, port, &hints, &servinfo);
     if (0 != rv) {
         log_warn("getaddrinfo: %s", gai_strerror(rv));
         exit(EXIT_FAILURE);

@@ -15,7 +15,7 @@
 
 typedef struct cdb_config {
     char *port;
-    int connections;
+    int connection_num;
 
     int log_level;
     char *log_path;

@@ -442,14 +442,14 @@ static cubedb_cmd *find_cmd(char *name)
     return NULL;
 }
 
-bool is_correct_cmd_arg(const char *arg)
+static bool is_correct_cmd_arg(const char *arg)
 {
     while (*arg && isprint(*arg))
         arg++;
     return '\0' == *arg;
 }
 
-cmd_result process_cmd(cdb_client *client, sds query)
+static cmd_result process_cmd(cdb_client *client, sds query)
 {
     /* Check size */
     if (sdslen(query) > MAX_QUERY_SIZE) {
@@ -493,7 +493,7 @@ cmd_result process_cmd(cdb_client *client, sds query)
 
 /* TCP server utilities */
 
-int read_from_client(cdb_client *client)
+static int read_from_client(cdb_client *client)
 {
     char receive_buffer[RECEIVE_BUFSIZE] = {0};
     int receive_size = 0;
@@ -549,37 +549,24 @@ int read_from_client(cdb_client *client)
     return receive_size;
 }
 
-int main(int argc, char **argv)
+static void do_server_loop(const char *port, int connection_num)
 {
-    /* Global state init */
-    cubedb = cdb_cubedb_create();
-    config = cdb_config_create(argc, argv);
-    cdb_client_mapping_init();
-
-    /* Check if a dump is available */
-    if (config->dump_path) {
-        log_info("Loading dumped cubes from %s", config->dump_path);
-        int files_loaded = cdb_load_dump(config->dump_path, cubedb);
-        log_info("%d dumps loaded", files_loaded);
-    }
-
     /* The server, using select only for now */
     int listener_fd;
     {
         /* Get a list of bindable network addresses */
-        struct addrinfo *servinfo = cdb_find_bindable_addr(config);
+        struct addrinfo *servinfo = cdb_find_bindable_addr(port);
         defer { freeaddrinfo(servinfo); }
 
         /* Bind the first bindable address */
         listener_fd = cdb_bind_addr(servinfo);
 
         /* Accept things, finally */
-        if (-1 == listen(listener_fd, config->connections)) {
+        if (-1 == listen(listener_fd, connection_num)) {
             perror("listen");
             exit(EXIT_FAILURE);
         }
     }
-
 
     /* Loop through incoming connections and handle them synchronously */
     log_info("Waiting for connections...");
@@ -668,9 +655,26 @@ int main(int argc, char **argv)
                     cdb_client_unregister(client->fd);
                 }
             }
-
         }
-
     }
+}
+
+int main(int argc, char **argv)
+{
+    /* Global state init */
+    cubedb = cdb_cubedb_create();
+    config = cdb_config_create(argc, argv);
+    cdb_client_mapping_init();
+
+    /* Check if a dump is available */
+    if (config->dump_path) {
+        log_info("Loading dumped cubes from %s", config->dump_path);
+        int files_loaded = cdb_load_dump(config->dump_path, cubedb);
+        log_info("%d dumps loaded", files_loaded);
+    }
+
+    /* Launch the server */
+    do_server_loop(config->port, config->connection_num);
+
     return EXIT_SUCCESS;
 }
