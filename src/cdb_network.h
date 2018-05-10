@@ -14,7 +14,7 @@
 
 void *cdb_get_in_addr(struct sockaddr *sa);
 
-struct addrinfo *cdb_find_bindable_addr(cdb_config *config);
+struct addrinfo *cdb_find_bindable_addr(const char *port);
 
 int cdb_bind_addr(struct addrinfo *servinfo);
 

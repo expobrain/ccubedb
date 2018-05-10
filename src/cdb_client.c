@@ -14,9 +14,9 @@ cdb_client *cdb_client_create(int fd)
     return client;
 }
 
-void cdb_client_mapping_init()
+khash_t(fd_to_client) *cdb_client_mapping_init(void)
 {
-    client_mapping = kh_init(fd_to_client);
+    return kh_init(fd_to_client);
 }
 
 void cdb_client_add_reply(cdb_client *client, sds reply)

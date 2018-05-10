@@ -39,7 +39,7 @@ extern khash_t(fd_to_client) *client_mapping;
 
 cdb_client *cdb_client_create(int fd);
 
-void cdb_client_mapping_init();
+khash_t(fd_to_client) *cdb_client_mapping_init(void);
 
 void cdb_client_add_reply(cdb_client *client, sds reply);
 
