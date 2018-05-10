@@ -347,11 +347,13 @@
   - [X] mesonify the build
 
   - [X] mesonify tests
-* DONE dumping and reloading
+* DONE [2/3] dumping and reloading
 
   - [X] walk cubes and dump into files
 
   - [X] dump path should be preconfigured on start
+
+  - [ ] functional dumping tests
 
 * TODO [0/2] Extract a generic server for reuse
 
@@ -361,9 +363,11 @@
 
 * TODO data retention (delpart works here?)
 
-* TODO [1/14] Full launch
+* TODO [1/15] Full launch
 ** DONE prefixes for everything
 ** TODO compressed dumps
+** TODO mt dump
+** TODO mt request/response
 ** TODO _FORTIFY_SOURCE=2 for debug builds
 ** TODO check for leaking memory
 ** TODO bitmaps for filtering
