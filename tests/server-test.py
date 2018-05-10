@@ -16,6 +16,12 @@ REPLY_OK = "0\n"
 
 class CubeDBTestBase(unittest.TestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        cls.process = None
+        cls.sock = None
+        cls.sock_file = None
+
     def setUp(self):
         self.start_server()
 
@@ -23,6 +29,8 @@ class CubeDBTestBase(unittest.TestCase):
         self.kill_server()
 
     def start_server(self):
+        assert not self.process and not self.sock and not self.sock_file
+
         global start_port
         start_port += 1
 
@@ -51,9 +59,15 @@ class CubeDBTestBase(unittest.TestCase):
         self.sock_file = self.sock.makefile()
 
     def kill_server(self):
+        assert self.process and self.sock and self.sock_file
+
         self.sock.close()
         self.process.kill()
         self.process.wait()
+
+        self.process = None
+        self.sock = None
+        self.sock_file = None
 
     def send(self, msg):
         self.sock.sendall(msg)
