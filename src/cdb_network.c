@@ -1,6 +1,6 @@
 #include "cdb_network.h"
 
-void *get_in_addr(struct sockaddr *sa)
+void *cdb_get_in_addr(struct sockaddr *sa)
 {
     if (sa->sa_family == AF_INET)
         return &(((struct sockaddr_in*)sa)->sin_addr);
@@ -8,7 +8,7 @@ void *get_in_addr(struct sockaddr *sa)
         return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
-struct addrinfo *find_bindable_addr(cdb_config *config)
+struct addrinfo *cdb_find_bindable_addr(cdb_config *config)
 {
     struct addrinfo *servinfo = NULL;
 
@@ -29,7 +29,7 @@ struct addrinfo *find_bindable_addr(cdb_config *config)
     return servinfo;
 }
 
-int bind_addr(struct addrinfo *servinfo)
+int cdb_bind_addr(struct addrinfo *servinfo)
 {
     int sockfd;
 
@@ -65,7 +65,7 @@ int bind_addr(struct addrinfo *servinfo)
     return sockfd;
 }
 
-int socket_non_blocking(int fd)
+int cdb_socket_non_blocking(int fd)
 {
 
     int flags = fcntl(fd, F_GETFL, 0);

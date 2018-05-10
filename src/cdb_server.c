@@ -567,11 +567,11 @@ int main(int argc, char **argv)
     int listener_fd;
     {
         /* Get a list of bindable network addresses */
-        struct addrinfo *servinfo = find_bindable_addr(config);
+        struct addrinfo *servinfo = cdb_find_bindable_addr(config);
         defer { freeaddrinfo(servinfo); }
 
         /* Bind the first bindable address */
-        listener_fd = bind_addr(servinfo);
+        listener_fd = cdb_bind_addr(servinfo);
 
         /* Accept things, finally */
         if (-1 == listen(listener_fd, config->connections)) {
