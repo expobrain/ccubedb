@@ -197,6 +197,7 @@ int cdb_do_dump(const char *dump_dir, cdb_cubedb *cdb)
     {
         sds cube_dump_path = sdsempty();
         cube_dump_path = sdscatprintf(cube_dump_path, "%s/%s.cdb", dump_dir, cube_name);
+        defer { sdsfree(cube_dump_path); }
 
         FILE * dump_file = fopen(cube_dump_path, "w");
         if (!dump_file) {
