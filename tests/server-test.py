@@ -7,6 +7,8 @@ import subprocess
 import shlex
 import socket
 import time
+import tempfile
+import shutil
 
 
 start_port = 1500
@@ -21,6 +23,7 @@ class CubeDBTestBase(unittest.TestCase):
         cls.process = None
         cls.sock = None
         cls.sock_file = None
+        cls.tmp_dump_dir = None
 
     def setUp(self):
         self.start_server()
@@ -29,18 +32,19 @@ class CubeDBTestBase(unittest.TestCase):
         self.kill_server()
 
     def start_server(self):
-        assert not self.process and not self.sock and not self.sock_file
+        assert not self.process and not self.sock and not self.sock_file and not self.tmp_dump_dir
 
         global start_port
         start_port += 1
+
+        self.tmp_dump_dir = tmp_dump_dir = tempfile.mkdtemp()
 
         executable = os.getenv('CDB_EXECUTABLE')
         if not executable:
             raise Exception("CDB_EXECUTABLE env var should be set")
 
-        cmd = "{cmd} --port {port} --log-level 0".format(
-            cmd=executable,
-            port=str(start_port)
+        cmd = "{cmd} --port {port} --log-level 0 --dump-path {dump_dir}".format(
+            cmd=executable, port=str(start_port), dump_dir=tmp_dump_dir
         )
         self.process = subprocess.Popen(shlex.split(cmd))
 
@@ -59,7 +63,7 @@ class CubeDBTestBase(unittest.TestCase):
         self.sock_file = self.sock.makefile()
 
     def kill_server(self):
-        assert self.process and self.sock and self.sock_file
+        assert self.process and self.sock and self.sock_file and self.tmp_dump_dir
 
         self.sock.close()
         self.process.kill()
@@ -68,6 +72,9 @@ class CubeDBTestBase(unittest.TestCase):
         self.process = None
         self.sock = None
         self.sock_file = None
+
+        shutil.rmtree(self.tmp_dump_dir)
+        self.tmp_dump_dir = None
 
     def send(self, msg):
         self.sock.sendall(msg)
