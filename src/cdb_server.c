@@ -359,6 +359,8 @@ static cmd_result cmd_dump(cdb_client *client, sds *argv, int argc)
 
     if (cdb_do_dump(config->dump_path, cubedb))
         cdb_client_sendcode(client, REPLY_ERR_ACTION_FAILED);
+    else
+        cdb_client_sendcode(client, REPLY_OK);;
 
     return CMD_DONE;
 }

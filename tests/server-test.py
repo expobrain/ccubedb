@@ -23,28 +23,46 @@ class CubeDBTestBase(unittest.TestCase):
         cls.process = None
         cls.sock = None
         cls.sock_file = None
-        cls.tmp_dump_dir = None
+
+        cls.tmp_dump_dir = tempfile.mkdtemp()
+
+    @classmethod
+    def tearDownClass(cls):
+        os.rmdir(cls.tmp_dump_dir)
 
     def setUp(self):
         self.start_server()
 
     def tearDown(self):
         self.kill_server()
+        self.clear_dump_dir()
+
+    def clear_dump_dir(self):
+        for p in os.listdir(self.tmp_dump_dir):
+            full_path = os.path.join(self.tmp_dump_dir, p)
+            if os.path.isdir(full_path):
+                shutil.rmtree(full_path)
+            else:
+                os.remove(full_path)
 
     def start_server(self):
-        assert not self.process and not self.sock and not self.sock_file and not self.tmp_dump_dir
+        assert not self.process and not self.sock and not self.sock_file
 
         global start_port
         start_port += 1
 
-        self.tmp_dump_dir = tmp_dump_dir = tempfile.mkdtemp()
+        tmp_dump_dir = self.tmp_dump_dir
 
         executable = os.getenv('CDB_EXECUTABLE')
         if not executable:
             raise Exception("CDB_EXECUTABLE env var should be set")
 
-        cmd = "{cmd} --port {port} --log-level 0 --dump-path {dump_dir}".format(
-            cmd=executable, port=str(start_port), dump_dir=tmp_dump_dir
+        log_level = os.getenv('CDB_LOG_LEVEL')
+        if not log_level:
+            log_level = '0'
+
+        cmd = "{cmd} --port {port} --log-level {log_level} --dump-path {dump_dir}".format(
+            cmd=executable, port=str(start_port), log_level=log_level, dump_dir=tmp_dump_dir
         )
         self.process = subprocess.Popen(shlex.split(cmd))
 
@@ -63,7 +81,7 @@ class CubeDBTestBase(unittest.TestCase):
         self.sock_file = self.sock.makefile()
 
     def kill_server(self):
-        assert self.process and self.sock and self.sock_file and self.tmp_dump_dir
+        assert self.process and self.sock and self.sock_file
 
         self.sock.close()
         self.process.kill()
@@ -72,9 +90,6 @@ class CubeDBTestBase(unittest.TestCase):
         self.process = None
         self.sock = None
         self.sock_file = None
-
-        shutil.rmtree(self.tmp_dump_dir)
-        self.tmp_dump_dir = None
 
     def send(self, msg):
         self.sock.sendall(msg)
@@ -547,6 +562,42 @@ class CubeDBTest(CubeDBTestBase):
         assert 2 == len(column_to_values['c1'])
         assert 'val1' in column_to_values['c1']
         assert 'val2' in column_to_values['c1']
+
+    def test_dump(self):
+        # Insert a couple of cubes
+        self.sendwithok("INSERT cube1 p1 a=1&b=1 1")
+        self.sendwithok("INSERT cube1 p1 a=2&b=1 2")
+        self.sendwithok("INSERT cube1 p1 a=3&b=1 3")
+        self.sendwithok("INSERT cube2 p1 a=1 1")
+
+        lines = self.sendwithlines("CUBES")
+        assert len(lines) == 2
+
+        # Dump data
+        self.sendwithok("DUMP")
+
+        # Restart the server - it should use the same dump dir
+        self.kill_server()
+        self.start_server()
+
+        # Check that cubes are there
+        lines = self.sendwithlines("CUBES")
+        assert len(lines) == 2
+        assert 'cube1' in lines
+        assert 'cube2' in lines
+
+        # Make sure the total number of values is ok
+        partition_to_value_to_count = self.sendwithmap("PCOUNT cube1")
+        assert partition_to_value_to_count == {'p1': '6'}
+
+        partition_to_value_to_count = self.sendwithmap("PCOUNT cube2")
+        assert partition_to_value_to_count == {'p1': '1'}
+
+        # Make sure the grouped number of values is ok
+        partition_to_value_to_count = self.sendwithmapmap("PCOUNT cube1 null null null a")
+        assert partition_to_value_to_count == {'p1': {'1': '1', '2': '2', '3': '3'}}
+
+
 
 
 if __name__ == '__main__':
